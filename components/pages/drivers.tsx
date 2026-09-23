@@ -3,156 +3,156 @@
 import * as React from "react";
 import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
-import { useConsole } from "@/components/app-context";
-import { Blueprint, PageHeader, Segmented } from "@/components/ui/primitives";
-import { DRIVERS } from "@/lib/data";
+import { MapView, type SurfaceInfo } from "@/components/map-view";
+import { Blueprint, PageHeader } from "@/components/ui/primitives";
+import { NoData, Provenance } from "@/components/ui/no-data";
 
-const MAX_SHARE = 45;
-
+/**
+ * What actually drives the composite score: the entropy weights computed
+ * across the live grid.
+ *
+ * The prototype showed SHAP contributions from a model that does not exist.
+ * These weights do exist — they fall out of the factor maps themselves, and
+ * the page shows the entropy they come from so the arithmetic is checkable.
+ */
 export function PageDrivers() {
-  const { site } = useConsole();
-  const [h, setH] = React.useState<"0" | "1" | "2">("0");
-  const [sel, setSel] = React.useState(0);
+  const [surface, setSurface] = React.useState<SurfaceInfo | null>(null);
+  const onSurface = React.useCallback((info: SurfaceInfo) => setSurface(info), []);
 
-  const hi = Number(h) as 0 | 1 | 2;
-  const chosen = DRIVERS[sel];
-
-  /* Stacked weekly contributions over the last 12 weeks. */
-  const stacks = React.useMemo(() => {
-    const out: { x: number; y: number; h: number; c: string; o: number }[] = [];
-    for (let w = 0; w < 12; w++) {
-      let y = 160;
-      const tot = 20 + w * 3.2;
-      DRIVERS.forEach((d, i) => {
-        const share = [0.24 + w * 0.012, 0.26 - w * 0.002, 0.2, 0.16 - w * 0.004, 0.14 - w * 0.006][i];
-        const bh = tot * share * 1.3;
-        y -= bh;
-        out.push({ x: 10 + w * 34, y, h: bh - 1, c: d.sc, o: sel === i ? 1 : 0.45 });
-      });
-    }
-    return out;
-  }, [sel]);
+  const factors = surface?.factors ?? [];
+  const maxWeight = surface ? Math.max(...Object.values(surface.weights)) : 1;
 
   return (
     <div className="flex flex-col gap-5.5 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        kicker={
-          <>
-            ANALYSIS &middot; RISK DRIVERS &middot; {site.cc} / {site.name}
-          </>
-        }
+        kicker={<>ANALYSIS &middot; RISK DRIVERS</>}
         title="What is driving risk"
         lede={
           <>
-            SHAP contribution of each factor to today&rsquo;s composite score of{" "}
-            <span className="font-mono text-severe">58</span>. Contributions sum to 100%.
+            Each factor is normalised across the region, scored by information entropy, and weighted by how much it
+            varies. A factor whose values are more dispersed carries more information, so it earns a larger weight.
+            No weight is set by hand.
           </>
-        }
-        actions={
-          <Segmented
-            value={h}
-            onChange={setH}
-            options={[
-              { value: "0", label: "Today" },
-              { value: "1", label: "+7 d" },
-              { value: "2", label: "+30 d" },
-            ]}
-          />
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Blueprint className="flex flex-col">
-          <div className="grid grid-cols-[minmax(0,1fr)_60px] gap-4 border-b border-divider px-5 py-3 font-mono text-[10px] tracking-[0.1em] text-muted sm:grid-cols-[230px_minmax(0,1fr)_60px]">
-            <span>DRIVER</span>
-            <span className="hidden sm:block">CONTRIBUTION</span>
-            <span className="text-right">SHARE</span>
-          </div>
-
-          {DRIVERS.map((d, i) => {
-            const on = sel === i;
-            const v = d.base[hi];
-            return (
-              <button
-                key={d.n}
-                onClick={() => setSel(i)}
-                aria-pressed={on}
-                className="grid grid-cols-[minmax(0,1fr)_60px] items-center gap-4 border-b border-divider px-5 py-4.5 text-left transition-colors duration-150 hover:bg-neutral-100 sm:grid-cols-[230px_minmax(0,1fr)_60px]"
-                style={{
-                  background: on ? "var(--ap-neutral-100)" : "transparent",
-                  boxShadow: `inset 2px 0 0 ${on ? "var(--ap-accent)" : "transparent"}`,
-                }}
-              >
-                <span className="flex items-start gap-3">
-                  <span className="mt-0.5 flex" style={{ color: d.c }}>
-                    <Icon name={d.icon} size={16} />
-                  </span>
-                  <span className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium">{d.n}</span>
-                    <span className="font-mono text-[11px] text-muted">{d.m}</span>
-                  </span>
-                </span>
-                <span className="relative hidden h-3.5 bg-neutral-100 sm:block">
-                  <motion.span
-                    className="absolute inset-y-0 left-0"
-                    animate={{ width: `${(v / MAX_SHARE) * 100}%` }}
-                    transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-                    style={{ background: d.c }}
-                  />
-                </span>
-                <span className="text-right font-heading text-2xl font-semibold tabular-nums">{v}%</span>
-              </button>
-            );
-          })}
-
-          <div className="flex items-center gap-2 px-5 py-3.5 text-[12.5px] text-muted">
-            <Icon name="info" size={14} />
-            Colour reflects each driver&rsquo;s own severity on the shared risk scale, not its share.
-          </div>
-        </Blueprint>
-
-        <div className="flex flex-col gap-6">
-          <Blueprint className="flex flex-col gap-3.5 p-5">
-            <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
-              SELECTED &middot; {chosen.n.toUpperCase()}
-            </span>
-            <div className="grid grid-cols-2 border-l border-t border-divider">
-              {chosen.facts.map(([k, v]) => (
-                <div key={k} className="border-b border-r border-divider px-3 py-2.5">
-                  <div className="font-mono text-[10px] text-muted">{k}</div>
-                  <div className="font-mono text-[15px]">{v}</div>
-                </div>
-              ))}
-            </div>
-            <div className="text-[13.5px] leading-[1.55]">{chosen.why}</div>
-          </Blueprint>
-
-          <Blueprint className="flex flex-col gap-2.5 px-5 py-4.5">
-            <div className="flex justify-between">
-              <span className="font-heading text-[17px] font-semibold">Drivers over time</span>
-              <span className="font-mono text-[10.5px] text-muted">LAST 12 WEEKS</span>
-            </div>
-            <svg viewBox="0 0 420 180" className="block w-full">
-              {stacks.map((s, i) => (
-                <rect key={i} x={s.x} y={s.y} width={24} height={s.h} fill={s.c} fillOpacity={s.o} />
-              ))}
-              <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9}>
-                <text x={10} y={176}>W28</text>
-                <text x={190} y={176}>W33</text>
-                <text x={380} y={176}>W39</text>
-              </g>
-            </svg>
-            <div className="flex flex-wrap gap-3 font-mono text-[10px] text-muted">
-              {DRIVERS.map((d) => (
-                <span key={d.short} className="flex items-center gap-1.5">
-                  <span className="size-2" style={{ background: d.sc }} />
-                  {d.short}
-                </span>
-              ))}
-            </div>
-          </Blueprint>
-        </div>
+      {/* The map is what produced these numbers, so it stays on the page. */}
+      <div className="hidden">
+        <MapView layer="risk" onSurface={onSurface} interactive={false} />
       </div>
+
+      {!surface ? (
+        <NoData
+          icon="bars"
+          title="Computing weights"
+          what="The weights come from the live risk surface. If this persists, the upstream weather service could not be reached."
+          needs="connection to Open-Meteo"
+        />
+      ) : (
+        <>
+          <Blueprint className="flex flex-col">
+            <div className="grid grid-cols-[minmax(0,1fr)_84px_64px] gap-4 border-b border-divider px-5 py-3 font-mono text-[10px] tracking-[0.1em] text-muted sm:grid-cols-[240px_minmax(0,1fr)_84px_64px]">
+              <span>FACTOR</span>
+              <span className="hidden sm:block">WEIGHT</span>
+              <span className="text-right">ENTROPY</span>
+              <span className="text-right">WEIGHT</span>
+            </div>
+
+            {factors.map((f, i) => {
+              const w = surface.weights[f.key] ?? 0;
+              const h = surface.entropy[f.key] ?? 0;
+              return (
+                <div
+                  key={f.key}
+                  className="grid grid-cols-[minmax(0,1fr)_84px_64px] items-center gap-4 border-b border-divider px-5 py-4.5 sm:grid-cols-[240px_minmax(0,1fr)_84px_64px]"
+                >
+                  <span className="flex items-start gap-3">
+                    <span className="mt-0.5 flex text-accent">
+                      <Icon name={ICONS[f.key] ?? "info"} size={16} />
+                    </span>
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium">{f.label}</span>
+                      {f.note && <span className="font-mono text-[11px] text-faint">{f.note}</span>}
+                    </span>
+                  </span>
+                  <span className="relative hidden h-3.5 bg-neutral-100 sm:block">
+                    <motion.span
+                      className="absolute inset-y-0 left-0 bg-accent"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(w / maxWeight) * 100}%` }}
+                      transition={{ duration: 0.5, delay: i * 0.05, ease: [0.2, 0.8, 0.2, 1] }}
+                    />
+                  </span>
+                  <span className="text-right font-mono text-[13px] text-muted">{h.toFixed(4)}</span>
+                  <span className="text-right font-heading text-2xl font-semibold tabular-nums">
+                    {(w * 100).toFixed(1)}%
+                  </span>
+                </div>
+              );
+            })}
+
+            <div className="flex items-center gap-2 px-5 py-3.5 text-[12.5px] text-muted">
+              <Icon name="info" size={14} />
+              Weights sum to {(Object.values(surface.weights).reduce((a, b) => a + b, 0) * 100).toFixed(0)}%. Lower
+              entropy means a more dispersed factor, and so a larger weight.
+            </div>
+          </Blueprint>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+              <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">THE METHOD</span>
+              <ol className="m-0 flex list-none flex-col gap-2.5 p-0 text-[13.5px] leading-[1.55]">
+                {[
+                  "Each factor map is normalised 0-1 across the region, flipped where a higher raw value means drier.",
+                  "The normalised values become a distribution over cells, and its information entropy H is measured.",
+                  "The weight is (1 - H) divided by the sum of (1 - H) across factors, so dispersed factors dominate.",
+                  "The composite is the weighted mean, reported as risk = (1 - composite) x 100.",
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="font-mono text-[11px] text-faint">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="flex-1">{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <Provenance>{surface.source}</Provenance>
+            </Blueprint>
+
+            <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+              <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">WHAT IS NOT IN HERE</span>
+              <div className="flex flex-col gap-3 text-[13.5px] leading-[1.55]">
+                <p className="m-0">
+                  The source method uses NDVI and land surface temperature. Neither has a feed connected, so two
+                  proxies stand in and are labelled as such above.
+                </p>
+                <p className="m-0 text-muted">
+                  Connecting a satellite source would not change the arithmetic &mdash; the weighting adapts to
+                  whatever factor maps it is given.
+                </p>
+              </div>
+              <div className="mt-auto grid grid-cols-2 border-l border-t border-divider">
+                {(
+                  [
+                    ["NDVI", "no optical feed"],
+                    ["LAND SURFACE TEMP", "no thermal feed"],
+                  ] as const
+                ).map(([k, v]) => (
+                  <div key={k} className="flex flex-col gap-0.5 border-b border-r border-divider px-3 py-2.5">
+                    <span className="font-mono text-[10px] tracking-[0.08em] text-muted">{k}</span>
+                    <span className="font-mono text-[12.5px] text-faint">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </Blueprint>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+const ICONS: Record<string, "rain" | "droplet" | "thermo" | "sun"> = {
+  precip30: "rain",
+  soilMoisture: "droplet",
+  tmax: "thermo",
+  et030: "sun",
+};

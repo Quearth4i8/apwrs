@@ -2,31 +2,23 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { Icon, type IconName } from "@/components/icon";
-import { Blueprint, ButtonLink, Corners } from "@/components/ui/primitives";
-import {
-  CROP_DOT,
-  FARMER_ALERTS,
-  FARMER_CROPS,
-  FARMER_FAQ,
-  FARMER_FIELDS,
-  FARMER_FIELDS_FR_PLANTS,
-  FARMER_TEXT,
-  FARMER_WEEK,
-  VERDICT,
-  type Lang,
-} from "@/lib/farmer-data";
+import { Icon } from "@/components/icon";
+import { Blueprint } from "@/components/ui/primitives";
+import { NoData, Provenance } from "@/components/ui/no-data";
+import { CROPS, STATIONS, type Station } from "@/lib/climate";
+import { conditionsFor, decadeLabel, suitability, type DecadeSuitability } from "@/lib/metrics";
+import { useForecast } from "@/lib/use-forecast";
+import { FARMER_TEXT, type Lang } from "@/lib/farmer-data";
 import type { FarmerTab } from "@/lib/data";
 
 /**
- * The farmer screens themselves, with no chrome of their own — the console
- * shell supplies the sidebar and header, and the standalone phone build
- * supplies its own header and bottom tab bar. Colour comes from whatever
- * theme the host sets, so this renders correctly dark or light.
+ * The farmer screens, in plain language and with no chrome of their own.
  *
- * Everything is still sized for a phone held outdoors: 44px+ targets, high
- * contrast, no jargon, and a read-aloud button because not every user reads
- * comfortably.
+ * Every number comes from the same place the expert console gets it: the
+ * 30-year station record and the live forecast. The invented fields, advisor
+ * and message history the prototype carried are gone — there is no farm
+ * profile behind this app, and pretending otherwise would be worse than an
+ * empty screen.
  */
 export function FarmerContent({
   tab,
@@ -37,14 +29,15 @@ export function FarmerContent({
   lang: Lang;
   className?: string;
 }) {
-  const [cropId, setCropId] = React.useState("wheat");
-  const [done, setDone] = React.useState<Record<string, boolean>>({});
-  const [sms, setSms] = React.useState(true);
+  const t = FARMER_TEXT[lang];
+  const station: Station = STATIONS[0];
+  const cond = React.useMemo(() => conditionsFor(station), [station]);
+  const { data: forecast } = useForecast(station.id);
+  const [cropId, setCropId] = React.useState(CROPS.find((c) => c.id === "ble-dur")?.id ?? CROPS[0].id);
   const [speaking, setSpeaking] = React.useState(false);
 
-  const t = FARMER_TEXT[lang];
-  const crop = FARMER_CROPS.find((c) => c.id === cropId) ?? FARMER_CROPS[0];
-  const v = VERDICT[crop.k];
+  const crop = CROPS.find((c) => c.id === cropId) ?? CROPS[0];
+  const verdict = React.useMemo(() => verdictFor(station.id, crop.id), [station.id, crop.id]);
 
   React.useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
@@ -55,14 +48,16 @@ export function FarmerContent({
       setSpeaking(false);
       return;
     }
-    const u = new SpeechSynthesisUtterance(
-      `${crop[lang]}. ${v[lang][1]}. ${crop.why[lang]} ${t.bestTime}: ${crop.when[lang]}.`,
-    );
+    const u = new SpeechSynthesisUtterance(`${crop.name}. ${verdict.headline}. ${verdict.detail}`);
     u.lang = lang === "fr" ? "fr-FR" : "en-GB";
     u.onend = () => setSpeaking(false);
     speechSynthesis.speak(u);
     setSpeaking(true);
   }
+
+  const next7 = forecast
+    ? forecast.days.filter((d) => d.forecast).slice(0, 7)
+    : [];
 
   return (
     <div
@@ -76,8 +71,9 @@ export function FarmerContent({
           <div className="flex flex-col gap-2 lg:col-span-2">
             <span className="text-sm font-semibold text-muted">{t.myCrops}</span>
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 no-scrollbar sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-              {FARMER_CROPS.map((c) => {
+              {CROPS.map((c) => {
                 const on = c.id === cropId;
+                const v = verdictFor(station.id, c.id);
                 return (
                   <button
                     key={c.id}
@@ -94,8 +90,8 @@ export function FarmerContent({
                       color: on ? "var(--ap-bg)" : "var(--ap-text)",
                     }}
                   >
-                    <span className="size-2.5" style={{ background: CROP_DOT[c.k] }} />
-                    {c[lang]}
+                    <span className="size-2.5" style={{ background: v.color }} />
+                    {c.name}
                   </button>
                 );
               })}
@@ -110,35 +106,50 @@ export function FarmerContent({
             transition={{ duration: 0.3 }}
             className="lg:row-span-2"
           >
-            <Blueprint className="flex h-full flex-col gap-4 px-5 py-5.5" style={{ background: v.bg, borderColor: v.bd }}>
+            <Blueprint
+              className="flex h-full flex-col gap-4 px-5 py-5.5"
+              style={{ background: verdict.bg, borderColor: verdict.border }}
+            >
               <div className="flex items-center gap-3.5">
-                <span className="grid size-15 flex-none place-items-center text-white" style={{ background: v.c }}>
-                  <Icon name={v.icon} size={30} strokeWidth={2} />
+                <span
+                  className="grid size-15 flex-none place-items-center text-white"
+                  style={{ background: verdict.color }}
+                >
+                  <Icon name={verdict.icon} size={30} strokeWidth={2} />
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate text-[13px] font-semibold uppercase tracking-[0.06em]" style={{ color: v.ink }}>
-                    {v[lang][0]}
+                  <span
+                    className="truncate text-[13px] font-semibold uppercase tracking-[0.06em]"
+                    style={{ color: verdict.ink }}
+                  >
+                    {crop.name}
                   </span>
                   <span className="font-heading text-[clamp(26px,5vw,32px)] font-semibold leading-[1.05] tracking-[-0.02em] text-balance">
-                    {v[lang][1]}
+                    {verdict.headline}
                   </span>
                 </div>
               </div>
 
-              <p className="m-0 text-[17px] leading-[1.5] text-pretty">{crop.why[lang]}</p>
+              <p className="m-0 text-[17px] leading-[1.5] text-pretty">{verdict.detail}</p>
 
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border border-divider bg-surface px-4 py-3.5">
-                <div className="flex flex-col gap-0.75">
-                  <span className="whitespace-nowrap text-[13px] text-muted">{t.bestTime}</span>
-                  <span className="font-heading text-[26px] font-semibold leading-none">{crop.when[lang]}</span>
+              {verdict.best && (
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border border-divider bg-surface px-4 py-3.5">
+                  <div className="flex flex-col gap-0.75">
+                    <span className="whitespace-nowrap text-[13px] text-muted">{t.bestTime}</span>
+                    <span className="font-heading text-[26px] font-semibold leading-none">
+                      {decadeLabel(verdict.best.decade)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end gap-0.75">
+                    <span className="font-heading text-[30px] font-semibold leading-none" style={{ color: verdict.ink }}>
+                      {(verdict.best.establishmentProb * 100).toFixed(0)}%
+                    </span>
+                    <span className="whitespace-nowrap text-[13px] text-muted">
+                      {lang === "fr" ? "des années" : "of years"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-0.75">
-                  <span className="font-heading text-[30px] font-semibold leading-none" style={{ color: v.ink }}>
-                    {crop.days ? crop.days : "✓"}
-                  </span>
-                  <span className="whitespace-nowrap text-[13px] text-muted">{crop.days ? t.daysTo : t.now}</span>
-                </div>
-              </div>
+              )}
 
               <button
                 onClick={speak}
@@ -150,237 +161,238 @@ export function FarmerContent({
             </Blueprint>
           </motion.div>
 
-          {/* To-do */}
-          <div className="flex flex-col gap-2.5">
-            <span className="text-sm font-semibold text-muted">{t.todo}</span>
-            {crop.todo.map((d, i) => {
-              const k = crop.id + i;
-              const isDone = !!done[k];
-              return (
-                <button
-                  key={k}
-                  onClick={() => setDone((s) => ({ ...s, [k]: !isDone }))}
-                  aria-pressed={isDone}
-                  className="flex min-h-15 items-center gap-3.5 border border-divider bg-surface px-3.5 py-2.5 text-left transition-colors hover:border-divider-strong"
-                >
-                  <span
-                    className="grid size-6.5 flex-none place-items-center border-[1.5px] text-white"
-                    style={{
-                      borderColor: isDone ? "var(--ap-accent)" : "var(--ap-divider-strong)",
-                      background: isDone ? "var(--ap-accent)" : "transparent",
-                    }}
-                  >
-                    {isDone && <Icon name="check" size={16} strokeWidth={2.5} />}
-                  </span>
-                  <span className="flex flex-1 flex-col gap-0.5">
-                    <span
-                      className="text-base font-medium"
-                      style={{
-                        textDecoration: isDone ? "line-through" : "none",
-                        color: isDone ? "var(--ap-muted)" : "var(--ap-text)",
-                      }}
-                    >
-                      {lang === "fr" ? d[1] : d[0]}
-                    </span>
-                    <span className="text-[13.5px] text-muted">{lang === "fr" ? d[3] : d[2]}</span>
-                  </span>
-                  <span className="text-teal">
-                    <Icon name={d[4]} size={20} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Dryness */}
+          {/* Dryness, from the measured index */}
           <Blueprint className="flex flex-col gap-3.5 bg-surface p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-base font-semibold">{t.dryness}</span>
-              <span className="text-[13px] text-muted">{t.dryWhere}</span>
+              <span className="text-[13px] text-muted">{station.name}</span>
             </div>
-            <div className="grid grid-cols-4 gap-1">
-              {t.lv.map((l, i) => {
-                const here = i === 2;
-                return (
-                  <div key={l} className="flex flex-col items-center gap-1.5">
-                    <div
-                      className="self-stretch"
-                      style={{
-                        height: here ? 28 : 14,
-                        background: ["#38A88A", "#E7A83B", "#EE8434", "#D96565"][i],
-                        opacity: here ? 1 : 0.35,
-                        outline: here ? "2px solid var(--ap-text)" : "none",
-                        outlineOffset: 2,
-                      }}
-                    />
-                    <span
-                      className="text-center text-[13px]"
-                      style={{ fontWeight: here ? 700 : 400, color: here ? "var(--ap-text)" : "var(--ap-muted)" }}
-                    >
-                      {l}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="m-0 text-[15px] leading-[1.5] text-muted">{t.dryText}</p>
+            {cond.spei3 ? (
+              <>
+                <div className="grid grid-cols-4 gap-1">
+                  {t.lv.map((l, i) => {
+                    const band = speiBand(cond.spei3!.value);
+                    const here = i === band;
+                    return (
+                      <div key={l} className="flex flex-col items-center gap-1.5">
+                        <div
+                          className="self-stretch"
+                          style={{
+                            height: here ? 28 : 14,
+                            background: ["#38A88A", "#E7A83B", "#EE8434", "#D96565"][i],
+                            opacity: here ? 1 : 0.35,
+                            outline: here ? "2px solid var(--ap-text)" : "none",
+                            outlineOffset: 2,
+                          }}
+                        />
+                        <span
+                          className="text-center text-[13px]"
+                          style={{
+                            fontWeight: here ? 700 : 400,
+                            color: here ? "var(--ap-text)" : "var(--ap-muted)",
+                          }}
+                        >
+                          {l}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="m-0 text-[15px] leading-[1.5] text-muted">
+                  {lang === "fr"
+                    ? `Il est tombé ${cond.rain30} mm de pluie en 30 jours${
+                        cond.rain30Normal ? `, contre ${cond.rain30Normal} mm d'habitude` : ""
+                      }.`
+                    : `${cond.rain30} mm of rain fell in the last 30 days${
+                        cond.rain30Normal ? `, against ${cond.rain30Normal} mm in a normal year` : ""
+                      }.`}
+                </p>
+              </>
+            ) : (
+              <p className="m-0 text-[15px] text-muted">
+                {lang === "fr" ? "Pas de mesure pour ce mois." : "No measurement for this month."}
+              </p>
+            )}
           </Blueprint>
 
-          {/* Week */}
+          {/* Real forecast */}
           <div className="flex flex-col gap-2.5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-sm font-semibold text-muted">{t.weather}</span>
-              <span className="text-[13px] text-muted">{t.rainWeek}</span>
+              <span className="text-[13px] text-muted">
+                {next7.length
+                  ? `${next7.reduce((a, d) => a + (d.precip ?? 0), 0).toFixed(0)} mm`
+                  : lang === "fr"
+                    ? "chargement…"
+                    : "loading…"}
+              </span>
             </div>
-            <div className="grid grid-cols-7 border border-divider bg-surface">
-              {FARMER_WEEK.map(([i, icon, temp, rain]) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center gap-1.5 border-r border-divider px-0.5 py-3 last:border-r-0"
-                  style={{ background: i === 0 ? "var(--ap-neutral-100)" : "transparent" }}
-                >
-                  <span className="text-[13px]" style={{ fontWeight: i === 0 ? 700 : 500 }}>
-                    {t.days[i]}
-                  </span>
-                  <span style={{ color: icon === "rain" ? "var(--ap-teal)" : "#D9A20B" }}>
-                    <Icon name={icon} size={22} />
-                  </span>
-                  <span className="text-[15px] font-semibold">{temp}&deg;</span>
-                  <span
-                    className="font-mono text-[11px]"
-                    style={{ color: rain === "0" ? "var(--ap-faint)" : "var(--ap-teal)" }}
-                  >
-                    {rain} mm
-                  </span>
-                </div>
-              ))}
-            </div>
+            {next7.length ? (
+              <div className="grid grid-cols-7 border border-divider bg-surface">
+                {next7.map((d, i) => {
+                  const day = new Date(d.date);
+                  const rain = d.precip ?? 0;
+                  return (
+                    <div
+                      key={d.date}
+                      className="flex flex-col items-center gap-1.5 border-r border-divider px-0.5 py-3 last:border-r-0"
+                      style={{ background: i === 0 ? "var(--ap-neutral-100)" : "transparent" }}
+                    >
+                      <span className="text-[13px]" style={{ fontWeight: i === 0 ? 700 : 500 }}>
+                        {day.toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB", {
+                          weekday: "short",
+                          timeZone: "UTC",
+                        })}
+                      </span>
+                      <span style={{ color: rain >= 1 ? "var(--ap-teal)" : "#D9A20B" }}>
+                        <Icon name={rain >= 1 ? "rain" : "sun"} size={22} />
+                      </span>
+                      <span className="text-[15px] font-semibold">
+                        {d.tmax == null ? "—" : `${d.tmax.toFixed(0)}°`}
+                      </span>
+                      <span
+                        className="font-mono text-[11px]"
+                        style={{ color: rain < 1 ? "var(--ap-faint)" : "var(--ap-teal)" }}
+                      >
+                        {rain.toFixed(rain >= 1 ? 0 : 0)} mm
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="border border-dashed border-divider p-6 text-center text-[13px] text-muted">
+                {lang === "fr" ? "Prévisions indisponibles" : "Forecast unavailable"}
+              </div>
+            )}
           </div>
         </>
       )}
 
       {tab === "fields" && (
-        <>
-          <h1 className="font-heading text-[30px] font-semibold leading-none lg:col-span-2">{t.fields}</h1>
-          {FARMER_FIELDS.map(([en, fr, cid, size, soilEn, soilFr], i) => {
-            const c = FARMER_CROPS.find((x) => x.id === cid) ?? FARMER_CROPS[0];
-            const kk = VERDICT[c.k];
-            return (
-              <Blueprint key={en} className="flex flex-col gap-3 bg-surface p-4">
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-lg font-semibold">{lang === "fr" ? fr : en}</span>
-                    <span className="text-sm text-muted">
-                      {c[lang]} &middot; {size}
-                      {cid === "olive" ? (lang === "fr" ? " arbres" : " trees") : ""}
-                    </span>
-                  </div>
-                  <span
-                    className="flex h-7.5 items-center gap-1.5 px-2.5 text-[13.5px] font-semibold"
-                    style={{ background: kk.bg, color: kk.ink }}
-                  >
-                    <span className="size-2" style={{ background: kk.c }} />
-                    {kk[lang][0]}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 border-t border-divider pt-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-teal">
-                      <Icon name="droplet" size={18} />
-                    </span>
-                    {lang === "fr" ? soilFr : soilEn}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-accent">
-                      <Icon name="leaf" size={18} />
-                    </span>
-                    {lang === "fr" ? FARMER_FIELDS_FR_PLANTS[i] : FARMER_FIELDS[i][6]}
-                  </div>
-                </div>
-              </Blueprint>
-            );
-          })}
-        </>
+        <div className="lg:col-span-2">
+          <NoData
+            icon="map"
+            title={lang === "fr" ? "Aucune parcelle enregistrée" : "No fields registered"}
+            what={
+              lang === "fr"
+                ? "Les parcelles, leurs cultures et leurs surfaces doivent être saisies par l’exploitant. Aucun profil d’exploitation n’existe pour le moment, donc il n’y a rien à afficher."
+                : "Fields, their crops and their areas have to be entered by the farmer. No farm profile exists yet, so there is nothing to show."
+            }
+            needs={lang === "fr" ? "profil d’exploitation" : "farm profile"}
+          />
+        </div>
       )}
 
       {tab === "alerts" && (
-        <>
-          <h1 className="font-heading text-[30px] font-semibold leading-none lg:col-span-2">{t.alerts}</h1>
-          {FARMER_ALERTS[lang].map((a) => (
-            <div key={a[5]} className="flex gap-3.5 p-4" style={{ border: `1px solid ${a[4]}`, background: a[3] }}>
-              <span className="grid size-10 flex-none place-items-center text-white" style={{ background: a[2] }}>
-                <Icon name={a[1] as IconName} size={20} strokeWidth={2} />
-              </span>
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] text-muted">{a[0]}</span>
-                <span className="text-[17px] font-semibold leading-[1.3]">{a[5]}</span>
-                <span className="text-[15px] leading-[1.5] text-muted">{a[6]}</span>
-              </div>
-            </div>
-          ))}
-          <button
-            onClick={() => setSms((x) => !x)}
-            role="switch"
-            aria-checked={sms}
-            className="flex min-h-16 items-center gap-3.5 border border-divider bg-surface px-4 py-3 text-left"
-          >
-            <span className="text-accent">
-              <Icon name="message" size={22} />
-            </span>
-            <span className="flex flex-1 flex-col gap-0.5">
-              <span className="text-base font-medium">{t.sms}</span>
-              <span className="text-[13.5px] text-muted">+216 &bull;&bull; &bull;&bull;&bull; 482</span>
-            </span>
-            <span
-              className="relative h-7 w-12 flex-none border transition-colors"
-              style={{
-                borderColor: sms ? "var(--ap-accent)" : "var(--ap-divider-strong)",
-                background: sms ? "var(--ap-accent)" : "transparent",
-              }}
-            >
-              <span
-                className="absolute top-0.75 size-5 transition-[left] duration-150"
-                style={{ left: sms ? 24 : 3, background: sms ? "#fff" : "var(--ap-muted)" }}
-              />
-            </span>
-          </button>
-        </>
+        <div className="lg:col-span-2">
+          <NoData
+            icon="bell"
+            title={lang === "fr" ? "Aucun message" : "No messages"}
+            what={
+              lang === "fr"
+                ? "Les messages proviennent des règles d’alerte, qui ne sont pas encore en place. Les indices de sécheresse eux-mêmes sont bien calculés et visibles sur l’onglet Aujourd’hui."
+                : "Messages come from alert rules, which are not in place yet. The drought indices themselves are computed and visible on the Today tab."
+            }
+            needs={lang === "fr" ? "moteur d’alertes" : "rules engine"}
+          />
+        </div>
       )}
 
       {tab === "help" && (
         <>
           <h1 className="font-heading text-[30px] font-semibold leading-none lg:col-span-2">{t.help}</h1>
           <Blueprint className="flex flex-col gap-3.5 bg-surface p-4.5">
-            <div className="flex items-center gap-3.5">
-              <span className="grid size-13 place-items-center border border-divider bg-s3 font-mono text-sm">SB</span>
-              <div className="flex flex-col">
-                <span className="text-[17px] font-semibold">Sana Ben Amor</span>
-                <span className="text-sm text-muted">{t.advisor} &middot; CRDA Bizerte</span>
-              </div>
+            <span className="text-base font-semibold">
+              {lang === "fr" ? "D’où viennent ces chiffres ?" : "Where these numbers come from"}
+            </span>
+            <div className="flex flex-col gap-2.5 text-[15px] leading-[1.5] text-muted">
+              <p className="m-0">
+                {lang === "fr"
+                  ? `Une station météo à ${station.name} enregistre la pluie et la température chaque jour depuis ${station.coverage.from.slice(0, 4)}.`
+                  : `A weather station at ${station.name} has recorded rain and temperature every day since ${station.coverage.from.slice(0, 4)}.`}
+              </p>
+              <p className="m-0">
+                {lang === "fr"
+                  ? "Pour chaque période de semis, ces 30 années sont rejouées pour compter combien de fois la pluie a suffi."
+                  : "For each sowing period, those 30 years are replayed to count how often the rain was enough."}
+              </p>
             </div>
-            <a
-              href="tel:+21672000000"
-              className="relative flex h-13 items-center justify-center gap-2 border border-accent bg-accent font-heading text-base font-semibold text-bg no-underline transition-colors hover:bg-accent-600"
-            >
-              <Corners />
-              <Icon name="phone" size={18} />
-              {t.call}
-            </a>
-            <ButtonLink href="#" size="lg" className="h-13 text-base">
-              <Icon name="message" size={18} />
-              {t.msg}
-            </ButtonLink>
+            <Provenance>
+              {station.coverage.days.toLocaleString("en-GB")} {lang === "fr" ? "jours mesurés" : "days measured"}
+            </Provenance>
           </Blueprint>
-          <div className="flex flex-col border-t border-divider">
-            {FARMER_FAQ[lang].map(([q, a]) => (
-              <div key={q} className="flex flex-col gap-1.5 border-b border-divider py-4">
-                <span className="text-base font-semibold">{q}</span>
-                <span className="text-[15px] leading-[1.5] text-muted">{a}</span>
-              </div>
-            ))}
-          </div>
+          <NoData
+            icon="phone"
+            title={lang === "fr" ? "Aucun conseiller assigné" : "No advisor assigned"}
+            what={
+              lang === "fr"
+                ? "Mettre un conseiller en relation demande un annuaire et un compte. Aucun des deux n’existe dans cette version."
+                : "Putting you in touch with an advisor needs a directory and an account. Neither exists in this build."
+            }
+            needs={lang === "fr" ? "annuaire + comptes" : "directory + accounts"}
+          />
         </>
       )}
     </div>
   );
+}
+
+/* ── Verdict ─────────────────────────────────────────────────────────── */
+
+const STYLES = {
+  go: { color: "#38A88A", ink: "#237A63", bg: "rgb(56 168 138 / 0.10)", border: "rgb(56 168 138 / 0.45)", icon: "check" as const },
+  soon: { color: "#B7860B", ink: "#8A6508", bg: "rgb(231 168 59 / 0.14)", border: "rgb(201 138 0 / 0.5)", icon: "calendar" as const },
+  wait: { color: "#D9621A", ink: "#B24E12", bg: "rgb(238 132 52 / 0.10)", border: "rgb(217 98 26 / 0.45)", icon: "hand" as const },
+  none: { color: "#56727D", ink: "#34505B", bg: "rgb(20 43 53 / 0.04)", border: "rgb(20 43 53 / 0.2)", icon: "info" as const },
+};
+
+function verdictFor(stationId: string, cropId: string) {
+  const decades = suitability(stationId, cropId);
+  const now = new Date();
+  const doy = Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 1)) / 86_400_000);
+  const current = Math.floor(doy / 10);
+
+  const here = decades.find((d) => d.decade === current);
+  const reliable = decades.filter((d) => d.water === "reliable");
+
+  if (!reliable.length) {
+    return {
+      ...STYLES.none,
+      headline: "No reliable rain window",
+      detail: "In 30 years of records, rain alone has never reliably carried this crop here. It needs irrigation.",
+      best: null as DecadeSuitability | null,
+    };
+  }
+
+  const soonest = reliable
+    .map((d) => ({ d, wait: (d.decade - current + 36) % 36 }))
+    .sort((a, b) => a.wait - b.wait)[0];
+
+  if (here?.water === "reliable") {
+    return {
+      ...STYLES.go,
+      headline: "Good time to sow",
+      detail: `In ${(here.establishmentProb * 100).toFixed(0)}% of the last 30 years, sowing now brought enough rain in the first three weeks.`,
+      best: here,
+    };
+  }
+
+  const weeks = Math.round((soonest.wait * 10) / 7);
+  return {
+    ...(soonest.wait <= 3 ? STYLES.soon : STYLES.wait),
+    headline: soonest.wait <= 3 ? "Almost time" : "Wait",
+    detail:
+      soonest.wait <= 3
+        ? `The most reliable period starts around ${decadeLabel(soonest.d.decade)}, about ${weeks} week${weeks === 1 ? "" : "s"} away.`
+        : `Rain is not reliable enough yet. The best period starts around ${decadeLabel(soonest.d.decade)}.`,
+    best: soonest.d,
+  };
+}
+
+function speiBand(v: number) {
+  if (v <= -2) return 3;
+  if (v <= -1.5) return 2;
+  if (v <= -1) return 1;
+  return 0;
 }

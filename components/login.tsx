@@ -88,7 +88,7 @@ export function LoginView({ initialView }: { initialView: View }) {
                     <Input
                       type="text"
                       autoComplete="username"
-                      defaultValue="sana.benamor@inrat.tn"
+                      placeholder="you@institution.org"
                       className="h-10.5 bg-surface text-[14.5px]"
                     />
                   </Field>
@@ -105,7 +105,7 @@ export function LoginView({ initialView }: { initialView: View }) {
                         id="pw"
                         type={showPw ? "text" : "password"}
                         autoComplete="current-password"
-                        defaultValue="correcthorsebattery"
+                        placeholder="••••••••••"
                         className="min-w-0 flex-1 border-0 bg-transparent px-3 text-[14.5px] text-ink outline-none"
                       />
                       <button
@@ -205,7 +205,7 @@ export function LoginView({ initialView }: { initialView: View }) {
                     <div className="flex flex-col gap-1">
                       <span className="text-sm font-medium">Check your inbox</span>
                       <span className="text-[13px] text-muted">
-                        A link was sent to <span className="font-mono text-ink">sana.benamor@inrat.tn</span>.
+                        A link was sent to the address you entered.
                         Didn&rsquo;t get it? Resend in <span className="font-mono">0:58</span>.
                       </span>
                     </div>
@@ -222,7 +222,7 @@ export function LoginView({ initialView }: { initialView: View }) {
                       <Input
                         type="email"
                         autoComplete="email"
-                        defaultValue="sana.benamor@inrat.tn"
+                        placeholder="you@institution.org"
                         className="h-10.5 bg-surface text-[14.5px]"
                       />
                     </Field>

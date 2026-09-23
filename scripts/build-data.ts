@@ -275,11 +275,155 @@ function toPoints(m: MonthAgg[], f: (a: MonthAgg) => number): MonthlyPoint[] {
   return m.map((a) => ({ year: a.year, month: a.month, value: f(a) }));
 }
 
+
+/* ── Planting suitability (FAO-56) ───────────────────────────────────── */
+
+/**
+ * FAO-56 single crop coefficient curve: flat at Kc_ini through the initial
+ * stage, linear to Kc_mid across development, flat through mid-season, then
+ * linear to Kc_end through late season.
+ */
+function kcAt(crop: Crop, dayOfCycle: number): number {
+  const { kcIni, kcMid, kcEnd, lIni, lDev, lMid } = crop;
+  if (dayOfCycle < lIni) return kcIni;
+  if (dayOfCycle < lIni + lDev) return kcIni + ((kcMid - kcIni) * (dayOfCycle - lIni)) / lDev;
+  if (dayOfCycle < lIni + lDev + lMid) return kcMid;
+  const intoLate = dayOfCycle - (lIni + lDev + lMid);
+  return kcMid + ((kcEnd - kcMid) * intoLate) / Math.max(1, crop.lLate);
+}
+
+/** Rain needed in the first three weeks for a seedbed to establish. */
+const ESTABLISHMENT_MM = 20;
+const ESTABLISHMENT_DAYS = 21;
+
+export interface DecadeSuitability {
+  /** 0-35: ten-day period starting 1 Jan. */
+  decade: number;
+  /** Fraction of years the establishment rain threshold was met. */
+  establishmentProb: number;
+  /** Mean share of the crop's water need covered by rain over the cycle. */
+  rainfedCoverage: number;
+  /** Mean days above 35 C during mid-season. */
+  heatDays: number;
+  /** Mean days below 0 C during establishment. */
+  frostDays: number;
+  /** Mean cycle ETc, mm. */
+  etcMm: number;
+  /** Mean cycle rainfall, mm. */
+  rainMm: number;
+  /**
+   * Classifies RAINFALL ADEQUACY ONLY. It is not an agronomic verdict: the
+   * record carries no base temperature or photoperiod requirement per crop,
+   * so warm-season and perennial crops are not judged on the things that
+   * actually gate their sowing date. The UI says so, and shows the
+   * agronomist's stated planting month alongside.
+   */
+  water: "reliable" | "marginal" | "irrigation-dependent";
+  years: number;
+}
+
+/**
+ * For every ten-day sowing period, replays all 30 years of daily weather
+ * through the crop's own Kc curve. Nothing here is assumed: establishment
+ * probability, rainfed coverage and heat exposure are counted from the
+ * record.
+ */
+function plantingSuitability(rows: DailyRow[], crop: Crop): DecadeSuitability[] {
+  const byDate = new Map(rows.map((r) => [r.date, r]));
+  const dates = rows.map((r) => r.date);
+  const firstYear = rows[0].year;
+  const lastYear = rows[rows.length - 1].year;
+
+  const out: DecadeSuitability[] = [];
+
+  for (let decade = 0; decade < 36; decade++) {
+    const startDoy = decade * 10;
+    let estab = 0;
+    let years = 0;
+    let coverageSum = 0;
+    let heatSum = 0;
+    let frostSum = 0;
+    let etcSum = 0;
+    let rainSum = 0;
+
+    for (let y = firstYear; y <= lastYear; y++) {
+      const start = new Date(Date.UTC(y, 0, 1));
+      start.setUTCDate(start.getUTCDate() + startDoy);
+
+      // The cycle must finish inside the record.
+      const end = new Date(start);
+      end.setUTCDate(end.getUTCDate() + crop.totalDays);
+      if (end.toISOString().slice(0, 10) > dates[dates.length - 1]) continue;
+
+      let estabRain = 0;
+      let cycleRain = 0;
+      let cycleEtc = 0;
+      let heat = 0;
+      let frost = 0;
+      let complete = true;
+
+      for (let d = 0; d < crop.totalDays; d++) {
+        const day = new Date(start);
+        day.setUTCDate(day.getUTCDate() + d);
+        const row = byDate.get(day.toISOString().slice(0, 10));
+        if (!row) {
+          complete = false;
+          break;
+        }
+        if (d < ESTABLISHMENT_DAYS) {
+          estabRain += row.precip;
+          if (row.tmin < 0) frost++;
+        }
+        cycleRain += row.precip;
+        cycleEtc += kcAt(crop, d) * row.et0;
+        const midStart = crop.lIni + crop.lDev;
+        const midEnd = midStart + crop.lMid;
+        if (d >= midStart && d < midEnd && row.tmax > 35) heat++;
+      }
+      if (!complete) continue;
+
+      years++;
+      if (estabRain >= ESTABLISHMENT_MM) estab++;
+      coverageSum += Math.min(1, cycleEtc > 0 ? cycleRain / cycleEtc : 0);
+      heatSum += heat;
+      frostSum += frost;
+      etcSum += cycleEtc;
+      rainSum += cycleRain;
+    }
+
+    if (!years) continue;
+
+    const establishmentProb = estab / years;
+    const rainfedCoverage = coverageSum / years;
+    const water: DecadeSuitability["water"] =
+      establishmentProb >= 0.6 && rainfedCoverage >= 0.5
+        ? "reliable"
+        : establishmentProb >= 0.3 || rainfedCoverage >= 0.35
+          ? "marginal"
+          : "irrigation-dependent";
+
+    out.push({
+      decade,
+      establishmentProb: +establishmentProb.toFixed(3),
+      rainfedCoverage: +rainfedCoverage.toFixed(3),
+      heatDays: +(heatSum / years).toFixed(1),
+      frostDays: +(frostSum / years).toFixed(2),
+      etcMm: +(etcSum / years).toFixed(1),
+      rainMm: +(rainSum / years).toFixed(1),
+      water,
+      years,
+    });
+  }
+
+  return out;
+}
+
 /* ── Build ───────────────────────────────────────────────────────────── */
 
 async function main() {
   mkdirSync(OUT, { recursive: true });
   const stations = [];
+  const stationDaily = new Map<string, DailyRow[]>();
 
   for (const s of STATIONS) {
     const daily = await readDaily(s);
@@ -366,6 +510,8 @@ async function main() {
       recent,
     });
 
+    stationDaily.set(s.id, daily);
+
     const last = spei[3].filter((v): v is number => v != null).at(-1);
     console.log(
       `  ${s.id} ${s.name.padEnd(8)} ${daily.length} days, ${years.length}y  ` +
@@ -375,6 +521,18 @@ async function main() {
 
   const crops = await readCrops();
 
+  // Suitability is per station, because it is the local weather that decides.
+  const planting = STATIONS.map((s) => ({
+    stationId: s.id,
+    crops: crops.map((c) => ({
+      cropId: c.id,
+      decades: plantingSuitability(stationDaily.get(s.id)!, c),
+    })),
+  }));
+  console.log(
+    `  planting: ${crops.length} crops x 36 decades x ${STATIONS.length} stations, replayed over 30 years`,
+  );
+
   const soil = { fieldCapacityMm: FIELD_CAPACITY_MM, wiltingPointMm: WILTING_POINT_MM, tawMm: TAW };
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -382,6 +540,7 @@ async function main() {
     soilModel: soil,
     stations,
     crops,
+    planting,
   };
 
   writeFileSync(`${OUT}/climate.json`, JSON.stringify(payload));

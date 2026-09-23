@@ -1,85 +1,51 @@
 "use client";
 
 import * as React from "react";
-import { Icon } from "@/components/icon";
-import { Blueprint, Button, PageHeader, TabStrip } from "@/components/ui/primitives";
-import { ACTIVITY_LOG, DATASETS, DATASET_STATUS } from "@/lib/data";
+import { Blueprint, PageHeader, TabStrip } from "@/components/ui/primitives";
+import { NoData, Provenance } from "@/components/ui/no-data";
+import { climateFile, CROPS, STATIONS } from "@/lib/climate";
 
-const SOURCES = ["All", "CHIRPS", "ERA5-Land", "Sentinel", "MODIS", "SMAP", "Field sensors", "Upload", "Manual"];
-
+/**
+ * The only datasets that genuinely exist are the two station workbooks this
+ * build was derived from, so those are what the catalogue lists. The activity
+ * log needs an audit trail nothing is writing to yet.
+ */
 export function PageDatasets({ tab: initial }: { tab: "datasets" | "activity" }) {
   const [tab, setTab] = React.useState(initial);
-  const [src, setSrc] = React.useState("All");
-  const [q, setQ] = React.useState("");
 
-  const rows = DATASETS.filter(
-    (d) =>
-      (src === "All" || d[2] === src) &&
-      (!q || d[1].toLowerCase().includes(q.toLowerCase()) || d[0].toLowerCase().includes(q.toLowerCase())),
-  );
+  const rows = STATIONS.map((s) => ({
+    id: s.id,
+    name: `${s.name} daily climate record`,
+    source: "Station workbook",
+    type: "Climate",
+    records: s.coverage.days,
+    period: `${s.coverage.from} → ${s.coverage.to}`,
+    fields: "P, Tmin/Tmean/Tmax, RH, Rs, wind, ET₀",
+  }));
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        kicker={tab === "datasets" ? "DATA · DATASETS · 10 SOURCES" : "DATA · ACTIVITY LOG · LAST 7 DAYS"}
+        kicker={tab === "datasets" ? <>DATA &middot; DATASETS</> : <>DATA &middot; ACTIVITY LOG</>}
         title={tab === "datasets" ? "Datasets" : "Activity log"}
-        actions={
-          <Button>
-            <Icon name="download" size={15} />
-            Export
-          </Button>
-        }
       />
 
       <TabStrip
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: "datasets", label: "Datasets", count: 142 },
-          { value: "activity", label: "Activity log", count: "7 d" },
+          { value: "datasets", label: "Datasets", count: rows.length },
+          { value: "activity", label: "Activity log" },
         ]}
       />
 
       {tab === "datasets" ? (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex h-8 w-[260px] items-center gap-2 border border-divider px-2.5 focus-within:border-accent">
-              <span className="text-muted">
-                <Icon name="search" size={14} />
-              </span>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search datasets"
-                aria-label="Search datasets"
-                className="min-w-0 flex-1 border-0 bg-transparent text-[13px] outline-none placeholder:text-muted"
-              />
-            </div>
-            {SOURCES.map((s) => {
-              const on = src === s;
-              return (
-                <button
-                  key={s}
-                  onClick={() => setSrc(s)}
-                  aria-pressed={on}
-                  className="flex h-8 items-center border px-2.75 text-[12.5px] transition-colors hover:border-divider-strong"
-                  style={{
-                    borderColor: on ? "color-mix(in srgb, var(--ap-accent) 45%, transparent)" : "var(--ap-divider)",
-                    background: on ? "var(--ap-accent-100)" : "transparent",
-                    color: on ? "var(--ap-text)" : "var(--ap-muted)",
-                  }}
-                >
-                  {s}
-                </button>
-              );
-            })}
-          </div>
-
           <Blueprint className="overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse text-[13px]">
+            <table className="w-full min-w-[820px] border-collapse text-[13px]">
               <thead>
                 <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
-                  {["Dataset", "Source", "Type", "Records", "Period", "Status", "User", "Updated"].map((h, i) => (
+                  {["Dataset", "Source", "Type", "Records", "Period", "Fields"].map((h, i) => (
                     <th
                       key={h}
                       className={`border-b border-divider py-2.75 font-normal uppercase ${
@@ -93,64 +59,74 @@ export function PageDatasets({ tab: initial }: { tab: "datasets" | "activity" })
               </thead>
               <tbody>
                 {rows.map((d) => (
-                  <tr key={d[0]} className="cursor-pointer transition-colors hover:bg-neutral-100">
+                  <tr key={d.id} className="transition-colors hover:bg-neutral-100">
                     <td className="border-b border-divider px-4 py-2.5">
                       <div className="flex flex-col">
-                        <span className="font-medium">{d[1]}</span>
-                        <span className="font-mono text-[10.5px] text-muted">{d[0]}</span>
+                        <span className="font-medium">{d.name}</span>
+                        <span className="font-mono text-[10.5px] text-muted">{d.id}</span>
                       </div>
                     </td>
                     <td className="border-b border-divider">
-                      <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">{d[2]}</span>
+                      <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">{d.source}</span>
                     </td>
-                    <td className="border-b border-divider text-muted">{d[3]}</td>
-                    <td className="border-b border-divider text-right font-mono">{d[4]}</td>
-                    <td className="border-b border-divider font-mono text-[11.5px] text-muted">{d[5]}</td>
-                    <td className="border-b border-divider">
-                      <span
-                        className="inline-flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.05em]"
-                        style={{ color: DATASET_STATUS[d[6]] }}
-                      >
-                        <span className="size-1.5" style={{ background: DATASET_STATUS[d[6]] }} />
-                        {d[6]}
-                      </span>
+                    <td className="border-b border-divider text-muted">{d.type}</td>
+                    <td className="border-b border-divider text-right font-mono">
+                      {d.records.toLocaleString("en-GB")}
                     </td>
-                    <td className="border-b border-divider text-[12.5px]">{d[7]}</td>
-                    <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">{d[8]}</td>
+                    <td className="border-b border-divider font-mono text-[11.5px] text-muted">{d.period}</td>
+                    <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">{d.fields}</td>
                   </tr>
                 ))}
+                <tr className="transition-colors hover:bg-neutral-100">
+                  <td className="border-b border-divider px-4 py-2.5">
+                    <div className="flex flex-col">
+                      <span className="font-medium">Crop coefficients</span>
+                      <span className="font-mono text-[10.5px] text-muted">FAO-56</span>
+                    </div>
+                  </td>
+                  <td className="border-b border-divider">
+                    <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">Station workbook</span>
+                  </td>
+                  <td className="border-b border-divider text-muted">Agricultural</td>
+                  <td className="border-b border-divider text-right font-mono">{CROPS.length}</td>
+                  <td className="border-b border-divider font-mono text-[11.5px] text-muted">&mdash;</td>
+                  <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">
+                    K<sub>c</sub> ini/mid/end, stage lengths
+                  </td>
+                </tr>
+                <tr className="transition-colors hover:bg-neutral-100">
+                  <td className="border-b border-divider px-4 py-2.5">
+                    <div className="flex flex-col">
+                      <span className="font-medium">Live risk surface</span>
+                      <span className="font-mono text-[10.5px] text-muted">/api/grid</span>
+                    </div>
+                  </td>
+                  <td className="border-b border-divider">
+                    <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">Open-Meteo</span>
+                  </td>
+                  <td className="border-b border-divider text-muted">Gridded</td>
+                  <td className="border-b border-divider text-right font-mono">320</td>
+                  <td className="border-b border-divider font-mono text-[11.5px] text-muted">rolling 30 d</td>
+                  <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">
+                    P, ET&#8320;, Tmax, soil moisture
+                  </td>
+                </tr>
               </tbody>
             </table>
-            {!rows.length && (
-              <div className="flex flex-col items-center gap-2 p-12 text-muted">
-                <Icon name="database" size={22} />
-                <span className="text-sm text-ink">No datasets match</span>
-                <span className="text-[12.5px]">Clear the search or pick another source.</span>
-              </div>
-            )}
           </Blueprint>
+
+          <Provenance>
+            Generated {new Date(climateFile.generatedAt).toISOString().slice(0, 10)} &middot; everything the app
+            reads from is listed here
+          </Provenance>
         </>
       ) : (
-        <Blueprint className="overflow-x-auto">
-          <div className="min-w-[760px]">
-            {ACTIVITY_LOG.map(([t, icon, c, u, role, a, ref]) => (
-              <div
-                key={`${t}-${ref}`}
-                className="grid grid-cols-[120px_28px_200px_minmax(0,1fr)_200px] items-center gap-3.5 border-b border-divider px-4.5 py-3"
-              >
-                <span className="font-mono text-[11px] text-muted">{t}</span>
-                <span className="grid size-6.5 place-items-center border border-divider" style={{ color: c }}>
-                  <Icon name={icon} size={13} />
-                </span>
-                <span className="text-[13px]">
-                  <span className="font-medium">{u}</span> <span className="text-muted">{role}</span>
-                </span>
-                <span className="text-[13px]">{a}</span>
-                <span className="text-right font-mono text-[11px] text-muted">{ref}</span>
-              </div>
-            ))}
-          </div>
-        </Blueprint>
+        <NoData
+          icon="activity"
+          title="No activity recorded"
+          what="An activity log needs an audit trail — who changed what, and when. Nothing is writing one yet, and the actions it would record (uploads, edits, role changes) are not wired to storage."
+          needs="audit trail + persistence"
+        />
       )}
     </div>
   );

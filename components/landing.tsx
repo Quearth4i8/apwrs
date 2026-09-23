@@ -75,14 +75,14 @@ export function Landing() {
             <div className="flex flex-col gap-6.5">
               <span className="flex w-fit items-center gap-2.5 border border-divider bg-bg px-2.5 py-1.25 font-mono text-[11px] tracking-[0.08em] text-muted">
                 <span className="size-1.5 bg-accent" />
-                SEASON 2026/27 FORECASTS LIVE &middot; TN &middot; MA &middot; DZ
+                30 YEARS OF DAILY RECORD &middot; BIZERTE, TUNISIA
               </span>
               <h1 className="text-[clamp(44px,7vw,76px)] leading-[0.95] tracking-[-0.035em] text-balance">
                 Plant on the right day, even in a drought year.
               </h1>
               <p className="max-w-[520px] text-[18px] leading-[1.55] text-muted text-pretty">
-                APWRS turns climate, soil, satellite and drought-index data into one risk score and a sowing window
-                for every crop and site across North Africa.
+                APWRS turns 30 years of daily station records into standardised drought indices and a sowing-date
+                assessment for every crop in the FAO-56 table.
               </p>
               <div className="flex flex-wrap gap-3">
                 <ButtonLink href="#access" variant="primary" size="lg">
@@ -258,13 +258,14 @@ export function Landing() {
               <span className="grid size-11 place-items-center bg-accent text-bg">
                 <Icon name="cpu" size={22} />
               </span>
-              <span className="font-heading text-[26px] font-semibold leading-none">AI forecasting model</span>
+              <span className="font-heading text-[26px] font-semibold leading-none">Published methods</span>
               <span className="text-[13.5px] leading-[1.5] text-muted">
-                An LSTM ensemble scores drought risk at +0, +7, +14 and +30 days, with a confidence band and a
-                plain-language explanation of each driver.
+                SPEI and SPI fitted per calendar month over the full record, a FAO-56 water balance per crop, and a
+                composite surface weighted by information entropy. No black box, and no confidence band where
+                there is no ensemble.
               </span>
               <div className="flex flex-wrap gap-1.5 font-mono text-[10.5px]">
-                {["SPI", "SPEI", "PDSI", "SHAP"].map((x) => (
+                {["SPEI", "SPI", "FAO-56", "ENTROPY"].map((x) => (
                   <span key={x} className="border border-divider px-1.75 py-0.75">
                     {x}
                   </span>
@@ -348,9 +349,9 @@ export function Landing() {
         {/* ── Regions ──────────────────────────────────────────────────── */}
         <section id="regions" className="grid items-center gap-12 border-b border-divider px-5 py-22 sm:px-8 xl:grid-cols-2">
           <div className="flex flex-col gap-4">
-            <span className="font-mono text-[11px] tracking-[0.12em] text-accent">05 &middot; COVERED REGIONS</span>
+            <span className="font-mono text-[11px] tracking-[0.12em] text-accent">05 &middot; COVERAGE</span>
             <h2 className="text-[clamp(32px,5vw,48px)] leading-none tracking-[-0.025em]">
-              From the Ichkeul wetlands to the Sa&iuml;ss plain.
+              Two stations in the Bizerte governorate.
             </h2>
             <div className="mt-3 flex flex-col border-t border-divider">
               {LANDING_SITES.map(([cc, n, , , coord]) => (
@@ -388,7 +389,7 @@ export function Landing() {
                 <text x={470} y={300}>ALGERIA</text>
                 <text x={760} y={200}>TUNISIA</text>
               </g>
-              {LANDING_SITES.filter((s) => s[1] !== "Saïss Plain").map(([, n, lon, lat, , side]) => {
+              {LANDING_SITES.map(([, n, lon, lat, , side]) => {
                 const x = px(lon);
                 const y = py(lat);
                 const right = side === "r";

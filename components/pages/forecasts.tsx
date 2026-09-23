@@ -1,238 +1,337 @@
 "use client";
 
-import { Icon } from "@/components/icon";
+import * as React from "react";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, Button, PageHeader, RiskBadge } from "@/components/ui/primitives";
-import { FORECAST_ROWS } from "@/lib/data";
-import { linePath } from "@/lib/utils";
+import { Blueprint, PageHeader } from "@/components/ui/primitives";
+import { NoData, Provenance } from "@/components/ui/no-data";
+import { SOIL_MODEL, stationForSite, type Station } from "@/lib/climate";
+import { useForecast, type ForecastPayload } from "@/lib/use-forecast";
 
-/* ── Soil water balance: weekly precipitation and crop ET against storage ── */
-const Y = (v: number) => 220 - v * (200 / 120);
-const bx = (i: number) => 44 + i * 32.5;
-
-const WATER_BALANCE = (() => {
-  const P = [4, 0, 2, 0, 0, 6, 0, 1, 0, 3, 14, 22, 9, 26, 18, 30];
-  let sw = 58;
-  const out: { i: number; p: number; e: number; sw: number }[] = [];
-  for (let i = 0; i < 16; i++) {
-    const e = i < 10 ? 26 - i * 0.9 : 14 - i * 0.3;
-    sw = Math.max(34, Math.min(98, sw + P[i] * 0.9 - e * 0.35));
-    out.push({ i, p: P[i], e, sw });
-  }
-  return out;
-})();
-
-/* ── Evapotranspiration: reference ET0 and crop ETc over 60 days ────────── */
-const EY = (v: number) => 220 - v * 25;
-const ex = (i: number) => 36 + i * (516 / 59);
-
-const { et0, etc } = (() => {
-  const et0: [number, number][] = [];
-  const etc: [number, number][] = [];
-  for (let i = 0; i < 60; i++) {
-    const v = 6.2 - 2.6 * (i / 59) + 0.5 * Math.sin(i / 2.1) + (i > 40 ? -0.3 : 0);
-    et0.push([ex(i), EY(v)]);
-    etc.push([ex(i), EY(v * 0.65)]);
-  }
-  return { et0, etc };
-})();
-
+/**
+ * Live daily forecast for the selected station, with a FAO-56 root-zone
+ * water balance run forward over it.
+ *
+ * There is no ensemble behind this feed, so there are no confidence
+ * intervals — and none are drawn. The recommended-action column the
+ * prototype carried is gone: nothing generates advice.
+ */
 export function PageForecasts() {
   const { site } = useConsole();
+  const station = stationForSite(site.name);
+  const { data, error } = useForecast(station.id);
 
   return (
     <div className="flex flex-col gap-5.5 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
         kicker={
           <>
-            ANALYSIS &middot; FORECASTS &middot; {site.cc} / {site.name}
+            ANALYSIS &middot; FORECASTS &middot; {station.name.toUpperCase()} &middot; {station.lat.toFixed(3)}&deg;N{" "}
+            {station.lon.toFixed(3)}&deg;E
           </>
         }
         title="Forecasts"
-        lede="Sample figures — this page is not yet wired to the live model."
-        actions={
-          <>
-            <Button>
-              <Icon name="refresh" size={15} />
-              Re-run model
-            </Button>
-            <Button>
-              <Icon name="download" size={15} />
-              CSV
-            </Button>
-          </>
+        lede={
+          data
+            ? `Daily values to ${data.days[data.days.length - 1].date}, ${data.horizonDays} days ahead.`
+            : "Loading the live forecast…"
         }
       />
 
-      <Blueprint className="overflow-x-auto">
-        <table className="w-full min-w-[820px] border-collapse text-[13px]">
-          <thead>
-            <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
-              <th className="w-[150px] border-b border-divider px-4.5 py-3 text-left font-normal uppercase">
-                Time frame
-              </th>
-              <th className="w-[130px] border-b border-divider py-3 text-left font-normal uppercase">Risk level</th>
-              <th className="border-b border-divider py-3 text-left font-normal uppercase">Prediction</th>
-              <th className="border-b border-divider py-3 text-left font-normal uppercase">Recommended action</th>
-              <th className="w-[150px] border-b border-divider py-3 pr-4.5 text-left font-normal uppercase">
-                Confidence
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {FORECAST_ROWS.map((r) => (
-              <tr key={r.f} className="transition-colors hover:bg-neutral-100">
-                <td className="border-b border-divider px-4.5 py-3.5">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{r.f}</span>
-                    <span className="font-mono text-[11px] text-muted">{r.d}</span>
-                  </div>
-                </td>
-                <td className="border-b border-divider">
-                  <RiskBadge score={r.s} />
-                </td>
-                <td className="border-b border-divider font-mono text-xs text-muted">{r.p}</td>
-                <td className="border-b border-divider pr-4 leading-[1.45]">{r.a}</td>
-                <td className="border-b border-divider pr-4.5">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1 flex-1 bg-neutral-100">
-                      <div className="h-full bg-teal" style={{ width: `${r.c}%` }} />
-                    </div>
-                    <span className="w-8 text-right font-mono text-[11.5px]">{r.c}%</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Blueprint>
+      {error && (
+        <NoData
+          icon="cloud"
+          title="Forecast unavailable"
+          what="The upstream weather service could not be reached, so there is nothing to show. The 30-year station record on Historical Comparison is unaffected."
+          needs="connection to Open-Meteo"
+        />
+      )}
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="font-heading text-lg font-semibold">Soil water balance</span>
-            <span className="font-mono text-[10.5px] text-muted">ROOT ZONE 0&ndash;60 CM &middot; WEEKLY &middot; MM</span>
-          </div>
-          <svg viewBox="0 0 560 250" className="block w-full">
-            <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-              <path d="M36 20H552M36 70H552M36 120H552M36 170H552M36 220H552" />
-            </g>
-            <line x1={36} y1={Y(96)} x2={552} y2={Y(96)} style={{ stroke: "var(--ap-teal)" }} strokeDasharray="4 3" />
-            <text
-              x={548}
-              y={Y(96) - 5}
-              textAnchor="end"
-              style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-teal)" }}
-              fontSize={9}
-            >
-              FIELD CAPACITY 96
-            </text>
-            <line x1={36} y1={Y(38)} x2={552} y2={Y(38)} stroke="#D96565" strokeDasharray="4 3" />
-            <text
-              x={548}
-              y={Y(38) - 5}
-              textAnchor="end"
-              style={{ fontFamily: "var(--font-mono)" }}
-              fill="#E07B7B"
-              fontSize={9}
-            >
-              WILTING POINT 38
-            </text>
-            {WATER_BALANCE.map((b) => (
-              <g key={b.i}>
-                <rect
-                  x={bx(b.i) - 12}
-                  y={Y(b.p * 2.2)}
-                  width={12}
-                  height={(b.p * 2.2 * 200) / 120}
-                  style={{ fill: "var(--ap-teal)" }}
-                  fillOpacity={0.8}
-                />
-                <rect x={bx(b.i)} y={Y(b.e)} width={12} height={(b.e * 200) / 120} fill="#EE8434" fillOpacity={0.75} />
-              </g>
-            ))}
-            <path
-              d={linePath(WATER_BALANCE.map((w) => [bx(w.i), Y(w.sw)]))}
-              fill="none"
-              style={{ stroke: "var(--ap-text)" }}
-              strokeWidth={1.75}
-            />
-            <line
-              x1={bx(8)}
-              y1={20}
-              x2={bx(8)}
-              y2={220}
-              style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }}
-              strokeDasharray="3 3"
-            />
-            <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
-              <text x={30} y={24} textAnchor="end">120</text>
-              <text x={30} y={124} textAnchor="end">60</text>
-              <text x={30} y={224} textAnchor="end">0</text>
-              <text x={40} y={240}>W31</text>
-              <text x={205} y={240}>W35</text>
-              <text x={bx(8)} y={240} textAnchor="middle" style={{ fill: "var(--ap-text)" }}>
-                W39 now
-              </text>
-              <text x={520} y={240}>W46</text>
-            </g>
-          </svg>
-          <div className="flex flex-wrap gap-4 font-mono text-[10.5px] text-muted">
-            <Legend swatch="var(--ap-teal)">Precipitation</Legend>
-            <Legend swatch="#EE8434">Crop ET (ETc)</Legend>
-            <Legend line="var(--ap-text)">Soil water storage</Legend>
-          </div>
-        </Blueprint>
-
-        <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="font-heading text-lg font-semibold">Evapotranspiration</span>
-            <span className="font-mono text-[10.5px] text-muted">
-              FAO-56 PENMAN&ndash;MONTEITH &middot; MM/DAY
-            </span>
-          </div>
-          <svg viewBox="0 0 560 250" className="block w-full">
-            <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-              <path d="M36 20H552M36 70H552M36 120H552M36 170H552M36 220H552" />
-            </g>
-            <path d={`${linePath(et0)}L${ex(59)} 220L36 220Z`} fill="#EE8434" fillOpacity={0.08} />
-            <path d={linePath(et0)} fill="none" stroke="#EE8434" strokeWidth={1.75} />
-            <path d={linePath(etc)} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={1.75} />
-            <line
-              x1={ex(30)}
-              y1={20}
-              x2={ex(30)}
-              y2={220}
-              style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }}
-              strokeDasharray="3 3"
-            />
-            <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
-              <text x={30} y={24} textAnchor="end">8</text>
-              <text x={30} y={124} textAnchor="end">4</text>
-              <text x={30} y={224} textAnchor="end">0</text>
-              <text x={40} y={240}>24 Aug</text>
-              <text x={ex(30)} y={240} textAnchor="middle" style={{ fill: "var(--ap-text)" }}>
-                23 Sep
-              </text>
-              <text x={505} y={240}>23 Oct</text>
-            </g>
-          </svg>
-          <div className="flex flex-wrap gap-4 font-mono text-[10.5px] text-muted">
-            <Legend line="#EE8434">ET&#8320; reference &middot; 5.1 today</Legend>
-            <Legend line="var(--ap-accent)">ETc olive (Kc 0.65) &middot; 3.3</Legend>
-          </div>
-        </Blueprint>
-      </div>
+      {data && <ForecastBody station={station} data={data} />}
     </div>
   );
 }
 
-function Legend({ swatch, line, children }: { swatch?: string; line?: string; children: React.ReactNode }) {
+function ForecastBody({ station, data }: { station: Station; data: ForecastPayload }) {
+  const days = data.days;
+  const future = days.filter((d) => d.forecast);
+
+  const sum = (rows: typeof days, k: "precip" | "et0") =>
+    rows.reduce((a, r) => a + (r[k] ?? 0), 0);
+
+  const next7 = future.slice(0, 7);
+  const next14 = future.slice(0, 14);
+
+  /* Root-zone balance carried forward day by day over the whole window. */
+  const balance = React.useMemo(() => runBalance(days, station), [days, station]);
+
   return (
-    <span className="flex items-center gap-1.5">
-      {swatch && <span className="size-2" style={{ background: swatch }} />}
-      {line && <span className="h-0.5 w-3.5" style={{ background: line }} />}
-      {children}
-    </span>
+    <>
+      <Blueprint className="grid grid-cols-2 xl:grid-cols-4">
+        {(
+          [
+            ["RAIN · NEXT 7 D", `${sum(next7, "precip").toFixed(1)}`, "mm"],
+            ["RAIN · NEXT 14 D", `${sum(next14, "precip").toFixed(1)}`, "mm"],
+            ["ET₀ · NEXT 7 D", `${sum(next7, "et0").toFixed(1)}`, "mm"],
+            [
+              "BALANCE · NEXT 7 D",
+              `${(sum(next7, "precip") - sum(next7, "et0")).toFixed(1)}`,
+              "mm",
+            ],
+          ] as const
+        ).map(([k, v, unit], i) => (
+          <div
+            key={k}
+            className={`flex flex-col gap-2 border-b border-divider px-5 py-4.5 xl:border-b-0 ${
+              i < 3 ? "xl:border-r" : ""
+            }`}
+          >
+            <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">{k}</span>
+            <span className="flex items-baseline gap-1.5">
+              <span className="font-heading text-[40px] font-semibold leading-none tabular-nums">{v}</span>
+              <span className="font-mono text-xs text-muted">{unit}</span>
+            </span>
+          </div>
+        ))}
+      </Blueprint>
+
+      {/* ── Daily rain + ET0 ──────────────────────────────────────────── */}
+      <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="font-heading text-lg font-semibold">Rainfall and reference evapotranspiration</span>
+          <span className="font-mono text-[10.5px] text-muted">DAILY &middot; mm</span>
+        </div>
+        <DailyChart days={days} />
+        <div className="flex flex-wrap gap-4 font-mono text-[10.5px] text-muted">
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 bg-teal" />
+            Rainfall
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-3.5" style={{ background: "#EE8434" }} />
+            ET&#8320;
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-px bg-ink opacity-50" />
+            today
+          </span>
+        </div>
+        <Provenance>{data.source} &middot; issued {new Date(data.generatedAt).toISOString().slice(0, 16).replace("T", " ")} UTC</Provenance>
+      </Blueprint>
+
+      {/* ── Water balance ─────────────────────────────────────────────── */}
+      <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="font-heading text-lg font-semibold">Modelled root-zone water balance</span>
+          <span className="font-mono text-[10.5px] text-muted">
+            FC {SOIL_MODEL.fieldCapacityMm} mm &middot; WP {SOIL_MODEL.wiltingPointMm} mm
+          </span>
+        </div>
+        <BalanceChart rows={balance} />
+        <div className="text-[12.5px] leading-[1.5] text-muted">
+          A single-coefficient FAO-56 balance driven by the forecast above. This is a model, not a probe reading
+          &mdash; the station record carries no soil measurements.
+        </div>
+      </Blueprint>
+
+      {/* ── Daily table ───────────────────────────────────────────────── */}
+      <Blueprint className="overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-[13px]">
+          <thead>
+            <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
+              {["Date", "Rain mm", "ET₀ mm", "Balance mm", "Tmin °C", "Tmax °C"].map((h, i) => (
+                <th
+                  key={h}
+                  className={`border-b border-divider py-2.5 font-normal uppercase ${
+                    i === 0 ? "px-4 text-left" : "text-right"
+                  }`}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {future.map((d) => {
+              const bal = (d.precip ?? 0) - (d.et0 ?? 0);
+              return (
+                <tr key={d.date} className="transition-colors hover:bg-neutral-100">
+                  <td className="border-b border-divider px-4 py-2.25 font-mono text-[12px]">{d.date}</td>
+                  <td className="border-b border-divider text-right font-mono">
+                    {d.precip == null ? "—" : d.precip.toFixed(1)}
+                  </td>
+                  <td className="border-b border-divider text-right font-mono">
+                    {d.et0 == null ? "—" : d.et0.toFixed(1)}
+                  </td>
+                  <td
+                    className="border-b border-divider text-right font-mono"
+                    style={{ color: bal < 0 ? "#EE8434" : "var(--ap-teal)" }}
+                  >
+                    {bal.toFixed(1)}
+                  </td>
+                  <td className="border-b border-divider text-right font-mono">
+                    {d.tmin == null ? "—" : d.tmin.toFixed(1)}
+                  </td>
+                  <td className="border-b border-divider text-right font-mono">
+                    {d.tmax == null ? "—" : d.tmax.toFixed(1)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Blueprint>
+    </>
+  );
+}
+
+/**
+ * FAO-56 single-coefficient depletion, seeded from the station's last
+ * modelled state and carried forward across the forecast.
+ */
+function runBalance(days: ForecastPayload["days"], station: Station) {
+  const taw = SOIL_MODEL.tawMm;
+  const seed = station.recent[station.recent.length - 1]?.soilFraction ?? 0.5;
+  const out: { date: string; storage: number; forecast: boolean }[] = [];
+  let depletion = taw * (1 - seed);
+  for (const d of days) {
+    depletion = Math.min(taw, Math.max(0, depletion + (d.et0 ?? 0) - (d.precip ?? 0)));
+    out.push({
+      date: d.date,
+      storage: +(SOIL_MODEL.wiltingPointMm + (taw - depletion)).toFixed(1),
+      forecast: d.forecast,
+    });
+  }
+  return out;
+}
+
+const W = 880;
+const H = 220;
+const PAD = { l: 40, r: 12, t: 14, b: 26 };
+
+function DailyChart({ days }: { days: { date: string; precip: number | null; et0: number | null; forecast: boolean }[] }) {
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+  const maxRain = Math.max(...days.map((d) => d.precip ?? 0), 10);
+  const maxEt = Math.max(...days.map((d) => d.et0 ?? 0), 5);
+  const max = Math.max(maxRain, maxEt);
+  const bw = innerW / days.length;
+  const y = (v: number) => PAD.t + innerH - (v / max) * innerH;
+  const firstFuture = days.findIndex((d) => d.forecast);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full">
+      <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
+        {[0, 0.5, 1].map((f) => (
+          <line key={f} x1={PAD.l} x2={W - PAD.r} y1={PAD.t + innerH * f} y2={PAD.t + innerH * f} />
+        ))}
+      </g>
+
+      {days.map((d, i) => {
+        const v = d.precip ?? 0;
+        const h = (v / max) * innerH;
+        return (
+          <rect
+            key={d.date}
+            x={PAD.l + i * bw}
+            y={PAD.t + innerH - h}
+            width={Math.max(0.8, bw - 0.6)}
+            height={h}
+            fill="var(--ap-teal)"
+            fillOpacity={d.forecast ? 0.55 : 0.9}
+          >
+            <title>
+              {d.date}: {v.toFixed(1)} mm
+            </title>
+          </rect>
+        );
+      })}
+
+      <path
+        d={"M" + days.map((d, i) => `${(PAD.l + i * bw + bw / 2).toFixed(1)} ${y(d.et0 ?? 0).toFixed(1)}`).join("L")}
+        fill="none"
+        stroke="#EE8434"
+        strokeWidth={1.5}
+      />
+
+      {firstFuture > 0 && (
+        <line
+          x1={PAD.l + firstFuture * bw}
+          x2={PAD.l + firstFuture * bw}
+          y1={PAD.t}
+          y2={PAD.t + innerH}
+          style={{ stroke: "var(--ap-text)", strokeOpacity: 0.5 }}
+          strokeDasharray="3 3"
+        />
+      )}
+
+      <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
+        <text x={PAD.l - 6} y={PAD.t + 4} textAnchor="end">{max.toFixed(0)}</text>
+        <text x={PAD.l - 6} y={PAD.t + innerH} textAnchor="end">0</text>
+        <text x={PAD.l} y={H - 8}>{days[0].date}</text>
+        <text x={W - PAD.r} y={H - 8} textAnchor="end">{days[days.length - 1].date}</text>
+      </g>
+    </svg>
+  );
+}
+
+function BalanceChart({ rows }: { rows: { date: string; storage: number; forecast: boolean }[] }) {
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+  const max = SOIL_MODEL.fieldCapacityMm;
+  const min = SOIL_MODEL.wiltingPointMm - 8;
+  const y = (v: number) => PAD.t + innerH - ((v - min) / (max - min)) * innerH;
+  const x = (i: number) => PAD.l + (i / (rows.length - 1)) * innerW;
+  const firstFuture = rows.findIndex((d) => d.forecast);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full">
+      <line x1={PAD.l} x2={W - PAD.r} y1={y(max)} y2={y(max)} style={{ stroke: "var(--ap-teal)" }} strokeDasharray="4 3" />
+      <text x={W - PAD.r} y={y(max) - 5} textAnchor="end" style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-teal)" }} fontSize={9}>
+        FIELD CAPACITY {max}
+      </text>
+      <line
+        x1={PAD.l}
+        x2={W - PAD.r}
+        y1={y(SOIL_MODEL.wiltingPointMm)}
+        y2={y(SOIL_MODEL.wiltingPointMm)}
+        stroke="#D96565"
+        strokeDasharray="4 3"
+      />
+      <text
+        x={W - PAD.r}
+        y={y(SOIL_MODEL.wiltingPointMm) - 5}
+        textAnchor="end"
+        style={{ fontFamily: "var(--font-mono)" }}
+        fill="#E07B7B"
+        fontSize={9}
+      >
+        WILTING POINT {SOIL_MODEL.wiltingPointMm}
+      </text>
+
+      <path
+        d={"M" + rows.map((r, i) => `${x(i).toFixed(1)} ${y(r.storage).toFixed(1)}`).join("L")}
+        fill="none"
+        style={{ stroke: "var(--ap-text)" }}
+        strokeWidth={1.75}
+      />
+
+      {firstFuture > 0 && (
+        <line
+          x1={x(firstFuture)}
+          x2={x(firstFuture)}
+          y1={PAD.t}
+          y2={PAD.t + innerH}
+          style={{ stroke: "var(--ap-text)", strokeOpacity: 0.5 }}
+          strokeDasharray="3 3"
+        />
+      )}
+
+      <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
+        <text x={PAD.l - 6} y={y(max) + 4} textAnchor="end">{max}</text>
+        <text x={PAD.l - 6} y={y(min) } textAnchor="end">{min}</text>
+        <text x={PAD.l} y={H - 8}>{rows[0].date}</text>
+        <text x={W - PAD.r} y={H - 8} textAnchor="end">{rows[rows.length - 1].date}</text>
+      </g>
+    </svg>
   );
 }

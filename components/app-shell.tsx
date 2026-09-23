@@ -364,15 +364,17 @@ export function AppShell({
                   {user.initials}
                 </span>
                 <span className="hidden flex-col text-left leading-[1.15] sm:flex">
-                  <span className="text-[12.5px] font-medium">{user.name}</span>
-                  <span className="font-mono text-[10px] text-muted">{fr ? user.role.fr : user.role.en}</span>
+                  <span className="text-[12.5px] font-medium">{user.view}</span>
+                  <span className="font-mono text-[10px] text-muted">{user.note}</span>
                 </span>
               </button>
             }
           >
             <div className="mb-1 border-b border-divider px-2.5 py-2">
-              <div className="text-[13px]">{user.mail}</div>
-              <div className="font-mono text-[10px] text-muted">{user.org}</div>
+              <div className="text-[13px]">{user.note}</div>
+              <div className="font-mono text-[10px] text-muted">
+                {isFarmer ? "farmer view" : "expert view"}
+              </div>
             </div>
             {!isFarmer && (
               <MenuItem icon="settings" onSelect={() => router.push("/app/settings")}>
