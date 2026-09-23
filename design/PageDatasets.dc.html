@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">DATA · {{ kicker }}</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">{{ title }}</h1>
+    </div>
+    <button class="btn btn-secondary" style="height:36px;color:var(--color-text)"><dc-import name="Icon" n="download" s="15" hint-size="15px,15px"></dc-import>Export</button>
+  </div>
+  <div style="display:flex;border-bottom:1px solid var(--color-divider)">
+    <sc-for list="{{ tabs }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;padding:10px 16px;font-size:13.5px;margin-bottom:-1px;border-bottom:2px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }} <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ t.n }}</span></button></sc-for>
+  </div>
+
+  <sc-if value="{{ isData }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:1px solid var(--color-divider);width:260px;box-sizing:border-box"><span style="color:var(--muted);display:flex"><dc-import name="Icon" n="search" s="14" hint-size="14px,14px"></dc-import></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search datasets" style="flex:1;background:transparent;border:0;outline:0;color:var(--color-text);font:inherit;font-size:13px"></div>
+      <sc-for list="{{ srcs }}" as="s"><button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;height:32px;padding:0 11px;display:flex;align-items:center;font-size:12.5px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};box-sizing:border-box">{{ s.l }}</button></sc-for>
+    </div>
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="font-size:13px">
+        <thead><tr><th style="padding:11px 16px;font-family:var(--font-mono);font-size:10px">DATASET</th><th style="font-family:var(--font-mono);font-size:10px">SOURCE</th><th style="font-family:var(--font-mono);font-size:10px">TYPE</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">RECORDS</th><th style="font-family:var(--font-mono);font-size:10px">PERIOD</th><th style="font-family:var(--font-mono);font-size:10px">STATUS</th><th style="font-family:var(--font-mono);font-size:10px">USER</th><th style="font-family:var(--font-mono);font-size:10px;padding-right:16px">UPDATED</th></tr></thead>
+        <tbody><sc-for list="{{ rows }}" as="r" hint-placeholder-count="10"><tr style="cursor:pointer">
+          <td style="padding:10px 16px"><div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ r.n }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ r.id }}</span></div></td>
+          <td><span style="font-family:var(--font-mono);font-size:11px;padding:2px 7px;border:1px solid var(--color-divider)">{{ r.src }}</span></td>
+          <td style="color:var(--muted)">{{ r.type }}</td>
+          <td style="font-family:var(--font-mono);text-align:right">{{ r.rec }}</td>
+          <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">{{ r.per }}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;color:{{ r.sc }}"><span style="width:6px;height:6px;background:{{ r.sc }}"></span>{{ r.st }}</span></td>
+          <td style="font-size:12.5px">{{ r.u }}</td>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:16px">{{ r.t }}</td>
+        </tr></sc-for></tbody>
+      </table>
+      <sc-if value="{{ empty }}"><div style="padding:48px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted)"><dc-import name="Icon" n="database" s="22" hint-size="22px,22px"></dc-import><span style="font-size:14px;color:var(--color-text)">No datasets match</span><span style="font-size:12.5px">Clear the search or pick another source.</span></div></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isLog }}" hint-placeholder-val="{{ false }}">
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <sc-for list="{{ log }}" as="l" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:120px 28px 200px minmax(0,1fr) 200px;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ l.t }}</span>
+          <span style="width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--color-divider);color:{{ l.c }}"><dc-import name="Icon" n="{{ l.icon }}" s="13" hint-size="13px,13px"></dc-import></span>
+          <span style="font-size:13px"><span style="font-weight:500">{{ l.u }}</span> <span style="color:var(--muted)">{{ l.role }}</span></span>
+          <span style="font-size:13px">{{ l.a }}</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:right">{{ l.ref }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const DS=[['DS-2026-0419','Ichkeul soil probes · Sep 2026','Upload','Soil','4,310','01–22 Sep 2026','PROCESSED','S. Ben Amor','08:44'],
+['DS-2026-0418','CHIRPS daily precipitation','CHIRPS','Climate','91,250','1981–2026','PROCESSED','system','06:02'],
+['DS-2026-0417','ERA5-Land hourly · Bizerte box','ERA5-Land','Climate','1.2 M','2016–2026','PROCESSING','system','06:00'],
+['DS-2026-0416','Sentinel-2 L2A NDVI/NDWI · 32SNF','Sentinel','Remote Sensing','18,904','Jan–Sep 2026','PROCESSED','system','22 Sep'],
+['DS-2026-0415','MODIS MOD11A2 LST 8-day','MODIS','Remote Sensing','6,212','2003–2026','PROCESSED','system','21 Sep'],
+['DS-2026-0414','SMAP L4 root-zone soil moisture','SMAP','Soil','44,830','2015–2026','PROCESSED','system','21 Sep'],
+['DS-2026-0413','SPI / SPEI / PDSI computed','Model','Drought Indices','2,760','1981–2026','PROCESSED','system','21 Sep'],
+['DS-2026-0412','Mateur yield survey 2025/26','Upload','Agricultural','312','2025/26','FAILED','K. Trabelsi','19 Sep'],
+['DS-2026-0411','Lac Ichkeul gauge + salinity','Field sensors','Hydrology','26,114','2019–2026','PROCESSED','ANPE feed','18 Sep'],
+['DS-2026-0410','Manual observations · Bizerte W','Manual','Soil','48','Sep 2026','QUEUED','Y. Haddad','17 Sep']];
+const SC={PROCESSED:'var(--color-accent)',PROCESSING:'var(--teal)',FAILED:'#E07B7B',QUEUED:'#E7A83B'};
+class Component extends DCLogic {
+  state={tab:this.props.tab ?? 'datasets',src:'All',q:''};
+  componentDidUpdate(pp){ if(pp.tab!==this.props.tab)this.setState({tab:this.props.tab}); }
+  renderVals(){
+    const S=this.state, q=S.q.toLowerCase();
+    const rows=DS.filter(d=>(S.src==='All'||d[2]===S.src)&&(!q||d[1].toLowerCase().includes(q)||d[0].toLowerCase().includes(q))).map(d=>({id:d[0],n:d[1],src:d[2],type:d[3],rec:d[4],per:d[5],st:d[6],sc:SC[d[6]],u:d[7],t:d[8]}));
+    return { title:S.tab==='datasets'?'Datasets':'Activity log', kicker:S.tab==='datasets'?'DATASETS · 10 SOURCES':'ACTIVITY LOG · LAST 7 DAYS',
+      tabs:[['datasets','Datasets','142'],['activity','Activity log','7 d']].map(([id,label,n])=>({label,n,pick:()=>this.setState({tab:id}),bd:S.tab===id?'var(--color-accent)':'transparent',fg:S.tab===id?'var(--color-text)':'var(--muted)'})),
+      isData:S.tab==='datasets', isLog:S.tab==='activity', q:S.q, onQ:e=>this.setState({q:e.target.value}), rows, empty:!rows.length,
+      srcs:['All','CHIRPS','ERA5-Land','Sentinel','MODIS','SMAP','Field sensors','Upload','Manual'].map(l=>({l,pick:()=>this.setState({src:l}),bd:S.src===l?'color-mix(in srgb,var(--color-accent) 45%,transparent)':'var(--color-divider)',bg:S.src===l?'var(--color-accent-100)':'transparent',fg:S.src===l?'var(--color-text)':'var(--muted)'})),
+      log:[['23 Sep 08:44','upload','var(--color-accent)','Sana Ben Amor','Agronomist','Imported 4,310 rows · 8 skipped','DS-2026-0419'],['23 Sep 08:12','bell','#EE8434','system','','Alert raised: SPEI-3 < −2.0 in zone M-07','ALR-5521'],['23 Sep 06:00','cpu','var(--teal)','system','','Model run v2.4.1 completed in 3 m 41 s','RUN-26-266'],['22 Sep 17:30','pencil','var(--muted)','Youssef Haddad','Field tech','Edited station BIZ-S03 coordinates','BIZ-S03'],['22 Sep 11:02','users','var(--muted)','Leïla Mansouri','Admin','Granted Viewer role to ANPE Ichkeul','USR-0088'],['21 Sep 15:40','settings','var(--muted)','Leïla Mansouri','Admin','Changed Extreme risk threshold 80 → 75','CFG-THR'],['19 Sep 09:15','alert','#E07B7B','Karim Trabelsi','Researcher','Upload failed: 12 rows missing parcel_id','DS-2026-0412'],['18 Sep 10:20','radio','var(--teal)','Youssef Haddad','Field tech','Registered sensor TIN-C01','TIN-C01'],['17 Sep 16:05','download','var(--muted)','Karim Trabelsi','Researcher','Exported historical comparison (PDF)','EXP-0934']].map(l=>({t:l[0],icon:l[1],c:l[2],u:l[3],role:l[4],a:l[5],ref:l[6]})) };
+  }
+}
+</script>
+</body>
+</html>

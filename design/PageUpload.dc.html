@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">DATA · UPLOAD · {{ site.cc }} / {{ site.name }}</div>
+    <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Upload data</h1>
+  </div>
+
+  <div class="blueprint" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr))">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+      <button onClick="{{ s.go }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 18px;border-right:1px solid var(--color-divider);box-shadow:inset 0 -2px 0 {{ s.edge }}">
+        <span style="width:26px;height:26px;display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }}">{{ s.n }}</span>
+        <span style="display:flex;flex-direction:column"><span style="font-size:13.5px;font-weight:500;color:{{ s.tc }}">{{ s.l }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ s.d }}</span></span>
+      </button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ s1 }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:24px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="field"><label style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">METRIC GROUP</label>
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--color-divider)">
+            <sc-for list="{{ groups }}" as="g"><button onClick="{{ g.pick }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;font-size:12px;text-align:center;border-right:1px solid var(--color-divider);background:{{ g.bg }};color:{{ g.fg }}"><dc-import name="Icon" n="{{ g.icon }}" s="16" hint-size="16px,16px"></dc-import>{{ g.n }}</button></sc-for>
+          </div>
+        </div>
+        <button onClick="{{ drop }}" style="all:unset;cursor:pointer;box-sizing:border-box;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;border:1px dashed {{ dzBd }};background:{{ dzBg }};text-align:center;transition:all .2s;background-image:radial-gradient(circle at 1px 1px,var(--dot) 1px,transparent 0);background-size:16px 16px" style-hover="border-color:var(--color-accent)">
+          <sc-if value="{{ noFile }}" hint-placeholder-val="{{ true }}">
+            <span style="width:52px;height:52px;display:grid;place-items:center;border:1px solid var(--divider-strong);color:var(--color-accent)"><dc-import name="Icon" n="upload" s="22" hint-size="22px,22px"></dc-import></span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:22px">Drop CSV or XLSX here</span>
+            <span style="font-size:13px;color:var(--muted)">or click to browse · max 50 MB · UTF-8, comma or semicolon separated</span>
+          </sc-if>
+          <sc-if value="{{ hasFile }}" hint-placeholder-val="{{ false }}">
+            <span style="width:52px;height:52px;display:grid;place-items:center;border:1px solid var(--color-accent);color:var(--color-accent)"><dc-import name="Icon" n="file" s="22" hint-size="22px,22px"></dc-import></span>
+            <span style="font-family:var(--font-mono);font-size:15px">ichkeul_soil_2026-09.csv</span>
+            <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">1.8 MB · 8 columns · 4,318 rows detected · delimiter “;”</span>
+          </sc-if>
+        </button>
+        <div style="display:flex;justify-content:flex-end;gap:10px"><button class="btn btn-primary blueprint" onClick="{{ next }}" disabled="{{ noFile }}" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Continue to mapping<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">TEMPLATES</span>
+        <sc-for list="{{ templates }}" as="t">
+          <div class="blueprint" style="display:flex;align-items:center;gap:14px;padding:12px 14px;transition:border-color .2s;border-color:{{ t.bd }}" style-hover="border-color:var(--divider-strong)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--color-divider);color:var(--teal)"><dc-import name="Icon" n="{{ t.icon }}" s="16" hint-size="16px,16px"></dc-import></span>
+            <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:500">{{ t.n }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ t.cols }}</span></span>
+            <button class="btn btn-ghost" style="color:var(--color-accent);font-family:var(--font-mono);font-size:11px">CSV</button><button class="btn btn-ghost" style="color:var(--color-accent);font-family:var(--font-mono);font-size:11px">XLSX</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}">
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Map file columns to APWRS fields</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">7 of 8 auto-matched · 1 needs review</span></div>
+      <table class="table" style="font-size:13px">
+        <thead><tr><th style="padding:10px 18px;font-family:var(--font-mono);font-size:10px">FILE COLUMN</th><th style="font-family:var(--font-mono);font-size:10px">SAMPLE</th><th style="font-family:var(--font-mono);font-size:10px"></th><th style="font-family:var(--font-mono);font-size:10px">APWRS FIELD</th><th style="font-family:var(--font-mono);font-size:10px">UNIT</th><th style="font-family:var(--font-mono);font-size:10px">MATCH</th></tr></thead>
+        <tbody><sc-for list="{{ maps }}" as="m"><tr>
+          <td style="padding:10px 18px;font-family:var(--font-mono);font-size:12px">{{ m.c }}</td>
+          <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">{{ m.s }}</td>
+          <td style="color:var(--faint)"><dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></td>
+          <td><div style="display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 10px;border:1px solid {{ m.bd }};width:230px;font-size:12.5px">{{ m.f }}<dc-import name="Icon" n="down" s="13" hint-size="13px,13px"></dc-import></div></td>
+          <td style="font-family:var(--font-mono);font-size:11.5px">{{ m.u }}</td>
+          <td><span style="font-family:var(--font-mono);font-size:10.5px;color:{{ m.mc }}">{{ m.m }}</span></td>
+        </tr></sc-for></tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;padding:14px 18px"><button class="btn btn-secondary" onClick="{{ back }}" style="height:34px;color:var(--color-text)">Back</button><button class="btn btn-primary blueprint" onClick="{{ next }}" style="height:34px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Validate 4,318 rows</button></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ s3 }}" hint-placeholder-val="{{ false }}">
+    <div class="blueprint" style="display:grid;grid-template-columns:repeat(4,1fr)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="padding:14px 18px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.1em">VALID</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px;color:var(--color-accent)">4,281</div></div>
+      <div style="padding:14px 18px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.1em">WARNINGS</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px;color:#E7A83B">29</div></div>
+      <div style="padding:14px 18px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.1em">ERRORS</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px;color:#E07B7B">8</div></div>
+      <div style="padding:14px 18px"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.1em">DUPLICATES</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px">0</div></div>
+    </div>
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="font-size:12.5px">
+        <thead><tr><th style="padding:10px 18px;font-family:var(--font-mono);font-size:10px">ROW</th><th style="font-family:var(--font-mono);font-size:10px">TIMESTAMP</th><th style="font-family:var(--font-mono);font-size:10px">STATION</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">VWC %</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">TEMP °C</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">EC dS/m</th><th style="font-family:var(--font-mono);font-size:10px">ISSUE</th></tr></thead>
+        <tbody><sc-for list="{{ vrows }}" as="r"><tr style="background:{{ r.bg }}">
+          <td style="padding:9px 18px;font-family:var(--font-mono);color:var(--muted)">{{ r.n }}</td><td style="font-family:var(--font-mono)">{{ r.t }}</td><td style="font-family:var(--font-mono)">{{ r.s }}</td><td style="font-family:var(--font-mono);text-align:right;color:{{ r.vc }}">{{ r.v }}</td><td style="font-family:var(--font-mono);text-align:right">{{ r.tp }}</td><td style="font-family:var(--font-mono);text-align:right">{{ r.ec }}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:{{ r.ic }}"><span style="width:6px;height:6px;background:{{ r.ic }}"></span>{{ r.i }}</span></td>
+        </tr></sc-for></tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px"><button class="btn btn-secondary" onClick="{{ back }}" style="height:34px;color:var(--color-text)">Back</button><div style="display:flex;gap:10px;align-items:center"><span style="font-size:12.5px;color:var(--muted)">8 rows with errors will be skipped</span><button class="btn btn-primary blueprint" onClick="{{ start }}" style="height:34px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Import 4,310 rows</button></div></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ s4 }}" hint-placeholder-val="{{ false }}">
+    <div class="blueprint" style="padding:36px;display:flex;flex-direction:column;gap:18px;max-width:720px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--font-heading);font-weight:600;font-size:24px">{{ pTitle }}</span><span style="font-family:var(--font-heading);font-weight:600;font-size:40px">{{ pct }}%</span></div>
+      <div style="height:8px;background:var(--color-neutral-100);position:relative"><div style="position:absolute;inset:0 auto 0 0;width:{{ pct }}%;background:var(--color-accent);transition:width .2s"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);font-family:var(--font-mono);font-size:11.5px;color:var(--muted);gap:10px"><span>{{ done }} / 4,310 rows</span><span>ichkeul_soil_2026-09.csv</span><span style="text-align:right">{{ eta }}</span></div>
+      <sc-if value="{{ finished }}"><div style="display:flex;gap:10px;padding-top:6px;border-top:1px solid var(--color-divider)"><span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="check" s="18" hint-size="18px,18px"></dc-import></span><span style="font-size:13.5px;flex:1">Dataset <span style="font-family:var(--font-mono)">DS-2026-0419</span> created. Model will re-run with new soil data at 18:00 UTC.</span><button class="btn btn-secondary" onClick="{{ reset }}" style="height:32px;color:var(--color-text)">Upload another</button></div></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const G=[['soil','Soil','droplet','station_id, timestamp, vwc_pct, soil_temp_c, ec_dsm, depth_cm'],['climate','Climate','sun','timestamp, tmax_c, tmin_c, rh_pct, rain_mm, wind_ms'],['drought','Drought Indices','gauge','date, spi_1, spi_3, spei_3, pdsi'],['agri','Agricultural','sprout','parcel_id, crop, sowing_date, yield_tha, irrigation'],['rs','Remote Sensing','satellite','date, tile, ndvi, ndwi, lst_c, cloud_pct'],['hydro','Hydrology','waves','gauge_id, timestamp, level_m, salinity_gl, flow_m3s']];
+class Component extends DCLogic {
+  state={step:1,group:'soil',file:false,p:0};
+  componentWillUnmount(){ clearInterval(this.iv); }
+  renderVals(){
+    const S=this.state, go=n=>()=>this.setState({step:n});
+    const SL=[['Select file','Type & source'],['Map columns','8 columns'],['Validate','Preview & fix'],['Import','Progress']];
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'},
+      steps:SL.map(([l,d],i)=>{const n=i+1,done=S.step>n,on=S.step===n;return{n:done?'✓':n,l,d,go:(done||on)?go(n):undefined,edge:on?'var(--color-accent)':'transparent',bd:done||on?'var(--color-accent)':'var(--divider-strong)',bg:done?'var(--color-accent)':'transparent',fg:done?'var(--color-bg)':on?'var(--color-accent)':'var(--muted)',tc:on||done?'var(--color-text)':'var(--muted)'};}),
+      s1:S.step===1,s2:S.step===2,s3:S.step===3,s4:S.step===4,
+      groups:G.map(g=>({n:g[1],icon:g[2],pick:()=>this.setState({group:g[0]}),bg:S.group===g[0]?'var(--color-accent-100)':'transparent',fg:S.group===g[0]?'var(--color-text)':'var(--muted)'})),
+      templates:G.map(g=>({n:g[1],icon:g[2],cols:g[3],bd:S.group===g[0]?'color-mix(in srgb,var(--color-accent) 50%,transparent)':'var(--color-divider)'})),
+      noFile:!S.file, hasFile:S.file, drop:()=>this.setState({file:true}), dzBd:S.file?'var(--color-accent)':'var(--divider-strong)', dzBg:S.file?'var(--color-accent-100)':'transparent',
+      next:()=>this.setState(s=>({step:s.step+1})), back:()=>this.setState(s=>({step:s.step-1})),
+      maps:[['station','ICH-S02','Station ID','—','AUTO'],['datetime_utc','2026-09-01 00:15','Timestamp (UTC)','ISO 8601','AUTO'],['vwc','13.94','Soil moisture (VWC)','%','AUTO'],['t_soil','21.3','Soil temperature','°C','AUTO'],['ec','4.81','Electrical conductivity','dS/m','AUTO'],['depth','30','Probe depth','cm','AUTO'],['batt_v','3.71','Battery voltage','V','AUTO'],['flag','OK','— select field —','','REVIEW']].map(m=>({c:m[0],s:m[1],f:m[2],u:m[3],m:m[4],mc:m[4]==='AUTO'?'var(--color-accent)':'#E7A83B',bd:m[4]==='AUTO'?'var(--color-divider)':'#E7A83B'})),
+      vrows:[['12','2026-09-01 03:00','ICH-S02','14.12','20.8','4.79','',0],['418','2026-09-05 08:30','ICH-S02','—','22.1','4.80','Missing required VWC',2],['419','2026-09-05 08:45','ICH-S02','13.88','22.4','4.80','',0],['1204','2026-09-13 11:00','ICH-S04','84.20','27.9','4.92','VWC outside plausible range (0–60 %)',2],['2011','2026-09-21 14:15','ICH-S04','15.02','29.6','5.31','EC jump +0.4 in 15 min',1],['3877','2026-09-22 23:45','ICH-S02','13.91','19.4','4.83','',0]].map(r=>({n:r[0],t:r[1],s:r[2],v:r[3],tp:r[4],ec:r[5],i:r[6]||'OK',ic:r[7]===2?'#E07B7B':r[7]===1?'#E7A83B':'var(--color-accent)',vc:r[7]===2?'#E07B7B':'var(--color-text)',bg:r[7]===2?'rgba(217,101,101,.06)':r[7]===1?'rgba(231,168,59,.05)':'transparent'})),
+      start:()=>{this.setState({step:4,p:0});clearInterval(this.iv);this.iv=setInterval(()=>this.setState(s=>{const p=Math.min(100,s.p+3+Math.random()*5);if(p>=100)clearInterval(this.iv);return{p};}),120);},
+      pct:Math.round(S.p), done:Math.round(S.p/100*4310).toLocaleString('en-US'), eta:S.p>=100?'done':`~${Math.ceil((100-S.p)/30)} s left`, finished:S.p>=100, pTitle:S.p>=100?'Import complete':'Importing…',
+      reset:()=>this.setState({step:1,file:false,p:0}) };
+  }
+}
+</script>
+</body>
+</html>

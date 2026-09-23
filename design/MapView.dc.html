@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative;width:100%;height:100%;min-height:120px;overflow:hidden;background:var(--map-sea,#081D27)">
+  <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+    <path d="{{ land }}" style="fill:var(--map-land,#0E2A36)"></path>
+    <sc-if value="{{ sat }}" hint-placeholder-val="{{ false }}">
+      <g><sc-for list="{{ fields }}" as="f" hint-placeholder-count="0"><rect x="{{ f.x }}" y="{{ f.y }}" width="{{ f.w }}" height="{{ f.h }}" fill="{{ f.c }}"></rect></sc-for></g>
+    </sc-if>
+    <sc-if value="{{ topo }}" hint-placeholder-val="{{ true }}">
+      <g fill="none" style="stroke:var(--color-text,#fff);stroke-opacity:.09"><sc-for list="{{ contours }}" as="p" hint-placeholder-count="0"><path d="{{ p }}" stroke-width="1"></path></sc-for></g>
+    </sc-if>
+    <g><sc-for list="{{ cells }}" as="c" hint-placeholder-count="0"><rect x="{{ c.x }}" y="{{ c.y }}" width="19" height="19" fill="{{ c.fill }}" fill-opacity="{{ c.op }}" stroke="{{ c.stroke }}" stroke-width="{{ c.sw }}" onClick="{{ c.click }}" style="cursor:pointer;transition:fill-opacity .3s"></rect></sc-for></g>
+    <sc-if value="{{ water }}" hint-placeholder-val="{{ true }}">
+      <g>
+        <path d="{{ lakeI }}" style="fill:var(--map-water,#1B5A6E);stroke:var(--teal,#9EDFF1);stroke-opacity:.55" stroke-width="1"></path>
+        <path d="{{ lakeB }}" style="fill:var(--map-water,#1B5A6E);stroke:var(--teal,#9EDFF1);stroke-opacity:.55" stroke-width="1"></path>
+        <path d="M418 292 C 432 280, 446 268, 468 258" fill="none" style="stroke:var(--teal,#9EDFF1);stroke-opacity:.6" stroke-width="3"></path>
+        <path d="M612 170 C 614 150, 612 130, 610 112" fill="none" style="stroke:var(--teal,#9EDFF1);stroke-opacity:.6" stroke-width="4"></path>
+        <path d="M120 470 C 170 430, 190 380, 215 335" fill="none" style="stroke:var(--teal,#9EDFF1);stroke-opacity:.35" stroke-width="1.5"></path>
+        <path d="M330 500 C 335 450, 322 410, 318 372" fill="none" style="stroke:var(--teal,#9EDFF1);stroke-opacity:.35" stroke-width="1.5"></path>
+      </g>
+    </sc-if>
+    <path d="{{ coast }}" fill="none" style="stroke:var(--teal,#9EDFF1);stroke-opacity:.5" stroke-width="1"></path>
+    <sc-if value="{{ grid }}" hint-placeholder-val="{{ true }}">
+      <g style="stroke:var(--color-text,#fff);stroke-opacity:.1" stroke-dasharray="2 4" stroke-width="1">
+        <path d="M100 0V500M300 0V500M500 0V500M700 0V500M0 83H800M0 250H800M0 416H800"></path>
+      </g>
+    </sc-if>
+    <sc-if value="{{ drawn }}" hint-placeholder-val="{{ false }}">
+      <g>
+        <polygon points="470,340 565,322 615,392 545,452 458,420" style="fill:var(--teal,#9EDFF1);fill-opacity:.1;stroke:var(--teal,#9EDFF1)" stroke-width="1.5" stroke-dasharray="6 4"></polygon>
+        <g style="fill:var(--color-bg,#0B2633);stroke:var(--teal,#9EDFF1)" stroke-width="1.5"><rect x="466" y="336" width="8" height="8"></rect><rect x="561" y="318" width="8" height="8"></rect><rect x="611" y="388" width="8" height="8"></rect><rect x="541" y="448" width="8" height="8"></rect><rect x="454" y="416" width="8" height="8"></rect></g>
+      </g>
+    </sc-if>
+    <sc-if value="{{ labels }}" hint-placeholder-val="{{ true }}">
+      <g style="font-family:'JetBrains Mono',monospace;fill:var(--color-text,#fff)" font-size="11">
+        <text x="300" y="309" text-anchor="middle" fill-opacity=".75" letter-spacing="1">LAC ICHKEUL</text>
+        <text x="578" y="229" text-anchor="middle" fill-opacity=".75" letter-spacing="1">LAC DE BIZERTE</text>
+        <text x="80" y="40" fill-opacity=".35" letter-spacing="3" font-size="10">MEDITERRANEAN SEA</text>
+        <text x="626" y="150" fill-opacity=".85">Bizerte</text>
+        <text x="440" y="326" fill-opacity=".6" font-size="10">Menzel Bourguiba</text>
+        <text x="455" y="484" fill-opacity=".6" font-size="10">Mateur</text>
+        <text x="104" y="494" fill-opacity=".35" font-size="9">9.60°E</text><text x="304" y="494" fill-opacity=".35" font-size="9">9.70°E</text><text x="504" y="494" fill-opacity=".35" font-size="9">9.80°E</text><text x="704" y="494" fill-opacity=".35" font-size="9">9.90°E</text>
+        <text x="6" y="79" fill-opacity=".35" font-size="9">37.30°N</text><text x="6" y="246" fill-opacity=".35" font-size="9">37.20°N</text><text x="6" y="412" fill-opacity=".35" font-size="9">37.10°N</text>
+      </g>
+    </sc-if>
+    <sc-if value="{{ sensors }}" hint-placeholder-val="{{ false }}">
+      <g><sc-for list="{{ sens }}" as="s" hint-placeholder-count="0"><g>
+        <circle cx="{{ s.x }}" cy="{{ s.y }}" r="11" fill="none" stroke="{{ s.c }}" stroke-opacity=".35"></circle>
+        <rect x="{{ s.rx }}" y="{{ s.ry }}" width="8" height="8" fill="{{ s.c }}" style="stroke:var(--color-bg,#0B2633)" stroke-width="1.5"></rect>
+        <sc-if value="{{ showSensorIds }}"><text x="{{ s.tx }}" y="{{ s.ty }}" font-size="9.5" style="font-family:'JetBrains Mono',monospace;fill:var(--color-text,#fff)" fill-opacity=".8">{{ s.id }}</text></sc-if>
+      </g></sc-for></g>
+    </sc-if>
+  </svg>
+  <sc-if value="{{ legend }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:10px;padding:7px 10px;background:color-mix(in srgb,var(--color-bg,#0B2633) 88%,transparent);border:1px solid var(--color-divider);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#8A968F);backdrop-filter:blur(6px)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;background:#38A88A"></span>Safe</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;background:#E7A83B"></span>Watch</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;background:#EE8434"></span>Severe</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;background:#D96565"></span>Extreme</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:800,&quot;height&quot;:500},&quot;layer&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;risk&quot;,&quot;ndvi&quot;,&quot;none&quot;],&quot;default&quot;:&quot;risk&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;base&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;topo&quot;,&quot;sat&quot;],&quot;default&quot;:&quot;topo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sensors&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;legend&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;drawn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;water&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;labels&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;grid&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;sensorIds&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;opacity&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.5,&quot;tsType&quot;:&quot;number&quot;},&quot;selected&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;onCell&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;}}">
+const RC=s=>s<25?'#38A88A':s<50?'#E7A83B':s<75?'#EE8434':'#D96565';
+const NC=v=>v<.2?'#9C7A45':v<.3?'#B8A04A':v<.4?'#7FB24E':v<.5?'#4CAF5A':'#2E9B55';
+const coastY=x=>78+22*Math.sin(x/95)+12*Math.cos(x/41+1);
+const blob=(cx,cy,rx,ry,seed)=>{const n=18,pts=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2,w=1+.12*Math.sin(a*3+seed)+.07*Math.cos(a*5+seed*2);pts.push([cx+Math.cos(a)*rx*w,cy+Math.sin(a)*ry*w]);}
+  let d='';for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n],m=[(p[0]+q[0])/2,(p[1]+q[1])/2];d+=(i?'':`M${((pts[n-1][0]+p[0])/2).toFixed(1)} ${((pts[n-1][1]+p[1])/2).toFixed(1)}`)+`Q${p[0].toFixed(1)} ${p[1].toFixed(1)} ${m[0].toFixed(1)} ${m[1].toFixed(1)}`;}return d+'Z';};
+const inE=(x,y,cx,cy,rx,ry)=>((x-cx)/rx)**2+((y-cy)/ry)**2<1.05;
+const LAKES=[[300,305,122,68],[578,225,112,62]];
+let coastPts=[];for(let x=0;x<=800;x+=20)coastPts.push(`${x} ${coastY(x).toFixed(1)}`);
+const COAST='M'+coastPts.join('L');const LAND=COAST+'L800 500L0 500Z';
+const CONT=[blob(290,400,90,40,1),blob(290,400,60,26,2),blob(290,400,30,12,3),blob(720,390,70,50,4),blob(720,390,42,30,5),blob(140,200,80,50,6),blob(140,200,45,26,7)];
+const FIELDS=[];{let r=7;const rnd=()=>(r=(r*9301+49297)%233280)/233280;for(let i=0;i<120;i++){const x=rnd()*800,y=90+rnd()*410;FIELDS.push({x:x.toFixed(0),y:y.toFixed(0),w:(20+rnd()*50).toFixed(0),h:(14+rnd()*34).toFixed(0),c:['#1E2A1A','#2A2A1C','#18241A','#252F1E','#2E2B20'][Math.floor(rnd()*5)]});}}
+const SENS=[{id:'ICH-W01',x:240,y:392,st:'ok'},{id:'ICH-S02',x:372,y:400,st:'ok'},{id:'ICH-L03',x:300,y:232,st:'ok'},{id:'ICH-S04',x:168,y:296,st:'warn'},{id:'BIZ-W01',x:660,y:176,st:'ok'},{id:'BIZ-L02',x:520,y:286,st:'ok'},{id:'BIZ-S03',x:706,y:300,st:'off'},{id:'MAT-S01',x:430,y:440,st:'ok'}];
+function score(x,y){let s=26+40*(y/500)+16*(1-x/800)+12*Math.sin(x/70+y/55)+8*Math.cos(x/33-y/41);for(const[cx,cy,rx,ry]of LAKES){const d=Math.hypot((x-cx)/rx,(y-cy)/ry);if(d<1.8)s-=(1.8-d)*14;}return Math.max(4,Math.min(96,s));}
+class Component extends DCLogic {
+  renderVals(){
+    const p=this.props, layer=p.layer ?? 'risk', sel=p.selected;
+    const cells=[];
+    if(layer!=='none') for(let r=0;r<25;r++)for(let q=0;q<40;q++){const x=q*20,y=r*20,cx=x+10,cy=y+10;if(cy<coastY(cx)+4)continue;if(LAKES.some(([a,b,c,d])=>inE(cx,cy,a,b,c*.8,d*.8)))continue;
+      const s=score(cx,cy),nd=Math.max(.12,Math.min(.62,.62-s/170+.05*Math.sin(cx/50)));const id=`${q}-${r}`,on=sel===id;
+      const cell={id,score:Math.round(s),ndvi:+nd.toFixed(2),lat:(37.35-cy/1666).toFixed(3),lon:(9.55+cx/2000).toFixed(3)};
+      cells.push({x,y,fill:layer==='ndvi'?NC(nd):RC(s),op:on?.9:(p.opacity ?? .42),stroke:on?'#ffffff':'none',sw:on?2:0,click:p.onCell?()=>p.onCell(cell):undefined});}
+    const sens=SENS.map(s=>({...s,rx:s.x-4,ry:s.y-4,tx:s.x+14,ty:s.y+3,c:s.st==='ok'?'#9EDFF1':s.st==='warn'?'#E7A83B':'#D96565'}));
+    const b=p.base ?? 'topo';
+    return { land:LAND, coast:COAST, lakeI:blob(300,305,122,68,.4), lakeB:blob(578,225,112,62,2.2), contours:CONT, fields:FIELDS, cells, sens,
+      sat:b==='sat', topo:b==='topo', water:p.water ?? true, sensors:p.sensors ?? false, labels:p.labels ?? true, grid:p.grid ?? true, drawn:p.drawn ?? false, legend:p.legend ?? false, showSensorIds:p.sensorIds ?? true };
+  }
+}
+</script>
+</body>
+</html>

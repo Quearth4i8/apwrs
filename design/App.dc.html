@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>html,body{margin:0;background:#0B2633;height:100%}a{color:#2BA6B8}a:hover{color:#9EDFF1}@keyframes apPulse{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(2.2)}}@keyframes apFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}</style>
+</helmet>
+<div ref="{{ rootRef }}" style="--color-bg:#0B2633;--color-surface:#0F3040;--s2:#163D4A;--s3:#1C4957;--color-text:#E6F1F5;--muted:#8FAAB4;--faint:#5C7883;--color-divider:rgba(255,255,255,.08);--divider-strong:rgba(255,255,255,.2);--color-accent:#2BA6B8;--color-accent-600:#5FC3D3;--color-accent-700:#197A91;--teal:#9EDFF1;--color-accent-100:rgba(43,166,184,.12);--color-accent-800:#9EDFF1;--color-neutral-100:rgba(255,255,255,.06);--color-neutral-800:#C9DCE2;--map-land:#0E2A36;--map-water:#1B5A6E;--map-sea:#081D27;--glow:rgba(43,166,184,.14);--dot:rgba(255,255,255,.045);--font-mono:'JetBrains Mono',ui-monospace,monospace;display:flex;height:100vh;min-width:1280px;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-variant-numeric:tabular-nums;overflow:hidden">
+
+  <aside style="width:{{ sbW }}px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--color-divider);background:var(--color-surface);transition:width .22s ease">
+    <div style="height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--color-divider)">
+      <div style="width:26px;height:26px;flex:none;border:1px solid var(--color-accent);display:grid;place-items:center;position:relative"><div style="width:10px;height:14px;background:var(--color-accent);transform:translate(3px,-2px)"></div><div style="position:absolute;left:5px;bottom:5px;width:6px;height:6px;background:var(--teal)"></div></div>
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;line-height:1"><span style="font-family:var(--font-heading);font-weight:600;font-size:20px;letter-spacing:.02em">APWRS</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;color:var(--muted);margin-top:3px">PLANTING · DROUGHT</span></div></sc-if>
+    </div>
+    <nav style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;padding:10px 10px 16px;display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+        <div style="display:flex;flex-direction:column;gap:1px">
+          <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--faint);padding:6px 8px 6px">{{ g.label }}</div></sc-if>
+          <sc-if value="{{ collapsed }}"><div style="height:1px;background:var(--color-divider);margin:6px 6px 8px"></div></sc-if>
+          <sc-for list="{{ g.items }}" as="it">
+            <sc-if value="{{ it.active }}">
+              <button onClick="{{ it.go }}" title="{{ it.label }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;position:relative;background:var(--color-accent-100);color:var(--color-text);border:1px solid color-mix(in srgb,var(--color-accent) 30%,transparent)">
+                <span style="position:absolute;left:-1px;top:-1px;bottom:-1px;width:2px;background:var(--color-accent)"></span>
+                <span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="{{ it.icon }}" s="16" hint-size="16px,16px"></dc-import></span>
+                <sc-if value="{{ expanded }}"><span style="font-size:13.5px;font-weight:500;flex:1;white-space:nowrap">{{ it.label }}</span></sc-if>
+                <sc-if value="{{ it.badgeShow }}"><span style="font-family:var(--font-mono);font-size:10px;padding:1px 5px;background:#D96565;color:#fff">{{ it.badge }}</span></sc-if>
+              </button>
+            </sc-if>
+            <sc-if value="{{ it.inactive }}">
+              <button onClick="{{ it.go }}" title="{{ it.label }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;color:var(--muted);border:1px solid transparent;transition:color .15s,border-color .15s" style-hover="color:var(--color-text);border-color:var(--color-divider)">
+                <span style="display:flex"><dc-import name="Icon" n="{{ it.icon }}" s="16" hint-size="16px,16px"></dc-import></span>
+                <sc-if value="{{ expanded }}"><span style="font-size:13.5px;flex:1;white-space:nowrap">{{ it.label }}</span></sc-if>
+                <sc-if value="{{ it.badgeShow }}"><span style="font-family:var(--font-mono);font-size:10px;padding:1px 5px;background:#D96565;color:#fff">{{ it.badge }}</span></sc-if>
+              </button>
+            </sc-if>
+          </sc-for>
+        </div>
+      </sc-for>
+    </nav>
+    <div style="border-top:1px solid var(--color-divider);padding:10px;display:flex;flex-direction:column;gap:8px">
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid var(--color-divider);font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">
+          <div style="display:flex;align-items:center;gap:6px;color:var(--color-text)"><span style="width:6px;height:6px;background:var(--color-accent)"></span>MODEL v2.4.1 · ONLINE</div>
+          <div>Last run 23 Sep 06:00 UTC</div>
+        </div>
+      </sc-if>
+      <button onClick="{{ toggleSb }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;color:var(--muted)" style-hover="color:var(--color-text)"><dc-import name="Icon" n="panel" s="16" hint-size="16px,16px"></dc-import><sc-if value="{{ expanded }}"><span style="font-size:13px">{{ collapseLabel }}</span></sc-if></button>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:56px;flex:none;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid var(--color-divider);background:var(--color-bg);position:relative;z-index:20">
+      <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);min-width:0;white-space:nowrap">
+        <span>{{ crumbGroup }}</span><span style="color:var(--faint)">/</span><span style="color:var(--color-text)">{{ crumbPage }}</span>
+      </div>
+      <div style="width:1px;height:22px;background:var(--color-divider);margin:0 8px"></div>
+      <div style="position:relative">
+        <button onClick="{{ openSite }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:1px solid var(--color-divider);font-size:13px" style-hover="border-color:var(--divider-strong)">
+          <dc-import name="Icon" n="pin" s="14" hint-size="14px,14px"></dc-import>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ site.cc }}</span><span style="color:var(--faint)">/</span><span style="font-weight:500">{{ site.name }}</span>
+          <dc-import name="Icon" n="down" s="14" hint-size="14px,14px"></dc-import>
+        </button>
+        <sc-if value="{{ siteOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:40px;left:0;width:460px;display:grid;grid-template-columns:170px 1fr;background:var(--s2);border:1px solid var(--divider-strong);box-shadow:0 20px 40px rgba(0,0,0,.35);animation:apFade .15s ease;z-index:40">
+            <div style="border-right:1px solid var(--color-divider);padding:8px">
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);padding:6px 8px">COUNTRY</div>
+              <sc-for list="{{ countries }}" as="c">
+                <button onClick="{{ c.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 8px;font-size:13px;background:{{ c.bg }};color:var(--color-text)" style-hover="background:var(--s3)"><span style="display:flex;gap:8px;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted);width:18px">{{ c.cc }}</span>{{ c.name }}</span><dc-import name="Icon" n="right" s="13" hint-size="13px,13px"></dc-import></button>
+              </sc-for>
+            </div>
+            <div style="padding:8px">
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);padding:6px 8px">SITE · {{ browseName }}</div>
+              <sc-for list="{{ browseSites }}" as="s">
+                <button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding:4px 8px;font-size:13px" style-hover="background:var(--s3)">
+                  <span style="display:flex;flex-direction:column"><span style="font-weight:500">{{ s.name }}</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">{{ s.coord }}</span></span>
+                  <sc-if value="{{ s.current }}"><span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="check" s="14" hint-size="14px,14px"></dc-import></span></sc-if>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="position:relative">
+        <sc-if value="{{ isExpert }}" hint-placeholder-val="{{ true }}"><button onClick="{{ openSeason }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:1px solid var(--color-divider);font-size:13px" style-hover="border-color:var(--divider-strong)">
+          <dc-import name="Icon" n="calendar" s="14" hint-size="14px,14px"></dc-import><span style="font-family:var(--font-mono);font-size:12px">{{ seasonLabel }}</span><dc-import name="Icon" n="down" s="14" hint-size="14px,14px"></dc-import>
+        </button>
+        <sc-if value="{{ seasonOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:40px;left:0;width:240px;background:var(--s2);border:1px solid var(--divider-strong);box-shadow:0 20px 40px rgba(0,0,0,.35);padding:8px;animation:apFade .15s ease;z-index:40">
+            <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);padding:6px 8px">SEASON</div>
+            <sc-for list="{{ seasons }}" as="y">
+              <button onClick="{{ y.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 8px;font-family:var(--font-mono);font-size:12px" style-hover="background:var(--s3)"><span>{{ y.label }}</span><span style="font-size:10px;color:var(--muted)">{{ y.note }}</span></button>
+            </sc-for>
+            <div style="height:1px;background:var(--color-divider);margin:6px 0"></div>
+            <button onClick="{{ pickPeriod }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;font-size:13px" style-hover="background:var(--s3)"><dc-import name="Icon" n="history" s="14" hint-size="14px,14px"></dc-import>Custom period…<span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted)">2016–2026</span></button>
+          </div>
+        </sc-if>
+      </sc-if></div>
+      <div style="flex:1"></div>
+      <sc-if value="{{ isExpert }}" hint-placeholder-val="{{ true }}"><button onClick="{{ openCmd }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;height:32px;width:260px;padding:0 10px;border:1px solid var(--color-divider);color:var(--muted);font-size:13px;box-sizing:border-box" style-hover="border-color:var(--divider-strong);color:var(--color-text)">
+        <dc-import name="Icon" n="search" s="14" hint-size="14px,14px"></dc-import><span style="flex:1">{{ searchLabel }}</span><span style="font-family:var(--font-mono);font-size:10.5px;padding:1px 5px;border:1px solid var(--color-divider)">⌘K</span>
+      </button></sc-if>
+      <div style="display:flex;border:1px solid var(--color-divider);height:32px;box-sizing:border-box">
+        <button onClick="{{ setEn }}" style="all:unset;cursor:pointer;padding:0 9px;font-family:var(--font-mono);font-size:11px;display:flex;align-items:center;background:{{ enBg }};color:{{ enFg }}">EN</button>
+        <button onClick="{{ setFr }}" style="all:unset;cursor:pointer;padding:0 9px;font-family:var(--font-mono);font-size:11px;display:flex;align-items:center;border-left:1px solid var(--color-divider);background:{{ frBg }};color:{{ frFg }}">FR</button>
+      </div>
+      <button onClick="{{ toggleTheme }}" title="Toggle theme" style="all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--color-divider);box-sizing:border-box" style-hover="border-color:var(--divider-strong)"><dc-import name="Icon" n="{{ themeIcon }}" s="15" hint-size="15px,15px"></dc-import></button>
+      <button onClick="{{ goAlerts }}" title="Notifications" style="all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--color-divider);box-sizing:border-box;position:relative" style-hover="border-color:var(--divider-strong)"><dc-import name="Icon" n="bell" s="15" hint-size="15px,15px"></dc-import><span style="position:absolute;top:5px;right:6px;width:6px;height:6px;background:#D96565"></span></button>
+      <div style="position:relative">
+        <button onClick="{{ openUser }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;height:32px;padding:0 4px 0 4px" style-hover="opacity:.85">
+          <span style="width:28px;height:28px;display:grid;place-items:center;background:var(--s3);border:1px solid var(--color-divider);font-family:var(--font-mono);font-size:11px">{{ uIni }}</span>
+          <span style="display:flex;flex-direction:column;line-height:1.15;text-align:left"><span style="font-size:12.5px;font-weight:500">{{ uName }}</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">{{ uRole }}</span></span>
+        </button>
+        <sc-if value="{{ userOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:40px;right:0;width:220px;background:var(--s2);border:1px solid var(--divider-strong);box-shadow:0 20px 40px rgba(0,0,0,.35);padding:6px;animation:apFade .15s ease;z-index:40;font-size:13px">
+            <div style="padding:8px 10px;border-bottom:1px solid var(--color-divider);margin-bottom:4px"><div>{{ uMail }}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">{{ uOrg }}</div></div>
+            <button onClick="{{ goSettings }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;gap:8px;align-items:center;height:32px;padding:0 10px" style-hover="background:var(--s3)"><dc-import name="Icon" n="settings" s="14" hint-size="14px,14px"></dc-import>Settings</button>
+            <a href="Login.dc.html" style="display:flex;gap:8px;align-items:center;height:32px;padding:0 10px;color:var(--color-text);text-decoration:none" style-hover="background:var(--s3)"><dc-import name="Icon" n="logout" s="14" hint-size="14px,14px"></dc-import>Sign out</a>
+          </div>
+        </sc-if>
+      </div>
+    </header>
+
+    <main style="flex:1;min-height:0;overflow:{{ mainOverflow }};position:relative;background-image:radial-gradient(circle at 1px 1px,var(--dot) 1px,transparent 0);background-size:24px 24px">
+      <sc-if value="{{ isFarmer }}" hint-placeholder-val="{{ false }}"><dc-import name="Farmer" embedded="{{ true }}" tab="{{ fTab }}" lang="{{ lang }}" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.overview }}" hint-placeholder-val="{{ true }}"><dc-import name="PageOverview" site="{{ site }}" on-nav="{{ nav }}" hint-size="100%,1100px"></dc-import></sc-if>
+      <sc-if value="{{ pg.map }}"><dc-import name="PageLiveMap" site="{{ site }}" hint-size="100%,100%" style="height:100%"></dc-import></sc-if>
+      <sc-if value="{{ pg.sensors }}"><dc-import name="PageSensors" site="{{ site }}" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.alerts }}"><dc-import name="PageAlerts" site="{{ site }}" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.risk }}"><dc-import name="PageRisk" site="{{ site }}" on-nav="{{ nav }}" hint-size="100%,1100px"></dc-import></sc-if>
+      <sc-if value="{{ pg.forecasts }}"><dc-import name="PageForecasts" site="{{ site }}" hint-size="100%,1000px"></dc-import></sc-if>
+      <sc-if value="{{ pg.drivers }}"><dc-import name="PageDrivers" site="{{ site }}" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.planting }}"><dc-import name="PagePlanting" site="{{ site }}" hint-size="100%,1100px"></dc-import></sc-if>
+      <sc-if value="{{ pg.history }}"><dc-import name="PageHistory" site="{{ site }}" tab="compare" hint-size="100%,1000px"></dc-import></sc-if>
+      <sc-if value="{{ pg.archive }}"><dc-import name="PageHistory" site="{{ site }}" tab="archive" hint-size="100%,1000px"></dc-import></sc-if>
+      <sc-if value="{{ pg.upload }}"><dc-import name="PageUpload" site="{{ site }}" hint-size="100%,1000px"></dc-import></sc-if>
+      <sc-if value="{{ pg.manual }}"><dc-import name="PageManual" site="{{ site }}" hint-size="100%,1000px"></dc-import></sc-if>
+      <sc-if value="{{ pg.datasets }}"><dc-import name="PageDatasets" site="{{ site }}" tab="datasets" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.activity }}"><dc-import name="PageDatasets" site="{{ site }}" tab="activity" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.users }}"><dc-import name="PageAdmin" site="{{ site }}" section="users" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.regions }}"><dc-import name="PageAdmin" site="{{ site }}" section="regions" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{ pg.settings }}"><dc-import name="PageAdmin" site="{{ site }}" section="settings" hint-size="100%,900px"></dc-import></sc-if>
+    </main>
+  </div>
+
+  <sc-if value="{{ anyPop }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeAll }}" style="position:fixed;inset:0;z-index:15"></div></sc-if>
+
+  <sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAll }}" style="position:fixed;inset:0;z-index:60;background:rgba(2,12,17,.6);backdrop-filter:blur(3px);display:flex;justify-content:center;padding-top:110px">
+      <div onClick="{{ stop }}" class="blueprint" style="width:600px;height:fit-content;background:var(--s2);border-color:var(--divider-strong);animation:apFade .15s ease">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 16px;height:52px;border-bottom:1px solid var(--color-divider)">
+          <span style="color:var(--muted);display:flex"><dc-import name="Icon" n="search" s="16" hint-size="16px,16px"></dc-import></span>
+          <input ref="{{ cmdRef }}" value="{{ q }}" onChange="{{ onQ }}" placeholder="Search pages, sites, crops, sensors…" style="flex:1;background:transparent;border:0;outline:0;color:var(--color-text);font:inherit;font-size:15px">
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--muted);padding:2px 6px;border:1px solid var(--color-divider)">ESC</span>
+        </div>
+        <div style="max-height:380px;overflow-y:auto;padding:8px">
+          <sc-for list="{{ cmdGroups }}" as="cg">
+            <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);padding:8px 10px 4px">{{ cg.label }}</div>
+            <sc-for list="{{ cg.items }}" as="ci">
+              <button onClick="{{ ci.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;font-size:13.5px" style-hover="background:var(--s3)">
+                <span style="color:var(--muted);display:flex"><dc-import name="Icon" n="{{ ci.icon }}" s="15" hint-size="15px,15px"></dc-import></span><span style="flex:1">{{ ci.label }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ ci.hint }}</span>
+              </button>
+            </sc-for>
+          </sc-for>
+          <sc-if value="{{ cmdEmpty }}"><div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">No results for “{{ q }}”</div></sc-if>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 16px;border-top:1px solid var(--color-divider);font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span>↵ open</span><span>↑↓ navigate</span><span style="margin-left:auto">APWRS command</span></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;expert&quot;,&quot;farmer&quot;],&quot;default&quot;:&quot;expert&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;page&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;overview&quot;,&quot;map&quot;,&quot;sensors&quot;,&quot;alerts&quot;,&quot;risk&quot;,&quot;forecasts&quot;,&quot;drivers&quot;,&quot;planting&quot;,&quot;history&quot;,&quot;archive&quot;,&quot;upload&quot;,&quot;manual&quot;,&quot;datasets&quot;,&quot;activity&quot;,&quot;users&quot;,&quot;regions&quot;,&quot;settings&quot;,&quot;f-today&quot;,&quot;f-fields&quot;,&quot;f-alerts&quot;,&quot;f-help&quot;],&quot;default&quot;:&quot;overview&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;collapsed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const NAV=[
+ {k:'MONITOR',fr:'SURVEILLER',items:[['overview','Overview','Vue d’ensemble','dashboard'],['map','Live Map','Carte en direct','map'],['sensors','Sensors','Capteurs','radio'],['alerts','Alerts','Alertes','bell']]},
+ {k:'ANALYSIS',fr:'ANALYSE',items:[['risk','Drought Risk','Risque de sécheresse','gauge'],['forecasts','Forecasts','Prévisions','trend'],['drivers','Risk Drivers','Facteurs de risque','bars'],['planting','Planting Windows','Fenêtres de semis','sprout']]},
+ {k:'HISTORY',fr:'HISTORIQUE',items:[['history','Historical Comparison','Comparaison historique','history'],['archive','Seasonal Archive','Archive saisonnière','archive']]},
+ {k:'DATA',fr:'DONNÉES',items:[['upload','Upload','Importer','upload'],['manual','Manual Entry','Saisie manuelle','pencil'],['datasets','Datasets','Jeux de données','database'],['activity','Activity Log','Journal d’activité','activity']]},
+ {k:'ADMIN',fr:'ADMIN',items:[['users','Users & Roles','Utilisateurs et rôles','users'],['regions','Regions & Sites','Régions et sites','pin'],['settings','Settings','Paramètres','settings']]}];
+const NAV_F=[{k:'MY FARM',fr:'MA FERME',items:[['f-today','Today','Aujourd’hui','home'],['f-fields','My fields','Mes parcelles','map'],['f-alerts','Messages','Messages','bell'],['f-help','Help','Aide','help']]}];
+const COUNTRIES=[{cc:'TN',name:'Tunisia',sites:[['Ichkeul','37.163°N 9.674°E'],['Bizerte','37.274°N 9.873°E'],['Kairouan','35.678°N 10.096°E'],['Skhira','34.300°N 10.070°E']]},
+ {cc:'MA',name:'Morocco',sites:[['Meknès','33.895°N 5.555°W'],['Saïss Plain','33.970°N 5.210°W'],['Tadla','32.340°N 6.360°W']]},
+ {cc:'DZ',name:'Algeria',sites:[['Sétif High Plains','36.190°N 5.410°E'],['Annaba','36.900°N 7.760°E'],['Tlemcen','34.880°N 1.320°W']]}];
+const THEMES={light:{'--color-bg':'#F2FAFC','--color-surface':'#FFFFFF','--s2':'#FFFFFF','--s3':'#E4F1F5','--color-text':'#142B35','--muted':'#56727D','--faint':'#8AA3AC','--color-divider':'rgba(20,43,53,.12)','--divider-strong':'rgba(20,43,53,.3)','--color-accent':'#197A91','--color-accent-600':'#146478','--color-accent-700':'#0F5163','--teal':'#2BA6B8','--color-accent-100':'rgba(43,166,184,.1)','--color-accent-800':'#0F5163','--color-neutral-100':'rgba(20,43,53,.05)','--color-neutral-800':'#23404C','--map-land':'#E3EEF1','--map-water':'#9EDFF1','--map-sea':'#CDE9F1','--glow':'rgba(43,166,184,.12)','--dot':'rgba(20,43,53,.07)'},
+ dark:{'--color-bg':'#0B2633','--color-surface':'#0F3040','--s2':'#163D4A','--s3':'#1C4957','--color-text':'#E6F1F5','--muted':'#8FAAB4','--faint':'#5C7883','--color-divider':'rgba(255,255,255,.08)','--divider-strong':'rgba(255,255,255,.2)','--color-accent':'#2BA6B8','--color-accent-600':'#5FC3D3','--color-accent-700':'#197A91','--teal':'#9EDFF1','--color-accent-100':'rgba(43,166,184,.12)','--color-accent-800':'#9EDFF1','--color-neutral-100':'rgba(255,255,255,.06)','--color-neutral-800':'#C9DCE2','--map-land':'#0E2A36','--map-water':'#1B5A6E','--map-sea':'#081D27','--glow':'rgba(43,166,184,.14)','--dot':'rgba(255,255,255,.045)'}};
+class Component extends DCLogic {
+  rootRef=React.createRef(); cmdRef=React.createRef();
+  role0=new URLSearchParams(location.search).get('role') || this.props.role || 'expert';
+  state={role:this.role0,page:this.role0==='farmer'?'f-today':(this.props.page ?? 'overview'),collapsed:!!this.props.collapsed,theme:this.props.theme ?? 'dark',lang:'en',cc:'TN',site:'Ichkeul',browse:'TN',season:'2026/27',pop:null,q:''};
+  componentDidMount(){ this.applyTheme(); this.mo=new MutationObserver(()=>{const el=this.rootRef.current,t=THEMES[this.state.theme];if(el&&el.style.getPropertyValue('--color-bg').trim()!==t['--color-bg'])this.applyTheme();}); if(this.rootRef.current)this.mo.observe(this.rootRef.current,{attributes:true,attributeFilter:['style']}); this.kd=e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();this.setState(s=>({pop:s.pop==='cmd'?null:'cmd',q:''}));}if(e.key==='Escape')this.setState({pop:null});}; window.addEventListener('keydown',this.kd); }
+  componentWillUnmount(){ window.removeEventListener('keydown',this.kd); this.mo&&this.mo.disconnect(); }
+  componentDidUpdate(pp,ps){ if(pp.role!==this.props.role&&this.props.role&&!new URLSearchParams(location.search).get('role'))this.setState({role:this.props.role,page:this.props.role==='farmer'?'f-today':'overview'}); if(pp.theme!==this.props.theme&&this.props.theme)this.setState({theme:this.props.theme}); if(pp.page!==this.props.page&&this.props.page)this.setState({page:this.props.page}); this.applyTheme(); requestAnimationFrame(()=>this.applyTheme()); if(this.state.pop==='cmd'&&ps.pop!=='cmd')setTimeout(()=>this.cmdRef.current&&this.cmdRef.current.focus(),30); }
+  applyTheme(){ const el=this.rootRef.current; if(!el)return; const t=THEMES[this.state.theme]; for(const k in t)el.style.setProperty(k,t[k]); document.body.style.background=t['--color-bg']; }
+  renderVals(){
+    const S=this.state, fr=S.lang==='fr', nav=p=>this.setState({page:p,pop:null});
+    const NV=S.role==='farmer'?NAV_F:NAV; const groups=NV.map(g=>({label:fr?g.fr:g.k,items:g.items.map(([id,en,f,icon])=>({label:fr?f:en,icon,active:S.page===id,inactive:S.page!==id,go:()=>nav(id),badge:'7',badgeShow:id==='alerts'&&!S.collapsed}))}));
+    let crumbGroup='',crumbPage='';NV.forEach(g=>g.items.forEach(i=>{if(i[0]===S.page){crumbGroup=fr?g.fr:g.k;crumbPage=fr?i[2]:i[1];}}));
+    const ctry=COUNTRIES.find(c=>c.cc===S.cc), cs=ctry.sites.find(s=>s[0]===S.site)||ctry.sites[0];
+    const br=COUNTRIES.find(c=>c.cc===S.browse);
+    const pg={};NAV.forEach(g=>g.items.forEach(i=>pg[i[0]]=S.page===i[0]));
+    const q=S.q.trim().toLowerCase(), m=t=>!q||t.toLowerCase().includes(q);
+    const pages=[];NV.forEach(g=>g.items.forEach(i=>{if(m(i[1]))pages.push({label:i[1],icon:i[3],hint:g.k,go:()=>nav(i[0])});}));
+    const sites=[];COUNTRIES.forEach(c=>c.sites.forEach(s=>{if(m(s[0])||m(c.name))sites.push({label:s[0],icon:'pin',hint:c.name,go:()=>this.setState({cc:c.cc,site:s[0],browse:c.cc,pop:null})});}));
+    const crops=['Durum wheat','Barley','Olive','Date palm','Alfalfa','Tomato'].filter(m).map(c=>({label:`Planting window — ${c}`,icon:'sprout',hint:'CROP',go:()=>nav('planting')}));
+    const actions=[{label:'Upload CSV / XLSX',icon:'upload',hint:'DATA',go:()=>nav('upload')},{label:'Register new sensor',icon:'plus',hint:'SENSORS',go:()=>nav('sensors')},{label:'Export historical report',icon:'download',hint:'HISTORY',go:()=>nav('history')}].filter(a=>m(a.label));
+    const cmdGroups=[{label:'PAGES',items:pages.slice(0,q?8:5)},{label:'SITES',items:sites.slice(0,q?6:3)},{label:'CROPS',items:crops.slice(0,q?6:2)},{label:'ACTIONS',items:actions}].filter(g=>g.items.length);
+    const pop=k=>()=>this.setState(s=>({pop:s.pop===k?null:k,browse:S.cc}));
+    const F=S.role==='farmer';
+    return { isFarmer:F, isExpert:!F, fTab:S.page.replace('f-',''), lang:S.lang, uName:F?'Hédi Jlassi':'Sana Ben Amor', uRole:F?(fr?'Agriculteur':'Farmer'):'Agronomist', uIni:F?'HJ':'SB', uMail:F?'hedi.jlassi@gmail.com':'sana.benamor@inrat.tn', uOrg:F?'Ichkeul · 3 fields':'INRAT · Tunisia', rootRef:this.rootRef, cmdRef:this.cmdRef, groups, expanded:!S.collapsed, collapsed:S.collapsed, sbW:S.collapsed?64:248,
+      collapseLabel:fr?'Réduire le menu':'Collapse sidebar', toggleSb:()=>this.setState(s=>({collapsed:!s.collapsed})),
+      crumbGroup, crumbPage, site:{cc:S.cc,name:cs[0],country:ctry.name,coord:cs[1]}, siteOpen:S.pop==='site', seasonOpen:S.pop==='season', userOpen:S.pop==='user', cmdOpen:S.pop==='cmd', anyPop:['site','season','user'].includes(S.pop),
+      openSite:pop('site'), openSeason:pop('season'), openUser:pop('user'), openCmd:()=>this.setState({pop:'cmd',q:''}), closeAll:()=>this.setState({pop:null}), stop:e=>e.stopPropagation(),
+      countries:COUNTRIES.map(c=>({...c,bg:c.cc===S.browse?'var(--s3)':'transparent',pick:()=>this.setState({browse:c.cc})})), browseName:br.name.toUpperCase(),
+      browseSites:br.sites.map(s=>({name:s[0],coord:s[1],current:S.cc===br.cc&&S.site===s[0],pick:()=>this.setState({cc:br.cc,site:s[0],pop:null})})),
+      seasonLabel:S.season, seasons:[['2026/27','current'],['2025/26',''],['2024/25',''],['2023/24',''],['2022/23','drought']].map(([l,n])=>({label:l,note:n,pick:()=>this.setState({season:l,pop:null})})), pickPeriod:()=>this.setState({season:'2016 – 2026',pop:null}),
+      searchLabel:fr?'Rechercher…':'Search…', enBg:fr?'transparent':'var(--s3)', enFg:fr?'var(--muted)':'var(--color-text)', frBg:fr?'var(--s3)':'transparent', frFg:fr?'var(--color-text)':'var(--muted)',
+      setEn:()=>this.setState({lang:'en'}), setFr:()=>this.setState({lang:'fr'}), themeIcon:S.theme==='dark'?'sun':'moon', toggleTheme:()=>this.setState(s=>({theme:s.theme==='dark'?'light':'dark'})),
+      goAlerts:()=>nav('alerts'), goSettings:()=>nav('settings'), nav, pg, mainOverflow:S.page==='map'?'hidden':'auto',
+      q:S.q, onQ:e=>this.setState({q:e.target.value}), cmdGroups, cmdEmpty:!cmdGroups.length };
+  }
+}
+</script>
+</body>
+</html>

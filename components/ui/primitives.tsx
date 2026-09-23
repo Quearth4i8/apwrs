@@ -1,0 +1,397 @@
+"use client";
+
+import * as React from "react";
+import { cn, riskLevel, RISK_COLOR, RISK_LABEL, type RiskLevel } from "@/lib/utils";
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Blueprint — the wireframe frame every card, figure and primary button
+   wears: square, hairline-bordered, with "+" registration marks at the
+   corners. The four marks are required by the system, so they ship with
+   the component rather than being hand-written per use.
+   ───────────────────────────────────────────────────────────────────── */
+
+export function Corners() {
+  return (
+    <>
+      <i className="bp-corner bp-tl" />
+      <i className="bp-corner bp-tr" />
+      <i className="bp-corner bp-bl" />
+      <i className="bp-corner bp-br" />
+    </>
+  );
+}
+
+export const Blueprint = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div"> & { hoverable?: boolean }
+>(function Blueprint({ className, children, hoverable, ...props }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "blueprint",
+        hoverable && "transition-colors duration-200 hover:border-divider-strong",
+        className,
+      )}
+      {...props}
+    >
+      <Corners />
+      {children}
+    </div>
+  );
+});
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Buttons — square corners, hairline border. The primary is the one solid
+   object on the board and carries the registration marks.
+   ───────────────────────────────────────────────────────────────────── */
+
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+
+const BUTTON_BASE =
+  "relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-none " +
+  "font-heading text-[14px] font-semibold leading-tight " +
+  "transition-[background-color,border-color,color,transform] duration-150 ease-out " +
+  "active:translate-y-px disabled:pointer-events-none disabled:opacity-45";
+
+const BUTTON_VARIANT: Record<ButtonVariant, string> = {
+  primary:
+    "border border-accent bg-accent text-bg hover:bg-accent-600 active:bg-accent-700",
+  secondary:
+    "border border-divider text-ink hover:border-divider-strong hover:bg-neutral-100 active:bg-[color-mix(in_srgb,var(--ap-text)_14%,transparent)]",
+  ghost:
+    "border border-transparent text-accent hover:bg-accent-100 active:bg-[color-mix(in_srgb,var(--ap-accent)_18%,transparent)]",
+  danger:
+    "border border-transparent text-extreme-ink hover:bg-[rgb(217_101_101_/_0.12)]",
+};
+
+export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
+  variant?: ButtonVariant;
+  size?: "sm" | "md" | "lg";
+  /** Primary buttons get the blueprint marks; opt out for dense toolbars. */
+  marks?: boolean;
+}
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { className, variant = "secondary", size = "md", marks, children, ...props },
+  ref,
+) {
+  const showMarks = marks ?? variant === "primary";
+  const sizing =
+    size === "sm" ? "h-[30px] px-3 text-[12.5px]" : size === "lg" ? "h-11 px-5 text-[15px]" : "h-9 px-3.5";
+  return (
+    <button ref={ref} className={cn(BUTTON_BASE, BUTTON_VARIANT[variant], sizing, className)} {...props}>
+      {showMarks && <Corners />}
+      {children}
+    </button>
+  );
+});
+
+/** Same surface as Button, for real links. */
+export const ButtonLink = React.forwardRef<
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<"a"> & { variant?: ButtonVariant; size?: "sm" | "md" | "lg"; marks?: boolean }
+>(function ButtonLink({ className, variant = "secondary", size = "md", marks, children, ...props }, ref) {
+  const showMarks = marks ?? variant === "primary";
+  const sizing =
+    size === "sm" ? "h-[30px] px-3 text-[12.5px]" : size === "lg" ? "h-11 px-5 text-[15px]" : "h-9 px-3.5";
+  return (
+    <a
+      ref={ref}
+      className={cn(BUTTON_BASE, BUTTON_VARIANT[variant], sizing, "no-underline", className)}
+      {...props}
+    >
+      {showMarks && <Corners />}
+      {children}
+    </a>
+  );
+});
+
+export const IconButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<"button"> & { label: string }
+>(function IconButton({ className, label, children, ...props }, ref) {
+  return (
+    <button
+      ref={ref}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "grid size-8 flex-none place-items-center rounded-none border border-divider text-ink",
+        "transition-colors duration-150 hover:border-divider-strong hover:bg-neutral-100",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+});
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Risk badge — the shared 0-100 vocabulary (RiskBadge.dc.html).
+   ───────────────────────────────────────────────────────────────────── */
+
+const BADGE_TINT: Record<RiskLevel, { border: string; bg: string; ink: string }> = {
+  safe: { border: "rgb(56 168 138 / 0.4)", bg: "rgb(56 168 138 / 0.1)", ink: "#38A88A" },
+  watch: { border: "rgb(231 168 59 / 0.45)", bg: "rgb(231 168 59 / 0.1)", ink: "#E7A83B" },
+  severe: { border: "rgb(238 132 52 / 0.45)", bg: "rgb(238 132 52 / 0.11)", ink: "#EE8434" },
+  extreme: { border: "rgb(217 101 101 / 0.5)", bg: "rgb(217 101 101 / 0.12)", ink: "#E07B7B" },
+};
+
+export function RiskBadge({
+  score,
+  level,
+  showScore = true,
+  className,
+}: {
+  score?: number;
+  level?: RiskLevel;
+  showScore?: boolean;
+  className?: string;
+}) {
+  const lv = level ?? riskLevel(score ?? 58);
+  const tint = BADGE_TINT[lv];
+  const withScore = showScore && level == null && score != null;
+  return (
+    <span
+      className={cn(
+        "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap border px-2",
+        "font-mono text-[10.5px] uppercase tracking-[0.06em] tabular-nums",
+        className,
+      )}
+      style={{ borderColor: tint.border, background: tint.bg, color: tint.ink }}
+    >
+      <span className="size-1.5 flex-none" style={{ background: RISK_COLOR[lv] }} />
+      {RISK_LABEL[lv]}
+      {withScore && <span className="opacity-75">{Math.round(score)}</span>}
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Small shared pieces.
+   ───────────────────────────────────────────────────────────────────── */
+
+export function Kicker({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span className={cn("font-mono text-[10.5px] tracking-[0.1em] text-muted", className)}>{children}</span>
+  );
+}
+
+export function PageHeader({
+  kicker,
+  title,
+  lede,
+  actions,
+}: {
+  kicker: React.ReactNode;
+  title: React.ReactNode;
+  lede?: React.ReactNode;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <div className="relative flex flex-wrap items-end justify-between gap-6">
+      <div className="flex flex-col gap-2">
+        <Kicker className="text-[11px]">{kicker}</Kicker>
+        <h1 className="text-[clamp(28px,4vw,36px)] leading-none tracking-[-0.02em]">{title}</h1>
+        {lede && <div className="max-w-[70ch] text-sm text-muted">{lede}</div>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
+    </div>
+  );
+}
+
+/** A horizontal switch row: the pill group used across filters and settings. */
+export function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+  className,
+  size = "md",
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: readonly { value: T; label: React.ReactNode }[];
+  className?: string;
+  size?: "sm" | "md";
+}) {
+  return (
+    <div className={cn("flex border border-divider", size === "sm" ? "h-[30px]" : "h-[34px]", className)}>
+      {options.map((o, i) => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 text-[12.5px] transition-colors duration-150",
+              i > 0 && "border-l border-divider",
+              on ? "bg-s3 text-ink" : "text-muted hover:text-ink",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The drawn toggle used for overlays, alert rules and SMS opt-in. */
+export function Toggle({
+  checked,
+  onChange,
+  label,
+  className,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={cn("relative h-4 w-[30px] flex-none border transition-colors duration-150", className)}
+      style={{
+        borderColor: checked ? "var(--ap-accent)" : "var(--ap-divider-strong)",
+        background: checked ? "var(--ap-accent-100)" : "transparent",
+      }}
+    >
+      <span
+        className="absolute top-[2px] size-2.5 transition-[left] duration-150 ease-out"
+        style={{ left: checked ? 16 : 2, background: checked ? "var(--ap-accent)" : "var(--ap-muted)" }}
+      />
+    </button>
+  );
+}
+
+export function Stat({
+  label,
+  value,
+  className,
+}: {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col gap-1 px-3 py-2.5", className)}>
+      <div className="font-mono text-[10px] tracking-[0.08em] text-muted">{label}</div>
+      <div className="font-mono text-[15px]">{value}</div>
+    </div>
+  );
+}
+
+/** Underlined tab strip (risk, alerts, history, datasets, admin). */
+export function TabStrip<T extends string>({
+  value,
+  onChange,
+  tabs,
+  className,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  tabs: readonly { value: T; label: React.ReactNode; count?: React.ReactNode }[];
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex overflow-x-auto border-b border-divider no-scrollbar", className)} role="tablist">
+      {tabs.map((t) => {
+        const on = t.value === value;
+        return (
+          <button
+            key={t.value}
+            role="tab"
+            aria-selected={on}
+            onClick={() => onChange(t.value)}
+            className={cn(
+              "-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-[13.5px] transition-colors duration-150",
+              on ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink",
+            )}
+          >
+            {t.label}
+            {t.count != null && <span className="ml-2 font-mono text-[10.5px] text-muted">{t.count}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function Field({
+  label,
+  required,
+  hint,
+  error,
+  children,
+}: {
+  label: React.ReactNode;
+  required?: boolean;
+  hint?: React.ReactNode;
+  error?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="flex items-baseline justify-between text-xs text-[color-mix(in_srgb,var(--ap-text)_70%,transparent)]">
+        <span>
+          {label} {required && <span className="text-extreme-ink">*</span>}
+        </span>
+        {hint && <span className="font-mono text-[10px] text-faint">{hint}</span>}
+      </span>
+      {children}
+      {error && <span className="font-mono text-[10.5px] text-extreme-ink">{error}</span>}
+    </label>
+  );
+}
+
+export const Input = React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<"input">>(
+  function Input({ className, ...props }, ref) {
+    return (
+      <input
+        ref={ref}
+        className={cn(
+          "h-9 w-full rounded-none border border-divider bg-bg px-2.5 text-sm text-ink caret-accent",
+          "transition-colors duration-150 placeholder:text-faint",
+          "hover:border-[color-mix(in_srgb,var(--ap-text)_45%,transparent)]",
+          "focus-visible:border-accent focus-visible:outline-offset-0",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
+
+/** Input with a unit suffix — used all over the sensor and manual-entry forms. */
+export function UnitInput({
+  unit,
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"input"> & { unit: React.ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "flex h-9 items-center border border-divider bg-bg transition-colors duration-150",
+        "focus-within:border-accent hover:border-divider-strong",
+        className,
+      )}
+    >
+      <input
+        className="min-w-0 flex-1 border-0 bg-transparent px-2.5 font-mono text-[13px] text-ink outline-none placeholder:text-faint"
+        {...props}
+      />
+      <span className="flex h-full items-center border-l border-divider px-2.5 font-mono text-[11px] text-muted">
+        {unit}
+      </span>
+    </div>
+  );
+}

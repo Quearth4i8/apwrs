@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>html,body{margin:0;background:#E4F1F5}a{color:#146478}a:hover{color:#0F5163}@keyframes fmIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}</style>
+</helmet>
+<div ref="{{ rootRef }}" style="--color-bg:#F2FAFC;--color-surface:#FFFFFF;--s3:#E4F1F5;--color-text:#142B35;--muted:#4E6A75;--faint:#8AA3AC;--color-divider:rgba(20,43,53,.12);--divider-strong:rgba(20,43,53,.3);--color-accent:#197A91;--color-accent-600:#146478;--color-accent-700:#0F5163;--teal:#2BA6B8;--color-accent-100:rgba(43,166,184,.1);--color-neutral-100:rgba(20,43,53,.05);--dot:rgba(20,43,53,.07);--font-mono:'JetBrains Mono',ui-monospace,monospace;min-height:100vh;background:var(--s3);color:var(--color-text);font-family:var(--font-body);font-variant-numeric:tabular-nums;display:flex;justify-content:center">
+  <div style="width:100%;max-width:1120px;min-height:100vh;background:var(--color-bg);border-left:1px solid var(--color-divider);border-right:1px solid var(--color-divider);display:flex;flex-direction:column;position:relative">
+
+    <sc-if value="{{ standalone }}" hint-placeholder-val="{{ true }}"><header style="position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 16px;background:color-mix(in srgb,var(--color-bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--color-divider)">
+      <span style="width:30px;height:30px;flex:none;border:1px solid var(--color-accent);display:grid;place-items:center;position:relative"><span style="width:11px;height:16px;background:var(--color-accent);transform:translate(3px,-2px)"></span><span style="position:absolute;left:6px;bottom:6px;width:6px;height:6px;background:var(--teal)"></span></span>
+      <div style="display:flex;flex-direction:column;line-height:1.15;min-width:0;flex:1 1 auto"><span style="font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.hello }}, Hédi</span><span style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden"><dc-import name="Icon" n="pin" s="13" hint-size="13px,13px"></dc-import>Ichkeul · {{ t.date }}</span></div>
+      <div style="display:flex;flex:none;border:1px solid var(--color-divider);height:44px">
+        <button onClick="{{ setEn }}" style="all:unset;cursor:pointer;width:44px;display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;background:{{ enBg }};color:{{ enFg }}">EN</button>
+        <button onClick="{{ setFr }}" style="all:unset;cursor:pointer;width:44px;display:grid;place-items:center;font-family:var(--font-mono);font-size:12px;border-left:1px solid var(--color-divider);background:{{ frBg }};color:{{ frFg }}">FR</button>
+      </div>
+    </header></sc-if>
+
+    <main style="flex:1;padding:24px clamp(16px,3vw,40px) 110px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px 28px;align-content:start;align-items:start">
+
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:8px;grid-column:1/-1">
+          <span style="font-size:14px;font-weight:600;color:var(--muted)">{{ t.myCrops }}</span>
+          <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px">
+            <sc-for list="{{ crops }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pick }}" style="all:unset;cursor:pointer;flex:none;display:flex;align-items:center;gap:8px;height:48px;padding:0 16px;font-size:15px;font-weight:500;white-space:nowrap;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}"><span style="width:10px;height:10px;background:{{ c.dot }}"></span>{{ c.n }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="blueprint" style="grid-row:span 2;padding:22px 20px;display:flex;flex-direction:column;gap:16px;background:{{ v.bg }};border-color:{{ v.bd }};animation:fmIn .3s ease">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="width:60px;height:60px;flex:none;display:grid;place-items:center;background:{{ v.c }};color:#fff"><dc-import name="Icon" n="{{ v.icon }}" s="30" sw="2" hint-size="30px,30px"></dc-import></span>
+            <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:{{ v.ink }}">{{ v.kicker }}</span><span style="font-family:var(--font-heading);font-weight:600;font-size:32px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance">{{ v.title }}</span></div>
+          </div>
+          <p style="margin:0;font-size:17px;line-height:1.5;text-wrap:pretty">{{ v.why }}</p>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 16px;background:var(--color-surface);border:1px solid var(--color-divider)">
+            <div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13px;color:var(--muted);white-space:nowrap">{{ t.bestTime }}</span><span style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1">{{ v.when }}</span></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><span style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1;color:{{ v.ink }}">{{ v.days }}</span><span style="font-size:13px;color:var(--muted);white-space:nowrap">{{ v.daysLabel }}</span></div>
+          </div>
+          <button onClick="{{ speak }}" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;height:52px;border:1px solid var(--divider-strong);background:var(--color-surface);font-size:16px;font-weight:500" style-hover="border-color:var(--color-text)"><dc-import name="Icon" n="volume" s="20" hint-size="20px,20px"></dc-import>{{ speakLabel }}</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-size:14px;font-weight:600;color:var(--muted)">{{ t.todo }}</span>
+          <sc-for list="{{ todos }}" as="d">
+            <button onClick="{{ d.toggle }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:14px;min-height:60px;padding:10px 14px;border:1px solid var(--color-divider);background:var(--color-surface);box-sizing:border-box" style-hover="border-color:var(--divider-strong)">
+              <span style="width:26px;height:26px;flex:none;border:1.5px solid {{ d.bd }};background:{{ d.bg }};display:grid;place-items:center;color:#fff"><sc-if value="{{ d.done }}"><dc-import name="Icon" n="check" s="16" sw="2.5" hint-size="16px,16px"></dc-import></sc-if></span>
+              <span style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:16px;font-weight:500;text-decoration:{{ d.deco }};color:{{ d.fg }}">{{ d.t }}</span><span style="font-size:13.5px;color:var(--muted)">{{ d.s }}</span></span>
+              <span style="color:var(--teal);display:flex"><dc-import name="Icon" n="{{ d.icon }}" s="20" hint-size="20px,20px"></dc-import></span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div class="blueprint" style="padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--color-surface)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:600">{{ t.dryness }}</span><span style="font-size:13px;color:var(--muted)">{{ t.dryWhere }}</span></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+            <sc-for list="{{ scale }}" as="s"><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><div style="height:{{ s.h }}px;align-self:stretch;background:{{ s.c }};opacity:{{ s.o }};outline:{{ s.ol }};outline-offset:2px"></div><span style="font-size:13px;font-weight:{{ s.fw }};color:{{ s.fg }};text-align:center">{{ s.l }}</span></div></sc-for>
+          </div>
+          <p style="margin:0;font-size:15px;line-height:1.5;color:var(--muted)">{{ t.dryText }}</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;font-weight:600;color:var(--muted)">{{ t.weather }}</span><span style="font-size:13px;color:var(--muted)">{{ t.rainWeek }}</span></div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--color-divider);background:var(--color-surface)">
+            <sc-for list="{{ week }}" as="w"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px;border-right:1px solid var(--color-divider);background:{{ w.bg }}"><span style="font-size:13px;font-weight:{{ w.fw }}">{{ w.d }}</span><span style="color:{{ w.ic }};display:flex"><dc-import name="Icon" n="{{ w.icon }}" s="22" hint-size="22px,22px"></dc-import></span><span style="font-size:15px;font-weight:600">{{ w.t }}°</span><span style="font-family:var(--font-mono);font-size:11px;color:{{ w.rc }}">{{ w.r }}</span></div></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isFields }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1">{{ t.fields }}</span>
+        <sc-for list="{{ fields }}" as="f">
+          <div class="blueprint" style="padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--color-surface)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:18px;font-weight:600">{{ f.n }}</span><span style="font-size:14px;color:var(--muted)">{{ f.crop }} · {{ f.size }}</span></div><span style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;font-size:13.5px;font-weight:600;background:{{ f.bg }};color:{{ f.ink }}"><span style="width:8px;height:8px;background:{{ f.c }}"></span>{{ f.st }}</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--color-divider);padding-top:12px;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:var(--teal);display:flex"><dc-import name="Icon" n="droplet" s="18" hint-size="18px,18px"></dc-import></span>{{ f.soil }}</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="leaf" s="18" hint-size="18px,18px"></dc-import></span>{{ f.plants }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ isAlerts }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1">{{ t.alerts }}</span>
+        <sc-for list="{{ alerts }}" as="a">
+          <div style="display:flex;gap:14px;padding:16px;border:1px solid {{ a.bd }};background:{{ a.bg }}">
+            <span style="width:40px;height:40px;flex:none;display:grid;place-items:center;background:{{ a.c }};color:#fff"><dc-import name="Icon" n="{{ a.icon }}" s="20" sw="2" hint-size="20px,20px"></dc-import></span>
+            <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;color:var(--muted)">{{ a.when }}</span><span style="font-size:17px;font-weight:600;line-height:1.3">{{ a.t }}</span><span style="font-size:15px;line-height:1.5;color:var(--muted)">{{ a.d }}</span></div>
+          </div>
+        </sc-for>
+        <button onClick="{{ toggleSms }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 16px;border:1px solid var(--color-divider);background:var(--color-surface);box-sizing:border-box">
+          <span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="message" s="22" hint-size="22px,22px"></dc-import></span>
+          <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:500">{{ t.sms }}</span><span style="font-size:13.5px;color:var(--muted)">+216 •• ••• 482</span></span>
+          <span style="width:48px;height:28px;border:1px solid {{ smsBd }};background:{{ smsBg }};position:relative;transition:background .15s"><span style="position:absolute;top:3px;left:{{ smsX }}px;width:20px;height:20px;background:{{ smsKnob }};transition:left .15s"></span></span>
+        </button>
+      </sc-if>
+
+      <sc-if value="{{ isHelp }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1">{{ t.help }}</span>
+        <div class="blueprint" style="padding:18px;display:flex;flex-direction:column;gap:14px;background:var(--color-surface)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:center;gap:14px"><span style="width:52px;height:52px;display:grid;place-items:center;border:1px solid var(--color-divider);background:var(--s3);font-family:var(--font-mono);font-size:14px">SB</span><div style="display:flex;flex-direction:column"><span style="font-size:17px;font-weight:600">Sana Ben Amor</span><span style="font-size:14px;color:var(--muted)">{{ t.advisor }} · CRDA Bizerte</span></div></div>
+          <a href="tel:+21672000000" class="btn btn-primary blueprint" style="height:52px;font-size:16px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="phone" s="18" hint-size="18px,18px"></dc-import>{{ t.call }}</a>
+          <a href="#" class="btn btn-secondary" style="height:52px;font-size:16px;color:var(--color-text)"><dc-import name="Icon" n="message" s="18" hint-size="18px,18px"></dc-import>{{ t.msg }}</a>
+        </div>
+        <div style="display:flex;flex-direction:column;border-top:1px solid var(--color-divider)">
+          <sc-for list="{{ faq }}" as="q"><div style="padding:16px 0;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:6px"><span style="font-size:16px;font-weight:600">{{ q.q }}</span><span style="font-size:15px;line-height:1.5;color:var(--muted)">{{ q.a }}</span></div></sc-for>
+        </div>
+      </sc-if>
+    </main>
+
+    <sc-if value="{{ standalone }}" hint-placeholder-val="{{ true }}"><nav style="position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--color-divider);background:var(--color-surface);padding-bottom:10px;z-index:5">
+      <sc-for list="{{ tabs }}" as="b">
+        <button onClick="{{ b.go }}" style="all:unset;cursor:pointer;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:{{ b.fw }};color:{{ b.fg }};box-shadow:inset 0 3px 0 {{ b.edge }};position:relative">
+          <dc-import name="Icon" n="{{ b.icon }}" s="22" hint-size="22px,22px"></dc-import>{{ b.l }}
+          <sc-if value="{{ b.badge }}"><span style="position:absolute;top:10px;left:calc(50% + 8px);min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;background:#D96565;color:#fff;font-family:var(--font-mono);font-size:11px;display:grid;place-items:center">2</span></sc-if>
+        </button>
+      </sc-for>
+    </nav></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;fr&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const TX={
+en:{hello:'Good morning',date:'Wed 23 Sep',myCrops:'My crops',bestTime:'Best time to plant',todo:'What to do this week',dryness:'How dry is it?',dryWhere:'Your area, today',weather:'Next 7 days',rainWeek:'Rain this week: 2 mm',fields:'My fields',alerts:'Messages',sms:'Also send me SMS',help:'Help',advisor:'Your farm advisor',call:'Call my advisor',msg:'Send a message',listen:'Listen',stop:'Stop',daysTo:'days to wait',now:'open now',
+ dryText:'The land is very dry. It has barely rained for 6 weeks and it is hot. It will likely get worse before November rains.',
+ lv:['Normal','A bit dry','Very dry','Drought'],days:['Wed','Thu','Fri','Sat','Sun','Mon','Tue'],tabs:['Today','My fields','Messages','Help']},
+fr:{hello:'Bonjour',date:'mer. 23 sept.',myCrops:'Mes cultures',bestTime:'Meilleure période pour semer',todo:'À faire cette semaine',dryness:'La terre est-elle sèche ?',dryWhere:'Votre zone, aujourd’hui',weather:'7 prochains jours',rainWeek:'Pluie cette semaine : 2 mm',fields:'Mes parcelles',alerts:'Messages',sms:'M’envoyer aussi un SMS',help:'Aide',advisor:'Votre conseiller agricole',call:'Appeler mon conseiller',msg:'Envoyer un message',listen:'Écouter',stop:'Arrêter',daysTo:'jours à attendre',now:'ouvert',
+ dryText:'La terre est très sèche. Il n’a presque pas plu depuis 6 semaines et il fait chaud. Cela risque d’empirer avant les pluies de novembre.',
+ lv:['Normal','Un peu sec','Très sec','Sécheresse'],days:['mer','jeu','ven','sam','dim','lun','mar'],tabs:['Aujourd’hui','Parcelles','Messages','Aide']}};
+const CROPS=[
+ {id:'wheat',en:'Wheat',fr:'Blé dur',k:'wait',days:50,when:{en:'12 Nov – 4 Dec',fr:'12 nov – 4 déc'},
+  why:{en:'The soil is too dry for seeds to sprout. Wait for the first good rain, expected around 8–14 November.',fr:'Le sol est trop sec pour que les graines germent. Attendez la première bonne pluie, prévue vers le 8–14 novembre.'},
+  todo:[['Keep your seed dry and ready','Garder la semence au sec','Store it off the ground, in the shade','À l’abri, hors du sol','sprout'],['Don’t plough bare soil yet','Ne pas labourer maintenant','Ploughing now dries the soil more','Labourer maintenant assèche le sol','alert']]},
+ {id:'olive',en:'Olive trees',fr:'Oliviers',k:'care',days:69,when:{en:'1 Dec – 28 Feb',fr:'1 déc – 28 fév'},
+  why:{en:'Wait until December to plant new trees. Your young trees need water now because of the heat.',fr:'Attendez décembre pour planter de nouveaux arbres. Vos jeunes arbres ont besoin d’eau maintenant à cause de la chaleur.'},
+  todo:[['Water young trees 2× this week','Arroser les jeunes arbres 2× cette semaine','About 40 litres per tree, early morning','Environ 40 litres par arbre, tôt le matin','droplet'],['Pick fallen fruit','Ramasser les fruits tombés','Heat is making fruit drop early','La chaleur fait tomber les fruits','leaf']]},
+ {id:'tomato',en:'Tomato',fr:'Tomate',k:'season',days:173,when:{en:'15 Mar – 23 Apr',fr:'15 mars – 23 avr'},
+  why:{en:'It is not tomato season. Plant seedlings in spring when nights stay warm.',fr:'Ce n’est pas la saison de la tomate. Plantez au printemps quand les nuits restent douces.'},
+  todo:[['Nothing to do for tomato now','Rien à faire pour la tomate','We will remind you in February','Nous vous rappellerons en février','calendar']]},
+ {id:'alfalfa',en:'Alfalfa',fr:'Luzerne',k:'maybe',days:0,when:{en:'Now – 20 Oct',fr:'Maintenant – 20 oct'},
+  why:{en:'You can sow now only if you can water it. Without irrigation, wait until March.',fr:'Vous pouvez semer maintenant seulement si vous pouvez arroser. Sans irrigation, attendez mars.'},
+  todo:[['Water 40 mm before sowing','Arroser 40 mm avant de semer','About 2 hours of drip','Environ 2 heures de goutte-à-goutte','droplet'],['Sow in the evening','Semer le soir','Less heat for the seeds','Moins de chaleur pour les graines','sun']]}];
+const VK={
+ wait:{icon:'hand',c:'#D9621A',ink:'#B24E12',bg:'rgba(238,132,52,.1)',bd:'rgba(217,98,26,.45)',en:['Not yet','Wait'],fr:['Pas encore','Attendez']},
+ care:{icon:'hand',c:'#D9621A',ink:'#B24E12',bg:'rgba(238,132,52,.1)',bd:'rgba(217,98,26,.45)',en:['Not yet','Wait'],fr:['Pas encore','Attendez']},
+ season:{icon:'calendar',c:'#56727D',ink:'#34505B',bg:'rgba(20,43,53,.04)',bd:'rgba(20,43,53,.2)',en:['Not the season','Not now'],fr:['Hors saison','Pas maintenant']},
+ maybe:{icon:'droplet',c:'#B7860B',ink:'#8A6508',bg:'rgba(231,168,59,.14)',bd:'rgba(201,138,0,.5)',en:['Only with water','Plant if you irrigate'],fr:['Seulement avec eau','Semez si vous irriguez']},
+ go:{icon:'check',c:'#38A88A',ink:'#237A63',bg:'rgba(43,166,184,.1)',bd:'rgba(43,166,184,.5)',en:['Go ahead','Plant now'],fr:['Allez-y','Semez maintenant']}};
+const DARK={'--color-bg':'#0B2633','--color-surface':'#0F3040','--s3':'#1C4957','--color-text':'#E6F1F5','--muted':'#9AB4BD','--faint':'#5C7883','--color-divider':'rgba(255,255,255,.1)','--divider-strong':'rgba(255,255,255,.25)','--color-accent':'#2BA6B8','--color-accent-600':'#5FC3D3','--color-accent-700':'#197A91','--teal':'#9EDFF1','--color-accent-100':'rgba(43,166,184,.12)','--color-neutral-100':'rgba(255,255,255,.06)','--dot':'rgba(255,255,255,.045)'};
+const LIGHT={'--color-bg':'#F2FAFC','--color-surface':'#FFFFFF','--s3':'#E4F1F5','--color-text':'#142B35','--muted':'#4E6A75','--faint':'#8AA3AC','--color-divider':'rgba(20,43,53,.12)','--divider-strong':'rgba(20,43,53,.3)','--color-accent':'#197A91','--color-accent-600':'#146478','--color-accent-700':'#0F5163','--teal':'#2BA6B8','--color-accent-100':'rgba(43,166,184,.1)','--color-neutral-100':'rgba(20,43,53,.05)','--dot':'rgba(20,43,53,.07)'};
+class Component extends DCLogic {
+  rootRef=React.createRef();
+  state={lang:this.props.lang ?? 'en',crop:'wheat',tab:this.props.tab ?? 'today',done:{},sms:true,speaking:false};
+  componentDidMount(){ this.apply(); }
+  componentDidUpdate(pp){ if(pp.tab!==this.props.tab&&this.props.tab)this.setState({tab:this.props.tab}); if(pp.lang!==this.props.lang&&this.props.lang)this.setState({lang:this.props.lang}); this.apply(); }
+  componentWillUnmount(){ window.speechSynthesis&&speechSynthesis.cancel(); }
+  apply(){ const el=this.rootRef.current; if(!el)return; if(this.props.embedded){for(const k in LIGHT)el.style.removeProperty(k);el.style.background='transparent';el.style.minHeight='0';return;} const t=this.props.theme==='dark'?DARK:LIGHT; for(const k in t)el.style.setProperty(k,t[k]); document.body.style.background=t['--s3']; }
+  renderVals(){
+    const S=this.state, L=S.lang, t=TX[L], c=CROPS.find(x=>x.id===S.crop), k=VK[c.k];
+    const v={icon:k.icon,c:k.c,ink:k.ink,bg:k.bg,bd:k.bd,kicker:k[L][0],title:k[L][1],why:c.why[L],when:c.when[L],days:c.days?c.days:'✓',daysLabel:c.days?t.daysTo:t.now};
+    const cropDot={wait:'#D9621A',care:'#D9621A',season:'#8AA3AC',maybe:'#C98A00',go:'#38A88A'};
+    const speak=()=>{ if(!window.speechSynthesis)return; if(S.speaking){speechSynthesis.cancel();this.setState({speaking:false});return;} const u=new SpeechSynthesisUtterance(`${c[L]}. ${v.title}. ${v.why} ${t.bestTime}: ${v.when}.`); u.lang=L==='fr'?'fr-FR':'en-GB'; u.onend=()=>this.setState({speaking:false}); speechSynthesis.speak(u); this.setState({speaking:true}); };
+    const tb=[['today','home'],['fields','map'],['alerts','bell'],['help','help']];
+    const lvl=2;
+    return { standalone:!this.props.embedded, rootRef:this.rootRef, t,
+      enBg:L==='en'?'var(--color-text)':'transparent', enFg:L==='en'?'var(--color-bg)':'var(--muted)', frBg:L==='fr'?'var(--color-text)':'transparent', frFg:L==='fr'?'var(--color-bg)':'var(--muted)',
+      setEn:()=>this.setState({lang:'en'}), setFr:()=>this.setState({lang:'fr'}),
+      isToday:S.tab==='today', isFields:S.tab==='fields', isAlerts:S.tab==='alerts', isHelp:S.tab==='help',
+      crops:CROPS.map(x=>{const on=x.id===S.crop;return{n:x[L],dot:cropDot[x.k],pick:()=>{window.speechSynthesis&&speechSynthesis.cancel();this.setState({crop:x.id,speaking:false});},bd:on?'var(--color-text)':'var(--color-divider)',bg:on?'var(--color-text)':'var(--color-surface)',fg:on?'var(--color-bg)':'var(--color-text)'};}),
+      v, speak, speakLabel:S.speaking?t.stop:t.listen,
+      todos:c.todo.map((d,i)=>{const key=c.id+i,dn=!!S.done[key];return{t:L==='fr'?d[1]:d[0],s:L==='fr'?d[3]:d[2],icon:d[4],done:dn,toggle:()=>this.setState(s=>({done:{...s.done,[key]:!dn}})),bd:dn?'var(--color-accent)':'var(--divider-strong)',bg:dn?'var(--color-accent)':'transparent',deco:dn?'line-through':'none',fg:dn?'var(--muted)':'var(--color-text)'};}),
+      scale:t.lv.map((l,i)=>({l,c:['#38A88A','#E7A83B','#EE8434','#D96565'][i],h:i===lvl?28:14,o:i===lvl?1:.35,ol:i===lvl?'2px solid var(--color-text)':'none',fw:i===lvl?700:400,fg:i===lvl?'var(--color-text)':'var(--muted)'})),
+      week:[[0,'sun',31,'0'],[1,'sun',32,'0'],[2,'sun',33,'0'],[3,'cloudsun',30,'0'],[4,'cloudsun',29,'1'],[5,'rain',27,'1'],[6,'cloudsun',28,'0']].map(([i,icon,tp,r])=>({d:t.days[i],icon,t:tp,r:r+' mm',ic:icon==='rain'?'var(--teal)':'#D9A20B',rc:r==='0'?'var(--faint)':'var(--teal)',bg:i===0?'var(--color-neutral-100)':'transparent',fw:i===0?700:500})),
+      fields:[[L==='fr'?'Parcelle nord':'North field','wheat','4.5 ha',L==='fr'?'Sol très sec':'Soil very dry',L==='fr'?'Pas encore semé':'Not sown yet'],[L==='fr'?'Verger de l’oued':'River orchard','olive','120 '+(L==='fr'?'arbres':'trees'),L==='fr'?'Sol sec':'Soil dry',L==='fr'?'Arbres stressés':'Trees stressed'],[L==='fr'?'Petit jardin':'Garden plot','alfalfa','0.6 ha',L==='fr'?'Irrigué · correct':'Irrigated · OK',L==='fr'?'Prêt à semer':'Ready to sow']].map(f=>{const cr=CROPS.find(x=>x.id===f[1]),kk=VK[cr.k];return{n:f[0],crop:cr[L],size:f[2],soil:f[3],plants:f[4],st:kk[L][0],c:kk.c,ink:kk.ink,bg:kk.bg};}),
+      alerts:(L==='fr'?[['Aujourd’hui 08:12','alert','#D9621A','rgba(238,132,52,.08)','rgba(217,98,26,.4)','Sécheresse forte dans votre zone','Ne semez pas le blé maintenant. Gardez l’eau pour les jeunes arbres.'],['Hier','thermo','#B7860B','rgba(231,168,59,.1)','rgba(201,138,0,.4)','Journées chaudes jusqu’à dimanche','Jusqu’à 33 °C. Arrosez tôt le matin ou le soir.'],['20 sept.','check','#197A91','rgba(43,166,184,.06)','rgba(43,166,184,.3)','Votre capteur fonctionne à nouveau','Les mesures de la parcelle nord sont revenues.']]
+        :[['Today 08:12','alert','#D9621A','rgba(238,132,52,.08)','rgba(217,98,26,.4)','Strong drought in your area','Do not sow wheat now. Save water for young trees.'],['Yesterday','thermo','#B7860B','rgba(231,168,59,.1)','rgba(201,138,0,.4)','Hot days until Sunday','Up to 33 °C. Water early morning or evening.'],['20 Sep','check','#197A91','rgba(43,166,184,.06)','rgba(43,166,184,.3)','Your sensor is working again','Readings from the north field are back.']]).map(a=>({when:a[0],icon:a[1],c:a[2],bg:a[3],bd:a[4],t:a[5],d:a[6]})),
+      sms:S.sms, toggleSms:()=>this.setState({sms:!S.sms}), smsBd:S.sms?'var(--color-accent)':'var(--divider-strong)', smsBg:S.sms?'var(--color-accent)':'transparent', smsKnob:S.sms?'#fff':'var(--muted)', smsX:S.sms?24:3,
+      faq:(L==='fr'?[['Que veulent dire les couleurs ?','Vert : allez-y. Jaune : seulement avec de l’eau. Orange : attendez. Gris : hors saison.'],['D’où viennent ces conseils ?','Des satellites, de la météo et des capteurs dans les champs de votre zone, vérifiés par votre conseiller.']]
+        :[['What do the colours mean?','Green: go ahead. Yellow: only with water. Orange: wait. Grey: not the season.'],['Where does this advice come from?','Satellites, weather data and field sensors in your area, checked by your advisor.']]).map(([q,a])=>({q,a})),
+      tabs:tb.map(([id,icon],i)=>{const on=S.tab===id;return{l:t.tabs[i],icon,go:()=>this.setState({tab:id}),fg:on?'var(--color-accent-700)':'var(--muted)',fw:on?700:500,edge:on?'var(--color-accent)':'transparent',badge:id==='alerts'};}) };
+  }
+}
+</script>
+</body>
+</html>

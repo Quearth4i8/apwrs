@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:20px;position:relative;min-height:100%;box-sizing:border-box">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">MONITOR · SENSORS · {{ site.cc }} / {{ site.name }}</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Field stations</h1>
+      <div style="font-size:14px;color:var(--muted)">24 stations · 19 online · readings every 15 min via LoRaWAN / GSM</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div style="display:flex;border:1px solid var(--color-divider);height:36px">
+        <button onClick="{{ vTable }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:13px;background:{{ tBg }};color:{{ tFg }}"><dc-import name="Icon" n="table" s="14" hint-size="14px,14px"></dc-import>Table</button>
+        <button onClick="{{ vMap }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:13px;border-left:1px solid var(--color-divider);background:{{ mBg }};color:{{ mFg }}"><dc-import name="Icon" n="map" s="14" hint-size="14px,14px"></dc-import>Map</button>
+      </div>
+      <button class="btn btn-primary blueprint" onClick="{{ openNew }}" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="plus" s="15" hint-size="15px,15px"></dc-import>Register sensor</button>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <sc-for list="{{ types }}" as="t">
+      <button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;height:30px;padding:0 11px;font-size:12.5px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }}" style-hover="border-color:var(--divider-strong)">{{ t.label }}<span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ t.n }}</span></button>
+    </sc-for>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--color-divider);width:240px;color:var(--muted);font-size:12.5px"><dc-import name="Icon" n="search" s="14" hint-size="14px,14px"></dc-import>Filter by ID or name</div>
+    <button class="btn btn-secondary" style="height:30px;color:var(--color-text);font-size:12.5px"><dc-import name="Icon" n="filter" s="13" hint-size="13px,13px"></dc-import>Status: all</button>
+  </div>
+
+  <sc-if value="{{ isTable }}" hint-placeholder-val="{{ true }}">
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="font-size:13px">
+        <thead><tr style="font-family:var(--font-mono)"><th style="padding:12px 16px;font-family:var(--font-mono);font-size:10px">STATION</th><th style="font-family:var(--font-mono);font-size:10px">TYPE</th><th style="font-family:var(--font-mono);font-size:10px">STATUS</th><th style="font-family:var(--font-mono);font-size:10px">LAST READING</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">VALUE</th><th style="font-family:var(--font-mono);font-size:10px">BATTERY</th><th style="font-family:var(--font-mono);font-size:10px">LINK</th><th style="font-family:var(--font-mono);font-size:10px">COORDINATES</th><th></th></tr></thead>
+        <tbody>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+            <tr onClick="{{ r.edit }}" style="cursor:pointer">
+              <td style="padding:11px 16px"><div style="display:flex;flex-direction:column"><span style="font-family:var(--font-mono);font-size:12px">{{ r.id }}</span><span style="font-size:12px;color:var(--muted)">{{ r.name }}</span></div></td>
+              <td><span style="display:inline-flex;align-items:center;gap:6px;color:var(--muted)"><dc-import name="Icon" n="{{ r.icon }}" s="14" hint-size="14px,14px"></dc-import>{{ r.type }}</span></td>
+              <td><span style="display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:{{ r.sc }}"><span style="width:6px;height:6px;background:{{ r.sc }}"></span>{{ r.status }}</span></td>
+              <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">{{ r.last }}</td>
+              <td style="font-family:var(--font-mono);font-size:12.5px;text-align:right">{{ r.val }}</td>
+              <td><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:6px;border:1px solid var(--divider-strong);padding:1px"><div style="height:100%;width:{{ r.bat }}%;background:{{ r.bc }}"></div></div><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ r.bat }}%</span></div></td>
+              <td><span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--muted)"><dc-import name="Icon" n="{{ r.linkIcon }}" s="14" hint-size="14px,14px"></dc-import>{{ r.link }}</span></td>
+              <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ r.coord }}</td>
+              <td style="text-align:right;padding-right:14px;color:var(--muted)"><dc-import name="Icon" n="more" s="16" hint-size="16px,16px"></dc-import></td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;padding:12px 16px;font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span>Showing 10 of 24</span><span>‹ 1 2 3 ›</span></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:0" class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="height:600px;position:relative"><dc-import name="MapView" layer="none" sensors="{{ true }}" hint-size="100%,600px" style="position:absolute;inset:0"></dc-import></div>
+      <div style="border-left:1px solid var(--color-divider);overflow-y:auto;max-height:600px">
+        <sc-for list="{{ rows }}" as="r">
+          <button onClick="{{ r.edit }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--color-divider)" style-hover="background:var(--color-neutral-100)">
+            <span style="width:8px;height:8px;background:{{ r.sc }};flex:none"></span>
+            <span style="display:flex;flex-direction:column;flex:1"><span style="font-family:var(--font-mono);font-size:12px">{{ r.id }}</span><span style="font-size:12px;color:var(--muted)">{{ r.name }}</span></span>
+            <span style="font-family:var(--font-mono);font-size:12px">{{ r.val }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position:fixed;inset:0;background:rgba(2,12,17,.45);z-index:30"></div>
+    <aside style="position:fixed;top:0;right:0;bottom:0;width:440px;z-index:31;background:var(--color-surface);border-left:1px solid var(--divider-strong);display:flex;flex-direction:column;animation:apFade .2s ease">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--color-divider)">
+        <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">{{ dKicker }}</span><span style="font-family:var(--font-heading);font-weight:600;font-size:24px">{{ dTitle }}</span></div>
+        <button onClick="{{ close }}" style="all:unset;cursor:pointer;width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--color-divider)"><dc-import name="Icon" n="x" s="14" hint-size="14px,14px"></dc-import></button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label>Station ID <span style="color:#E07B7B">*</span></label><input class="input" value="{{ f.id }}" style="font-family:var(--font-mono);font-size:13px;background:var(--color-bg)"></div>
+          <div class="field"><label>Display name <span style="color:#E07B7B">*</span></label><input class="input" value="{{ f.name }}" style="background:var(--color-bg)"></div>
+        </div>
+        <div class="field"><label>Sensor type <span style="color:#E07B7B">*</span></label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--color-divider)">
+            <sc-for list="{{ ftypes }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;font-size:11.5px;text-align:center;border-right:1px solid var(--color-divider);background:{{ t.bg }};color:{{ t.fg }}"><dc-import name="Icon" n="{{ t.icon }}" s="16" hint-size="16px,16px"></dc-import>{{ t.label }}</button></sc-for>
+          </div>
+        </div>
+        <div class="field"><label>Location <span style="color:#E07B7B">*</span> <span style="float:right;font-family:var(--font-mono);font-size:10.5px;color:var(--color-accent)">{{ pickHint }}</span></label>
+          <div style="height:200px;position:relative;border:1px solid var(--color-divider);cursor:crosshair"><dc-import name="MapView" layer="risk" labels="{{ true }}" sensors="{{ true }}" sensor-ids="{{ false }}" on-cell="{{ pick }}" selected="{{ pickId }}" opacity="{{ 0 }}" hint-size="100%,200px" style="position:absolute;inset:0"></dc-import></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div class="field"><label>Latitude</label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-bg);height:36px"><input value="{{ f.lat }}" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:10px">°N</span></div></div>
+          <div class="field"><label>Longitude</label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-bg);height:36px"><input value="{{ f.lon }}" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:10px">°E</span></div></div>
+          <div class="field"><label>Altitude</label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-bg);height:36px"><input value="{{ f.alt }}" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:10px">m</span></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label>Reporting interval</label><div class="input" style="display:flex;align-items:center;justify-content:space-between;background:var(--color-bg);font-family:var(--font-mono);font-size:13px">15 min<dc-import name="Icon" n="down" s="14" hint-size="14px,14px"></dc-import></div></div>
+          <div class="field"><label>Telemetry</label><div class="input" style="display:flex;align-items:center;justify-content:space-between;background:var(--color-bg);font-size:13px">LoRaWAN · EU868<dc-import name="Icon" n="down" s="14" hint-size="14px,14px"></dc-import></div></div>
+        </div>
+        <div class="field"><label>Notes <span style="color:var(--faint)">(optional)</span></label><textarea class="input" style="background:var(--color-bg);min-height:70px">Mounted 2 m mast, sensor head faces north.</textarea></div>
+      </div>
+      <div style="display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--color-divider)">
+        <button class="btn btn-ghost" style="color:#E07B7B">Decommission</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-secondary" onClick="{{ close }}" style="height:36px;color:var(--color-text)">Cancel</button>
+        <button class="btn btn-primary blueprint" onClick="{{ close }}" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Save station</button>
+      </div>
+    </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const D=[['ICH-W01','Ichkeul South Met','weather','ok','08:30','24.6 °C · 38% RH',86,'LoRa','37.118','9.670',41],
+['ICH-S02','Djebel Ichkeul foot','soil','ok','08:30','13.9 % VWC',72,'LoRa','37.112','9.736',22],
+['ICH-L03','North shore gauge','water','ok','08:15','1.84 m · 9.1 g/L',64,'GSM','37.211','9.700',3],
+['ICH-S04','Oued Joumine field','soil','warn','08:30','15.1 % VWC',11,'LoRa','37.172','9.634',14],
+['BIZ-W01','Bizerte Port Met','weather','ok','08:30','26.2 °C · 61% RH',91,'GSM','37.244','9.880',8],
+['BIZ-L02','Menzel Bourguiba gauge','water','ok','08:15','0.42 m · 36.8 g/L',58,'GSM','37.178','9.810',1],
+['BIZ-S03','Utique plots','soil','off','22 Sep 06:10','—',0,'LoRa','37.170','9.903',19],
+['MAT-S01','Mateur cereal station','soil','ok','08:30','11.4 % VWC',77,'LoRa','37.086','9.765',35],
+['MAT-W02','Mateur plain Met','weather','warn','07:45','25.9 °C · 34% RH',68,'GSM','37.049','9.662',46],
+['TIN-C01','Tinja lysimeter','custom','ok','08:00','ET₀ 4.8 mm/d',83,'Sat','37.160','9.760',6]];
+const TY={weather:['Weather','sun'],soil:['Soil moisture','droplet'],water:['Water level','waves'],custom:['Custom','cpu']};
+const ST={ok:['Online','var(--teal)'],warn:['Degraded','#E7A83B'],off:['Offline','#E07B7B']};
+class Component extends DCLogic {
+  state={view:'table',type:'all',drawer:false,edit:null,ftype:'soil',lat:'',lon:'',pickId:null};
+  renderVals(){
+    const S=this.state, v=S.view;
+    const open=r=>()=>this.setState({drawer:true,edit:r,ftype:r?r[2]:'soil',lat:r?r[8]:'',lon:r?r[9]:'',pickId:null});
+    const rows=D.filter(r=>S.type==='all'||r[2]===S.type).map(r=>({id:r[0],name:r[1],type:TY[r[2]][0],icon:TY[r[2]][1],status:ST[r[3]][0],sc:ST[r[3]][1],last:r[4],val:r[5],bat:r[6],bc:r[6]<20?'#D96565':r[6]<60?'#E7A83B':'var(--teal)',link:r[7],linkIcon:r[3]==='off'?'wifioff':'wifi',coord:`${r[8]}°N ${r[9]}°E`,edit:open(r)}));
+    const cnt=t=>t==='all'?24:{weather:7,soil:11,water:4,custom:2}[t];
+    const types=['all','weather','soil','water','custom'].map(t=>({label:t==='all'?'All types':TY[t][0],n:cnt(t),pick:()=>this.setState({type:t}),bd:S.type===t?'color-mix(in srgb,var(--color-accent) 45%,transparent)':'var(--color-divider)',bg:S.type===t?'var(--color-accent-100)':'transparent',fg:S.type===t?'var(--color-text)':'var(--muted)'}));
+    const e=S.edit;
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'}, isTable:v==='table', isMap:v==='map', vTable:()=>this.setState({view:'table'}), vMap:()=>this.setState({view:'map'}),
+      tBg:v==='table'?'var(--s3)':'transparent', tFg:v==='table'?'var(--color-text)':'var(--muted)', mBg:v==='map'?'var(--s3)':'transparent', mFg:v==='map'?'var(--color-text)':'var(--muted)',
+      types, rows, drawer:S.drawer, openNew:open(null), close:()=>this.setState({drawer:false}),
+      dKicker:e?'EDIT STATION':'REGISTER NEW STATION', dTitle:e?e[1]:'New sensor',
+      f:{id:e?e[0]:'ICH-S05',name:e?e[1]:'',lat:S.lat,lon:S.lon,alt:e?e[10]:''},
+      ftypes:Object.keys(TY).map(k=>({label:TY[k][0],icon:TY[k][1],pick:()=>this.setState({ftype:k}),bg:S.ftype===k?'var(--color-accent-100)':'transparent',fg:S.ftype===k?'var(--color-text)':'var(--muted)'})),
+      pick:c=>this.setState({lat:c.lat,lon:c.lon,pickId:c.id}), pickId:S.pickId, pickHint:S.pickId?'✓ PICKED ON MAP':'CLICK MAP TO PICK' };
+  }
+}
+</script>
+</body>
+</html>

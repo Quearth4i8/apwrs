@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">ANALYSIS · FORECASTS · {{ site.cc }} / {{ site.name }}</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Forecasts</h1>
+      <div style="font-size:14px;color:var(--muted)">ECMWF SEAS5 + ERA5-Land downscaled to 1 km, blended with station data. Issued 23 Sep 2026 06:00 UTC.</div>
+    </div>
+    <div style="display:flex;gap:10px"><button class="btn btn-secondary" style="height:36px;color:var(--color-text)"><dc-import name="Icon" n="refresh" s="15" hint-size="15px,15px"></dc-import>Re-run model</button><button class="btn btn-secondary" style="height:36px;color:var(--color-text)"><dc-import name="Icon" n="download" s="15" hint-size="15px,15px"></dc-import>CSV</button></div>
+  </div>
+
+  <div class="blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <table class="table" style="font-size:13px">
+      <thead><tr><th style="padding:12px 18px;font-family:var(--font-mono);font-size:10px;width:150px">TIME FRAME</th><th style="font-family:var(--font-mono);font-size:10px;width:130px">RISK LEVEL</th><th style="font-family:var(--font-mono);font-size:10px">PREDICTION</th><th style="font-family:var(--font-mono);font-size:10px">RECOMMENDED ACTION</th><th style="font-family:var(--font-mono);font-size:10px;width:150px;padding-right:18px">CONFIDENCE</th></tr></thead>
+      <tbody><sc-for list="{{ rows }}" as="r" hint-placeholder-count="6"><tr>
+        <td style="padding:14px 18px"><div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ r.f }}</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ r.d }}</span></div></td>
+        <td><dc-import name="RiskBadge" score="{{ r.s }}" hint-size="96px,22px"></dc-import></td>
+        <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">{{ r.p }}</td>
+        <td style="line-height:1.45;padding-right:16px">{{ r.a }}</td>
+        <td style="padding-right:18px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--color-neutral-100)"><div style="height:100%;width:{{ r.c }}%;background:var(--teal)"></div></div><span style="font-family:var(--font-mono);font-size:11.5px;width:32px;text-align:right">{{ r.c }}%</span></div></td>
+      </tr></sc-for></tbody>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px">
+    <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Soil water balance</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">ROOT ZONE 0–60 CM · WEEKLY · MM</span></div>
+      <svg viewBox="0 0 560 250" style="width:100%;display:block">
+        <g style="stroke:var(--color-text);stroke-opacity:.08"><path d="M36 20H552M36 70H552M36 120H552M36 170H552M36 220H552"></path></g>
+        <line x1="36" y1="{{ fcY }}" x2="552" y2="{{ fcY }}" style="stroke:var(--teal)" stroke-dasharray="4 3"></line><text x="548" y="{{ fcYt }}" text-anchor="end" style="font-family:'JetBrains Mono',monospace;fill:var(--teal)" font-size="9">FIELD CAPACITY 96</text>
+        <line x1="36" y1="{{ wpY }}" x2="552" y2="{{ wpY }}" stroke="#D96565" stroke-dasharray="4 3"></line><text x="548" y="{{ wpYt }}" text-anchor="end" style="font-family:'JetBrains Mono',monospace" fill="#E07B7B" font-size="9">WILTING POINT 38</text>
+        <sc-for list="{{ wb }}" as="b"><g><rect x="{{ b.x }}" y="{{ b.py }}" width="12" height="{{ b.ph }}" style="fill:var(--teal)" fill-opacity=".8"></rect><rect x="{{ b.x2 }}" y="{{ b.ey }}" width="12" height="{{ b.eh }}" fill="#EE8434" fill-opacity=".75"></rect></g></sc-for>
+        <path d="{{ swPath }}" fill="none" style="stroke:var(--color-text)" stroke-width="1.75"></path>
+        <line x1="{{ nowX }}" y1="20" x2="{{ nowX }}" y2="220" style="stroke:var(--color-text);stroke-opacity:.35" stroke-dasharray="3 3"></line>
+        <g style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="9.5"><text x="30" y="24" text-anchor="end">120</text><text x="30" y="124" text-anchor="end">60</text><text x="30" y="224" text-anchor="end">0</text><text x="40" y="240">W31</text><text x="205" y="240">W35</text><text x="{{ nowX }}" y="240" text-anchor="middle" style="fill:var(--color-text)">W39 now</text><text x="520" y="240">W46</text></g>
+      </svg>
+      <div style="display:flex;gap:16px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:var(--teal)"></span>Precipitation</span><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#EE8434"></span>Crop ET (ETc)</span><span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:var(--color-text)"></span>Soil water storage</span></div>
+    </div>
+    <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Evapotranspiration</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">FAO-56 PENMAN–MONTEITH · MM/DAY</span></div>
+      <svg viewBox="0 0 560 250" style="width:100%;display:block">
+        <g style="stroke:var(--color-text);stroke-opacity:.08"><path d="M36 20H552M36 70H552M36 120H552M36 170H552M36 220H552"></path></g>
+        <path d="{{ et0Area }}" fill="#EE8434" fill-opacity=".08"></path>
+        <path d="{{ et0Path }}" fill="none" stroke="#EE8434" stroke-width="1.75"></path>
+        <path d="{{ etcPath }}" fill="none" style="stroke:var(--color-accent)" stroke-width="1.75"></path>
+        <line x1="{{ etNow }}" y1="20" x2="{{ etNow }}" y2="220" style="stroke:var(--color-text);stroke-opacity:.35" stroke-dasharray="3 3"></line>
+        <g style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="9.5"><text x="30" y="24" text-anchor="end">8</text><text x="30" y="124" text-anchor="end">4</text><text x="30" y="224" text-anchor="end">0</text><text x="40" y="240">24 Aug</text><text x="{{ etNow }}" y="240" text-anchor="middle" style="fill:var(--color-text)">23 Sep</text><text x="505" y="240">23 Oct</text></g>
+      </svg>
+      <div style="display:flex;gap:16px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#EE8434"></span>ET₀ reference · 5.1 today</span><span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:var(--color-accent)"></span>ETc olive (Kc 0.65) · 3.3</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const Y=v=>220-v*(200/120);
+const W=[];let sw=58;const P=[4,0,2,0,0,6,0,1,0,3,14,22,9,26,18,30];
+for(let i=0;i<16;i++){const e=i<10?26-i*.9:14-i*.3;sw=Math.max(34,Math.min(98,sw+P[i]*.9-e*.35));W.push({i,p:P[i],e,sw});}
+const bx=i=>44+i*32.5;
+const EY=v=>220-v*25, ex=i=>36+i*(516/59);
+const e0=[],ec=[];for(let i=0;i<60;i++){const v=6.2-2.6*(i/59)+.5*Math.sin(i/2.1)+(i>40?-.3:0);e0.push([ex(i),EY(v)]);ec.push([ex(i),EY(v*.65)]);}
+const L=a=>'M'+a.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L');
+class Component extends DCLogic {
+  renderVals(){
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'},
+      rows:[['Next 3 days','24–26 Sep',59,'Rain 0 mm · Tmax 31 °C · ET₀ 5.2','Irrigate alfalfa and young olive; no field operations on bare soil.',88],
+        ['Days 4–7','27–30 Sep',64,'Rain 2 mm · Tmax 33 °C · wind NW 25 km/h','Mulch or delay tillage to limit topsoil moisture loss.',79],
+        ['Week 2','01–07 Oct',67,'Rain 6 mm (p=0.34) · Tmax 29 °C','Hold seed purchase decisions; monitor SPEI-3 trend.',68],
+        ['Weeks 3–4','08–21 Oct',71,'Rain 14 mm · 35% below normal','Prepare pre-sowing irrigation plan for tomato transplants.',59],
+        ['November','Month 2',54,'Rain 48 mm · near normal (tercile 44%)','Target durum wheat sowing 12 Nov – 04 Dec after first 20 mm event.',52],
+        ['December','Month 3',38,'Rain 71 mm · above normal (tercile 41%)','Barley sowing viable until 20 Dec; plan N top-dress for January.',44]].map(r=>({f:r[0],d:r[1],s:r[2],p:r[3],a:r[4],c:r[5]})),
+      wb:W.map(w=>({x:bx(w.i)-12,x2:bx(w.i),py:Y(w.p*2.2).toFixed(1),ph:(w.p*2.2*200/120).toFixed(1),ey:Y(w.e).toFixed(1),eh:(w.e*200/120).toFixed(1)})),
+      swPath:'M'+W.map(w=>`${bx(w.i).toFixed(1)} ${Y(w.sw).toFixed(1)}`).join('L'), fcY:Y(96), fcYt:Y(96)-5, wpY:Y(38), wpYt:Y(38)-5, nowX:bx(8).toFixed(1),
+      et0Path:L(e0), etcPath:L(ec), et0Area:L(e0)+`L${ex(59)} 220L36 220Z`, etNow:ex(30).toFixed(1) };
+  }
+}
+</script>
+</body>
+</html>

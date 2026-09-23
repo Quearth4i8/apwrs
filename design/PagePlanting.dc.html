@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:22px;position:relative">
+  <div style="position:absolute;right:0;top:-80px;width:700px;height:360px;background:radial-gradient(ellipse at 60% 50%,var(--glow),transparent 65%);pointer-events:none"></div>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;position:relative">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">ANALYSIS · PLANTING WINDOWS · {{ site.cc }} / {{ site.name }} · SEASON 2026/27</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Planting windows</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)">IRRIGATION</span>
+      <div style="display:flex;border:1px solid var(--color-divider);height:34px"><sc-for list="{{ irr }}" as="o"><button onClick="{{ o.pick }}" style="all:unset;cursor:pointer;padding:0 12px;display:flex;align-items:center;font-size:12.5px;border-right:1px solid var(--color-divider);background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for></div>
+      <button class="btn btn-secondary" style="height:34px;color:var(--color-text)"><dc-import name="Icon" n="download" s="14" hint-size="14px,14px"></dc-import>Advisory PDF</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;position:relative" class="blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <sc-for list="{{ crops }}" as="c" hint-placeholder-count="6">
+      <button onClick="{{ c.pick }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-right:1px solid var(--color-divider);background:{{ c.bg }};box-shadow:inset 0 -2px 0 {{ c.edge }}" style-hover="background:var(--color-neutral-100)">
+        <span style="display:flex;justify-content:space-between;align-items:center;color:{{ c.ic }}"><dc-import name="Icon" n="{{ c.icon }}" s="16" hint-size="16px,16px"></dc-import><span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">{{ c.state }}</span></span>
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:18px;line-height:1.1">{{ c.n }}</span>
+        <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ c.v }}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div class="blueprint" style="display:flex;flex-direction:column">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--color-divider)">
+      <span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Season calendar · Sep 2026 → Jun 2027</span>
+      <span style="display:flex;gap:16px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(43,166,184,.35);border:1px solid var(--color-accent)"></span>Optimal</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(231,168,59,.25);border:1px solid rgba(231,168,59,.6)"></span>Marginal</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:repeating-linear-gradient(135deg,rgba(217,101,101,.45) 0 3px,transparent 3px 6px);border:1px solid rgba(217,101,101,.55)"></span>Risky</span></span>
+    </div>
+    <div style="display:grid;grid-template-columns:170px minmax(0,1fr)">
+      <div></div>
+      <div style="display:grid;grid-template-columns:repeat(10,1fr);border-bottom:1px solid var(--color-divider);border-left:1px solid var(--color-divider)"><sc-for list="{{ months }}" as="m"><div style="padding:8px 10px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted);border-right:1px solid var(--color-divider)">{{ m }}</div></sc-for></div>
+    </div>
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+      <div onClick="{{ r.pick }}" style="display:grid;grid-template-columns:170px minmax(0,1fr);border-bottom:1px solid var(--color-divider);cursor:pointer;background:{{ r.bg }}" style-hover="background:var(--color-neutral-100)">
+        <div style="padding:0 20px;display:flex;align-items:center;gap:10px;height:46px;font-size:13.5px;font-weight:{{ r.fw }}"><span style="color:{{ r.ic }};display:flex"><dc-import name="Icon" n="{{ r.icon }}" s="15" hint-size="15px,15px"></dc-import></span>{{ r.n }}</div>
+        <div style="position:relative;height:46px;border-left:1px solid var(--color-divider);background-image:linear-gradient(90deg,var(--color-divider) 1px,transparent 1px);background-size:10% 100%">
+          <sc-for list="{{ r.segs }}" as="s"><div title="{{ s.t }}" style="position:absolute;top:12px;bottom:12px;left:{{ s.l }}%;width:{{ s.w }}%;background:{{ s.bg }};border:1px solid {{ s.bd }};box-sizing:border-box"></div></sc-for>
+          <div style="position:absolute;top:0;bottom:0;left:{{ todayL }}%;width:1px;background:var(--color-text);opacity:.6"></div>
+        </div>
+      </div>
+    </sc-for>
+    <div style="display:grid;grid-template-columns:170px minmax(0,1fr)"><div></div><div style="position:relative;height:26px"><span style="position:absolute;left:{{ todayL }}%;transform:translateX(-50%);top:6px;font-family:var(--font-mono);font-size:10px;padding:1px 6px;background:var(--color-text);color:var(--color-bg)">TODAY 23 SEP</span></div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:24px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ cur.n }} — why these windows</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ cur.v }} · {{ irrLabel }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+        <sc-for list="{{ cur.wins }}" as="w" hint-placeholder-count="3">
+          <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;border-top:2px solid {{ w.c }}">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:{{ w.c }}">{{ w.k }}</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1">{{ w.d }}</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ w.m }}</span>
+            <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--color-divider);padding-top:10px">
+              <sc-for list="{{ w.why }}" as="y"><div style="display:flex;gap:8px;font-size:12.5px;line-height:1.45"><span style="color:{{ w.c }};flex:none">—</span><span>{{ y }}</span></div></sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-heading);font-weight:600;font-size:22px">Warnings</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ warnCount }}</span></div>
+      <sc-for list="{{ warns }}" as="w">
+        <div style="padding:14px 16px;border:1px solid {{ w.bd }};background:{{ w.bg }};display:flex;gap:12px">
+          <span style="color:{{ w.c }};display:flex;margin-top:1px"><dc-import name="Icon" n="alert" s="16" hint-size="16px,16px"></dc-import></span>
+          <div style="display:flex;flex-direction:column;gap:5px"><span style="font-size:13.5px;font-weight:600;line-height:1.3">{{ w.t }}</span><span style="font-size:12.5px;color:var(--muted);line-height:1.5">{{ w.d }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:{{ w.c }}">{{ w.src }}</span></div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noWarn }}"><div style="padding:24px;border:1px dashed var(--color-divider);text-align:center;color:var(--muted);font-size:13px">No compatibility issues for this crop and irrigation mode.</div></sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const T=304, O='o',M='m',R='r';
+const C=[
+ {id:'durum',n:'Durum wheat',v:'cv. Karim',icon:'sprout',segs:[[0,60,R],[61,71,M],[72,94,O],[95,108,M],[109,140,R]],state:'IN 50 D',
+  wins:[{k:'OPTIMAL',cls:O,d:'12 Nov – 04 Dec',m:'23 days · score 82 · conf. 78%',why:['First effective rain (>20 mm / 5 d) expected 8–14 Nov (p=0.71)','Soil temp. at 5 cm drops below 20 °C ~10 Nov','Frost risk at tillering < 5% for this sowing date']},
+        {k:'MARGINAL',cls:M,d:'01 – 11 Nov',m:'11 days · score 54',why:['Germination possible only if rain arrives early','Seedlings exposed to residual heat (Tmax > 27 °C)']},
+        {k:'RISKY',cls:R,d:'Before 31 Oct',m:'score 21 · drought risk 67–71',why:['Soil moisture 14 % VWC, below 18 % germination threshold','41-day dry spell; SPEI-3 −1.7 by mid-Oct']}]},
+ {id:'barley',n:'Barley',v:'cv. Rihane',icon:'sprout',segs:[[0,55,R],[56,66,M],[67,110,O],[111,125,M],[126,150,R]],state:'IN 45 D',
+  wins:[{k:'OPTIMAL',cls:O,d:'06 Nov – 19 Dec',m:'44 days · score 79 · conf. 74%',why:['More drought-tolerant than durum; tolerates later first rain','ECe 4.8 dS/m within barley tolerance (8.0)']},{k:'MARGINAL',cls:M,d:'26 Oct – 05 Nov',m:'score 51',why:['Viable with a 25 mm pre-sowing irrigation']},{k:'RISKY',cls:R,d:'Before 25 Oct',m:'score 24',why:['Topsoil too dry for uniform emergence']}]},
+ {id:'olive',n:'Olive',v:'cv. Chemlali · saplings',icon:'leaf',segs:[[60,90,M],[91,180,O],[181,210,M],[211,280,R]],state:'IN 69 D',
+  wins:[{k:'OPTIMAL',cls:O,d:'01 Dec – 28 Feb',m:'90 days · score 85',why:['Dormancy reduces transplant shock','Winter rain establishes roots before summer']},{k:'MARGINAL',cls:M,d:'Nov · Mar',m:'score 58',why:['Requires 2–3 establishment irrigations']},{k:'RISKY',cls:R,d:'After 31 Mar',m:'score 19',why:['Heat and drought before root establishment']}]},
+ {id:'palm',n:'Date palm',v:'cv. Deglet Nour · offshoots',icon:'sun',segs:[[20,45,M],[46,180,R],[212,270,O],[271,290,M]],state:'IN 190 D',
+  wins:[{k:'OPTIMAL',cls:O,d:'01 Apr – 29 May',m:'59 days · score 77',why:['Soil temperature > 20 °C promotes rooting','Requires drip; coastal humidity acceptable']},{k:'MARGINAL',cls:M,d:'21 Sep – 15 Oct',m:'score 49',why:['Possible now if irrigated daily for 6 weeks']},{k:'RISKY',cls:R,d:'Nov – Mar',m:'score 15',why:['Cold nights below 7 °C stall offshoot rooting']}]},
+ {id:'alfalfa',n:'Alfalfa',v:'cv. Gabès · irrigated',icon:'leaf',segs:[[22,50,M],[51,120,R],[181,230,O],[231,250,M]],state:'NOW',
+  wins:[{k:'OPTIMAL',cls:O,d:'01 Mar – 19 Apr',m:'50 days · score 74',why:['Spring sowing avoids current soil-moisture deficit','Lower weed pressure after winter tillage']},{k:'MARGINAL',cls:M,d:'23 Sep – 20 Oct',m:'score 47 · open now',why:['Normally optimal; downgraded by 58 → 71 risk trend','Needs 40 mm establishment irrigation']},{k:'RISKY',cls:R,d:'21 Oct – Dec',m:'score 22',why:['Seedlings cannot harden before frost']}]},
+ {id:'tomato',n:'Tomato',v:'cv. Rio Grande · transplants',icon:'sprout',segs:[[196,235,O],[236,260,M],[261,290,R]],state:'IN 174 D',
+  wins:[{k:'OPTIMAL',cls:O,d:'15 Mar – 23 Apr',m:'40 days · score 80',why:['Night temps > 10 °C, frost risk < 3%','Fruit set before July heat peak']},{k:'MARGINAL',cls:M,d:'24 Apr – 18 May',m:'score 55',why:['Higher irrigation demand at fruiting']},{k:'RISKY',cls:R,d:'After 19 May',m:'score 18',why:['Flower drop above 35 °C; ET₀ > 7 mm/d']}]}];
+const ST={o:['rgba(43,166,184,.32)','var(--color-accent)','var(--color-accent)'],m:['rgba(231,168,59,.22)','rgba(231,168,59,.6)','#E7A83B'],r:['repeating-linear-gradient(135deg,rgba(217,101,101,.4) 0 4px,transparent 4px 8px)','rgba(217,101,101,.5)','#E07B7B']};
+class Component extends DCLogic {
+  state={crop:'durum',irr:'drip'};
+  renderVals(){
+    const S=this.state, cur=C.find(c=>c.id===S.crop);
+    const segs=c=>c.segs.map(([a,b,k])=>({l:(a/T*100).toFixed(2),w:((b-a+1)/T*100).toFixed(2),bg:ST[k][0],bd:ST[k][1],t:k}));
+    const warns=[];
+    if(S.crop==='durum'&&S.irr==='drip')warns.push({lv:'x',t:'Soil salinity incompatible with durum wheat under drip irrigation',d:'Ichkeul west plots measure ECe 4.8 dS/m. Drip concentrates salts at the wetting-front edge where durum roots develop; tolerance threshold is 4.0 dS/m. Switch to sprinkler, rainfed, or barley.',src:'SOIL · ICH-S04 · lab 12 Sep 2026'});
+    if(S.crop==='durum')warns.push({lv:'s',t:'Late sowing penalty after 18 Dec',d:'Each week of delay reduces yield potential by ~12% at this latitude.',src:'MODEL · yield response curve'});
+    if(S.crop==='alfalfa')warns.push({lv:'s',t:'Autumn window downgraded by drought trend',d:'Risk forecast 71 at +30 d. Autumn sowing only with guaranteed irrigation.',src:'FORECAST · run 23 Sep 06:00'});
+    if(S.crop==='palm'&&S.irr==='rainfed')warns.push({lv:'x',t:'Date palm cannot establish rainfed at this site',d:'Annual rainfall 540 mm is far below offshoot water need; select drip.',src:'AGRONOMY RULE · DP-02'});
+    if(S.irr==='sprinkler'&&S.crop==='tomato')warns.push({lv:'s',t:'Sprinkler raises foliar disease risk',d:'Late blight pressure increases with leaf wetness; prefer drip for tomato.',src:'AGRONOMY RULE · TM-05'});
+    const WC={x:['#E07B7B','rgba(217,101,101,.45)','rgba(217,101,101,.07)'],s:['#EE8434','rgba(238,132,52,.4)','rgba(238,132,52,.06)']};
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'},
+      irr:[['rainfed','Rainfed'],['drip','Drip'],['sprinkler','Sprinkler']].map(([id,l])=>({l,pick:()=>this.setState({irr:id}),bg:S.irr===id?'var(--s3)':'transparent',fg:S.irr===id?'var(--color-text)':'var(--muted)'})), irrLabel:S.irr.toUpperCase(),
+      crops:C.map(c=>({n:c.n,v:c.v,icon:c.icon,state:c.state,pick:()=>this.setState({crop:c.id}),bg:S.crop===c.id?'var(--color-accent-100)':'transparent',edge:S.crop===c.id?'var(--color-accent)':'transparent',ic:S.crop===c.id?'var(--color-accent)':'var(--muted)'})),
+      months:['SEP','OCT','NOV','DEC','JAN','FEB','MAR','APR','MAY','JUN'],
+      rows:C.map(c=>({n:c.n,icon:c.icon,segs:segs(c),pick:()=>this.setState({crop:c.id}),bg:S.crop===c.id?'var(--color-neutral-100)':'transparent',fw:S.crop===c.id?600:400,ic:S.crop===c.id?'var(--color-accent)':'var(--muted)'})),
+      todayL:(22/T*100).toFixed(2),
+      cur:{n:cur.n,v:cur.v,wins:cur.wins.map(w=>({...w,c:ST[w.cls][2]}))},
+      warns:warns.map(w=>({...w,c:WC[w.lv][0],bd:WC[w.lv][1],bg:WC[w.lv][2]})), warnCount:warns.length?warns.length+' active':'none', noWarn:!warns.length };
+  }
+}
+</script>
+</body>
+</html>

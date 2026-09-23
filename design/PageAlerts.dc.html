@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">MONITOR · ALERTS</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Alerts</h1>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onClick="{{ markAll }}" style="height:36px;color:var(--color-text)"><dc-import name="Icon" n="check" s="15" hint-size="15px,15px"></dc-import>Mark all as read</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--color-divider)">
+    <sc-for list="{{ tabs }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;padding:10px 16px;font-size:13.5px;margin-bottom:-1px;border-bottom:2px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }} <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ t.n }}</span></button></sc-for>
+  </div>
+
+  <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ true }}">
+    <div class="blueprint" style="display:grid;grid-template-columns:200px minmax(0,1fr) 400px;min-height:620px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="border-right:1px solid var(--color-divider);padding:14px 10px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:1px">
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);padding:4px 8px">PRIORITY</div>
+          <sc-for list="{{ prios }}" as="p"><button onClick="{{ p.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;font-size:13px;background:{{ p.bg }}" style-hover="background:var(--color-neutral-100)"><span style="width:8px;height:8px;background:{{ p.c }}"></span><span style="flex:1">{{ p.label }}</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ p.n }}</span></button></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1px">
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);padding:4px 8px">REGION</div>
+          <sc-for list="{{ regions }}" as="r"><div style="display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;font-size:13px;color:var(--muted)"><span style="width:12px;height:12px;border:1px solid var(--divider-strong);display:grid;place-items:center"><span style="width:6px;height:6px;background:var(--color-accent)"></span></span><span style="flex:1">{{ r.l }}</span><span style="font-family:var(--font-mono);font-size:11px">{{ r.n }}</span></div></sc-for>
+        </div>
+      </div>
+      <div style="border-right:1px solid var(--color-divider);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--color-divider);font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span>{{ count }} alerts</span><span style="margin-left:auto">Sort: newest</span></div>
+        <sc-for list="{{ list }}" as="a" hint-placeholder-count="7">
+          <button onClick="{{ a.open }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:12px;padding:13px 16px;border-bottom:1px solid var(--color-divider);background:{{ a.bg }};box-shadow:inset 2px 0 0 {{ a.edge }}" style-hover="background:var(--color-neutral-100)">
+            <span style="width:6px;height:6px;margin-top:7px;background:{{ a.dot }}"></span>
+            <span style="display:flex;flex-direction:column;gap:5px;min-width:0">
+              <span style="display:flex;align-items:center;gap:8px"><dc-import name="RiskBadge" level="{{ a.lv }}" hint-size="80px,22px"></dc-import><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ a.r }}</span></span>
+              <span style="font-size:13.5px;font-weight:{{ a.fw }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.t }}</span>
+              <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.d }}</span>
+            </span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ a.time }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <div style="padding:20px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px"><dc-import name="RiskBadge" level="{{ cur.lv }}" hint-size="80px,22px"></dc-import><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ cur.stamp }}</span></div>
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.1">{{ cur.t }}</div>
+          <div style="font-size:13.5px;color:var(--muted);line-height:1.55">{{ cur.body }}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--color-divider)">
+          <sc-for list="{{ cur.facts }}" as="f"><div style="padding:12px 20px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:3px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)">{{ f.k }}</span><span style="font-family:var(--font-mono);font-size:14px">{{ f.v }}</span></div></sc-for>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--muted)">RECOMMENDED ACTION</span>
+          <div style="font-size:13.5px;line-height:1.55">{{ cur.act }}</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-secondary" style="height:34px;color:var(--color-text)"><dc-import name="Icon" n="map" s="14" hint-size="14px,14px"></dc-import>Show on map</button>
+            <button class="btn btn-secondary" style="height:34px;color:var(--color-text)">Snooze 24 h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isRules }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13.5px;color:var(--muted)">Rules are evaluated after every model run (06:00 and 18:00 UTC) and on each sensor reading.</span><button class="btn btn-primary blueprint" style="height:34px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="plus" s="14" hint-size="14px,14px"></dc-import>New rule</button></div>
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="font-size:13px">
+        <thead><tr><th style="padding:12px 16px;font-family:var(--font-mono);font-size:10px">RULE</th><th style="font-family:var(--font-mono);font-size:10px">CONDITION</th><th style="font-family:var(--font-mono);font-size:10px">PRIORITY</th><th style="font-family:var(--font-mono);font-size:10px">SCOPE</th><th style="font-family:var(--font-mono);font-size:10px">CHANNELS</th><th style="font-family:var(--font-mono);font-size:10px">ENABLED</th></tr></thead>
+        <tbody><sc-for list="{{ rules }}" as="r" hint-placeholder-count="6"><tr>
+          <td style="padding:12px 16px;font-weight:500">{{ r.n }}</td>
+          <td><code style="font-family:var(--font-mono);font-size:11.5px;padding:3px 7px;background:var(--color-neutral-100);border:1px solid var(--color-divider)">{{ r.c }}</code></td>
+          <td><dc-import name="RiskBadge" level="{{ r.lv }}" hint-size="80px,22px"></dc-import></td>
+          <td style="color:var(--muted)">{{ r.s }}</td>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ r.ch }}</td>
+          <td><button onClick="{{ r.toggle }}" style="all:unset;cursor:pointer;display:block;width:30px;height:16px;border:1px solid {{ r.bd }};background:{{ r.bg }};position:relative"><span style="position:absolute;top:2px;left:{{ r.x }}px;width:10px;height:10px;background:{{ r.knob }};transition:left .15s"></span></button></td>
+        </tr></sc-for></tbody>
+      </table>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const A=[
+{lv:'extreme',t:'SPEI-3 crossed −2.0 in southern Mateur plain',d:'Zone M-07 · 14.2 km² now classified Extreme',r:'MATEUR',time:'08:12',body:'The 3-month Standardized Precipitation-Evapotranspiration Index fell to −2.07 across zone M-07 after 41 consecutive days below 1 mm. Model confidence 84%.',facts:[['SPEI-3','−2.07'],['AREA','14.2 km²'],['RAIN 30D','6.1 mm'],['CONF.','84%']],act:'Postpone any early cereal sowing in M-07. Prioritise supplementary irrigation for olive plots under 5 years.'},
+{lv:'severe',t:'Soil moisture below 15% VWC at ICH-S02',d:'Lowest September value since 2017',r:'ICHKEUL S',time:'06:40',body:'Station ICH-S02 (0–30 cm) reports 13.9% volumetric water content, 3.1 points lower than 7 days ago and below the wilting threshold for young alfalfa.',facts:[['VWC','13.9 %'],['Δ 7D','−3.1 pts'],['THRESHOLD','15.0 %'],['DEPTH','0–30 cm']],act:'Schedule irrigation for alfalfa within 48 h; re-check after next reading.'},
+{lv:'watch',t:'Lac Ichkeul level down 11 cm in 14 days',d:'Salinity rising at north shore gauge',r:'ICHKEUL N',time:'Yest.',body:'Gauge ICH-L03 shows 1.84 m, with salinity climbing to 9.1 g/L. Wetland vegetation and wintering bird habitat may be affected if the trend continues.',facts:[['LEVEL','1.84 m'],['Δ 14D','−11 cm'],['SALINITY','9.1 g/L'],['NORMAL','6.5 g/L']],act:'Notify park authority (ANPE). Review Sejnane dam release schedule.'},
+{lv:'severe',t:'LST anomaly +4.3 °C (MODIS 8-day)',d:'Heat stress on late olive harvest',r:'BIZERTE W',time:'Yest.',body:'MODIS land surface temperature for 14–21 Sep is 4.3 °C above the 2003–2022 mean across the western Bizerte plateau.',facts:[['LST','36.8 °C'],['ANOMALY','+4.3 °C'],['PIXELS','312'],['SOURCE','MOD11A2']],act:'Advise growers to delay harvest-time pruning; monitor fruit drop.'},
+{lv:'watch',t:'NDVI 0.06 below 5-year median',d:'Sentinel-2 composite 21 Sep',r:'ICHKEUL',time:'21 Sep',body:'Median NDVI across rain-fed parcels is 0.31 vs 0.37 expected for this date.',facts:[['NDVI','0.31'],['MEDIAN','0.37'],['CLOUD','4 %'],['TILE','32SNF']],act:'No action required. Keep monitoring weekly composite.'},
+{lv:'safe',t:'BIZ-L02 back online',d:'Connectivity restored after 3 h',r:'BIZERTE',time:'20 Sep',body:'Station reconnected via GSM fallback.',facts:[['DOWNTIME','3 h 12 m'],['LINK','GSM']],act:'None.'},
+{lv:'severe',t:'7-day forecast: risk to peak at 66',d:'Driven by rainfall deficit and ET₀ 5.1 mm/d',r:'ICHKEUL',time:'19 Sep',body:'The ensemble forecast projects risk rising from 58 to 66 by 29 Sep.',facts:[['PEAK','66'],['DATE','29 Sep'],['ET₀','5.1 mm/d'],['CONF.','76%']],act:'Review planting plans on the Planting Windows page.'}];
+const PC={extreme:'#D96565',severe:'#EE8434',watch:'#E7A83B',safe:'#38A88A'};
+class Component extends DCLogic {
+  state={tab:'inbox',sel:0,read:{4:1,5:1,6:1},prio:'all',rules:{0:1,1:1,2:1,3:0,4:1,5:1}};
+  renderVals(){
+    const S=this.state;
+    const items=A.map((a,i)=>({...a,i})).filter(a=>S.prio==='all'||a.lv===S.prio);
+    const list=items.map(a=>{const unread=!S.read[a.i],on=S.sel===a.i;return{...a,open:()=>this.setState(s=>({sel:a.i,read:{...s.read,[a.i]:1}})),bg:on?'var(--color-neutral-100)':'transparent',edge:on?'var(--color-accent)':'transparent',dot:unread?'var(--color-accent)':'transparent',fw:unread?600:400};});
+    const c=A[S.sel];
+    const nUnread=A.filter((_,i)=>!S.read[i]).length;
+    const RU=[['Extreme drought onset','SPEI-3 < −2.0 for ≥ 2 runs','extreme','All TN sites','Email · SMS · App'],['Soil moisture floor','VWC(0–30cm) < 15 %','severe','Ichkeul, Mateur','Email · App'],['Lake level drop','Δ level(14d) < −10 cm','watch','Ichkeul','Email · App'],['Heat anomaly','LST anomaly > +4 °C','severe','Bizerte','App'],['Forecast escalation','risk(+7d) − risk(0) ≥ 10','severe','All sites','Email · App'],['Sensor offline','no data > 6 h','watch','All stations','App']];
+    return { tabs:[['inbox','Inbox',nUnread+' unread'],['rules','Alert rules','6']].map(([id,label,n])=>({label,n,pick:()=>this.setState({tab:id}),bd:S.tab===id?'var(--color-accent)':'transparent',fg:S.tab===id?'var(--color-text)':'var(--muted)'})),
+      isInbox:S.tab==='inbox', isRules:S.tab==='rules', list, count:items.length,
+      prios:[['all','All','var(--muted)',7],['extreme','Extreme',PC.extreme,1],['severe','Severe',PC.severe,3],['watch','Watch',PC.watch,2],['safe','Info',PC.safe,1]].map(([id,label,c,n])=>({label,c,n,pick:()=>this.setState({prio:id}),bg:S.prio===id?'var(--color-neutral-100)':'transparent'})),
+      regions:[{l:'Ichkeul',n:4},{l:'Bizerte',n:2},{l:'Mateur',n:1}],
+      cur:{...c,stamp:`${c.r} · ${c.time}`,facts:c.facts.map(([k,v])=>({k,v}))},
+      markAll:()=>this.setState({read:{0:1,1:1,2:1,3:1,4:1,5:1,6:1}}),
+      rules:RU.map((r,i)=>{const on=!!S.rules[i];return{n:r[0],c:r[1],lv:r[2],s:r[3],ch:r[4],toggle:()=>this.setState(s=>({rules:{...s.rules,[i]:on?0:1}})),bd:on?'var(--color-accent)':'var(--divider-strong)',bg:on?'var(--color-accent-100)':'transparent',knob:on?'var(--color-accent)':'var(--muted)',x:on?16:2};}) };
+  }
+}
+</script>
+</body>
+</html>

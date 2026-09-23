@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">ADMIN · {{ kicker }}</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">{{ title }}</h1>
+    </div>
+    <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary blueprint" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="plus" s="15" hint-size="15px,15px"></dc-import>Invite user</button></sc-if>
+    <sc-if value="{{ isRegions }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary blueprint" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="plus" s="15" hint-size="15px,15px"></dc-import>Add site</button></sc-if>
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}"><button class="btn btn-primary blueprint" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Save changes</button></sc-if>
+  </div>
+  <div style="display:flex;border-bottom:1px solid var(--color-divider)">
+    <sc-for list="{{ tabs }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;padding:10px 16px;font-size:13.5px;margin-bottom:-1px;border-bottom:2px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }}</button></sc-for>
+  </div>
+
+  <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0" class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <sc-for list="{{ roles }}" as="r"><div style="padding:12px 16px;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px"><span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)">{{ r.n }}</span><span style="font-family:var(--font-heading);font-weight:600;font-size:24px">{{ r.c }}</span><span style="font-size:11.5px;color:var(--muted);line-height:1.35">{{ r.d }}</span></div></sc-for>
+    </div>
+    <div class="blueprint">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <table class="table" style="font-size:13px">
+        <thead><tr><th style="padding:11px 16px;font-family:var(--font-mono);font-size:10px">USER</th><th style="font-family:var(--font-mono);font-size:10px">ORGANISATION</th><th style="font-family:var(--font-mono);font-size:10px">ROLE</th><th style="font-family:var(--font-mono);font-size:10px">SITE ACCESS</th><th style="font-family:var(--font-mono);font-size:10px">LAST ACTIVE</th><th style="font-family:var(--font-mono);font-size:10px">STATUS</th><th></th></tr></thead>
+        <tbody><sc-for list="{{ users }}" as="u" hint-placeholder-count="8"><tr>
+          <td style="padding:10px 16px"><div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--color-divider);background:var(--s3);font-family:var(--font-mono);font-size:10.5px">{{ u.i }}</span><span style="display:flex;flex-direction:column"><span style="font-weight:500">{{ u.n }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ u.e }}</span></span></div></td>
+          <td style="color:var(--muted)">{{ u.o }}</td>
+          <td><span style="display:inline-flex;align-items:center;justify-content:space-between;gap:10px;height:28px;padding:0 10px;border:1px solid var(--color-divider);min-width:140px;font-size:12.5px">{{ u.r }}<dc-import name="Icon" n="down" s="12" hint-size="12px,12px"></dc-import></span></td>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ u.s }}</td>
+          <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ u.l }}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;color:{{ u.sc }}"><span style="width:6px;height:6px;background:{{ u.sc }}"></span>{{ u.st }}</span></td>
+          <td style="color:var(--muted);text-align:right;padding-right:14px"><dc-import name="Icon" n="more" s="16" hint-size="16px,16px"></dc-import></td>
+        </tr></sc-for></tbody>
+      </table>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isRegions }}" hint-placeholder-val="{{ false }}">
+    <div class="blueprint" style="display:grid;grid-template-columns:320px minmax(0,1fr);min-height:560px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="border-right:1px solid var(--color-divider);padding:10px">
+        <sc-for list="{{ tree }}" as="c">
+          <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;font-size:13px;font-weight:600"><dc-import name="Icon" n="down" s="13" hint-size="13px,13px"></dc-import><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ c.cc }}</span>{{ c.n }}<span style="margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ c.count }}</span></div>
+          <sc-for list="{{ c.regions }}" as="r">
+            <div style="display:flex;align-items:center;gap:8px;height:28px;padding:0 8px 0 28px;font-size:12.5px;color:var(--muted)">{{ r.n }}</div>
+            <sc-for list="{{ r.sites }}" as="s"><button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:8px;height:30px;padding:0 8px 0 44px;font-size:13px;background:{{ s.bg }};box-shadow:inset 2px 0 0 {{ s.edge }}" style-hover="background:var(--color-neutral-100)"><dc-import name="Icon" n="pin" s="13" hint-size="13px,13px"></dc-import>{{ s.n }}</button></sc-for>
+          </sc-for>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <div style="padding:18px 22px;border-bottom:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">{{ sel.path }}</span><span style="font-family:var(--font-heading);font-weight:600;font-size:28px">{{ sel.n }}</span></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-secondary" style="height:32px;color:var(--color-text)"><dc-import name="Icon" n="pencil" s="14" hint-size="14px,14px"></dc-import>Edit</button><button class="btn btn-secondary" style="height:32px;color:var(--color-text)"><dc-import name="Icon" n="polygon" s="14" hint-size="14px,14px"></dc-import>Edit boundary</button></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--color-divider)">
+          <sc-for list="{{ sel.facts }}" as="f"><div style="padding:12px 22px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.08em">{{ f.k }}</div><div style="font-family:var(--font-mono);font-size:14px">{{ f.v }}</div></div></sc-for>
+        </div>
+        <div style="flex:1;min-height:320px;position:relative"><dc-import name="MapView" layer="none" sensors="{{ true }}" drawn="{{ true }}" hint-size="100%,320px" style="position:absolute;inset:0"></dc-import></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <div class="blueprint" style="display:flex;flex-direction:column">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="padding:14px 20px;border-bottom:1px solid var(--color-divider);font-family:var(--font-heading);font-weight:600;font-size:18px">Units</div>
+          <sc-for list="{{ units }}" as="u"><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--color-divider)"><span style="font-size:13.5px">{{ u.l }}</span><div style="display:flex;border:1px solid var(--color-divider)"><sc-for list="{{ u.opts }}" as="o"><button onClick="{{ o.pick }}" style="all:unset;cursor:pointer;padding:5px 11px;font-family:var(--font-mono);font-size:11.5px;border-right:1px solid var(--color-divider);background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for></div></div></sc-for>
+        </div>
+        <div class="blueprint" style="display:flex;flex-direction:column">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="padding:14px 20px;border-bottom:1px solid var(--color-divider);font-family:var(--font-heading);font-weight:600;font-size:18px">Language &amp; region</div>
+          <sc-for list="{{ lang }}" as="u"><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--color-divider)"><span style="font-size:13.5px">{{ u.l }}</span><div style="display:flex;border:1px solid var(--color-divider)"><sc-for list="{{ u.opts }}" as="o"><button onClick="{{ o.pick }}" style="all:unset;cursor:pointer;padding:5px 11px;font-family:var(--font-mono);font-size:11.5px;border-right:1px solid var(--color-divider);background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for></div></div></sc-for>
+        </div>
+      </div>
+      <div class="blueprint" style="display:flex;flex-direction:column">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="padding:14px 20px;border-bottom:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Alert thresholds</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">APPLIES TO ALL SITES</span></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;height:14px"><div style="width:{{ w1 }}%;background:#38A88A"></div><div style="width:{{ w2 }}%;background:#E7A83B"></div><div style="width:{{ w3 }}%;background:#EE8434"></div><div style="flex:1;background:#D96565"></div></div>
+            <div style="position:relative;height:14px;font-family:var(--font-mono);font-size:10px;color:var(--muted)"><span style="position:absolute;left:0">0</span><span style="position:absolute;left:{{ t1 }}%;transform:translateX(-50%)">{{ t1 }}</span><span style="position:absolute;left:{{ t2 }}%;transform:translateX(-50%)">{{ t2 }}</span><span style="position:absolute;left:{{ t3 }}%;transform:translateX(-50%)">{{ t3 }}</span><span style="position:absolute;right:0">100</span></div>
+          </div>
+          <sc-for list="{{ thr }}" as="t"><div style="display:grid;grid-template-columns:120px minmax(0,1fr) 44px;gap:14px;align-items:center"><span style="display:flex;align-items:center;gap:8px;font-size:13.5px"><span style="width:8px;height:8px;background:{{ t.c }}"></span>{{ t.l }} from</span><input type="range" min="{{ t.min }}" max="{{ t.max }}" value="{{ t.v }}" onChange="{{ t.on }}" style="accent-color:{{ t.c }}"><span style="font-family:var(--font-mono);font-size:14px;text-align:right">{{ t.v }}</span></div></sc-for>
+          <div style="border-top:1px solid var(--color-divider);padding-top:14px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">NOTIFY WHEN RISK ENTERS</span>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:13px"><span style="display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--color-divider)"><span style="width:12px;height:12px;background:var(--color-accent)"></span>Severe · email</span><span style="display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--color-divider)"><span style="width:12px;height:12px;background:var(--color-accent)"></span>Extreme · SMS</span><span style="display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--color-divider)"><span style="width:12px;height:12px;border:1px solid var(--divider-strong)"></span>Watch · in-app</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TREE=[{cc:'TN',n:'Tunisia',regions:[{n:'Bizerte Governorate',sites:[['Ichkeul','37.163°N 9.674°E','126 km²',8,'Durum, barley, olive'],['Bizerte','37.274°N 9.873°E','152 km²',6,'Olive, tomato']]},{n:'Kairouan Governorate',sites:[['Kairouan','35.678°N 10.096°E','210 km²',4,'Olive, barley']]},{n:'Sfax Governorate',sites:[['Skhira','34.300°N 10.070°E','88 km²',2,'Date palm, olive']]}]},
+ {cc:'MA',n:'Morocco',regions:[{n:'Fès-Meknès',sites:[['Meknès','33.895°N 5.555°W','174 km²',3,'Durum, olive'],['Saïss Plain','33.970°N 5.210°W','240 km²',1,'Wheat, alfalfa']]}]},
+ {cc:'DZ',n:'Algeria',regions:[{n:'Sétif Province',sites:[['Sétif High Plains','36.190°N 5.410°E','310 km²',0,'Durum, barley']]}]}];
+class Component extends DCLogic {
+  state={sec:this.props.section ?? 'users',site:'Ichkeul',u:{temp:'°C',rain:'mm',area:'km²',sm:'% VWC'},l:{lang:'EN',date:'DD/MM/YYYY',week:'MON'},t:[25,50,75]};
+  componentDidUpdate(pp){ if(pp.section!==this.props.section)this.setState({sec:this.props.section}); }
+  renderVals(){
+    const S=this.state;
+    let sel;TREE.forEach(c=>c.regions.forEach(r=>r.sites.forEach(s=>{if(s[0]===S.site)sel={n:s[0],path:`${c.n.toUpperCase()} / ${r.n.toUpperCase()}`,facts:[['CENTROID',s[1]],['AREA',s[2]],['SENSORS',s[3]],['CROPS',s[4]]].map(([k,v])=>({k,v}))};})));
+    const seg=(obj,key,label,opts)=>({l:label,opts:opts.map(o=>({l:o,pick:()=>this.setState({[obj]:{...S[obj],[key]:o}}),bg:S[obj][key]===o?'var(--s3)':'transparent',fg:S[obj][key]===o?'var(--color-text)':'var(--muted)'}))});
+    const [a,b,c]=S.t;
+    const TT={users:['Users & roles','USERS & ROLES · 38 USERS'],regions:['Regions & sites','REGIONS & SITES · 3 COUNTRIES · 7 SITES'],settings:['Settings','SETTINGS']};
+    return { title:TT[S.sec][0], kicker:TT[S.sec][1], isUsers:S.sec==='users', isRegions:S.sec==='regions', isSettings:S.sec==='settings',
+      tabs:[['users','Users & roles'],['regions','Regions & sites'],['settings','Settings']].map(([id,label])=>({label,pick:()=>this.setState({sec:id}),bd:S.sec===id?'var(--color-accent)':'transparent',fg:S.sec===id?'var(--color-text)':'var(--muted)'})),
+      roles:[['ADMIN',3,'Full access, users, thresholds'],['AGRONOMIST',11,'All analysis, data entry'],['RESEARCHER',9,'Analysis, exports, uploads'],['PARK AUTHORITY',6,'Monitor & alerts, own sites'],['FIELD TECH',5,'Sensors & manual entry'],['VIEWER',4,'Read-only dashboards']].map(r=>({n:r[0],c:r[1],d:r[2]})),
+      users:[['LM','Leïla Mansouri','l.mansouri@inrat.tn','INRAT','Admin','All sites','Now','ACTIVE'],['SB','Sana Ben Amor','sana.benamor@inrat.tn','INRAT','Agronomist','TN · 4 sites','Now','ACTIVE'],['KT','Karim Trabelsi','k.trabelsi@inat.u-carthage.tn','INAT','Researcher','TN, DZ','2 h ago','ACTIVE'],['YH','Youssef Haddad','y.haddad@crda-bizerte.tn','CRDA Bizerte','Field tech','Bizerte, Ichkeul','1 d ago','ACTIVE'],['AE','Amina El Idrissi','a.elidrissi@inra.ma','INRA Maroc','Agronomist','MA · 2 sites','3 d ago','ACTIVE'],['AN','ANPE Ichkeul','parc.ichkeul@anpe.nat.tn','ANPE','Park authority','Ichkeul','5 d ago','ACTIVE'],['RB','Rachid Boukhari','r.boukhari@inraa.dz','INRAA','Researcher','DZ · 1 site','—','INVITED'],['MC','Mehdi Chaabane','m.chaabane@example.org','—','Viewer','Kairouan','62 d ago','SUSPENDED']].map(u=>({i:u[0],n:u[1],e:u[2],o:u[3],r:u[4],s:u[5],l:u[6],st:u[7],sc:u[7]==='ACTIVE'?'var(--color-accent)':u[7]==='INVITED'?'#E7A83B':'var(--muted)'})),
+      tree:TREE.map(c=>({cc:c.cc,n:c.n,count:c.regions.reduce((s,r)=>s+r.sites.length,0),regions:c.regions.map(r=>({n:r.n,sites:r.sites.map(s=>({n:s[0],pick:()=>this.setState({site:s[0]}),bg:S.site===s[0]?'var(--color-neutral-100)':'transparent',edge:S.site===s[0]?'var(--color-accent)':'transparent'}))}))})), sel,
+      units:[seg('u','temp','Temperature',['°C','°F']),seg('u','rain','Precipitation',['mm','in']),seg('u','area','Area',['km²','ha']),seg('u','sm','Soil moisture',['% VWC','m³/m³'])],
+      lang:[seg('l','lang','Default language',['EN','FR','AR']),seg('l','date','Date format',['DD/MM/YYYY','YYYY-MM-DD']),seg('l','week','Week starts',['MON','SUN'])],
+      w1:a, w2:b-a, w3:c-b, t1:a, t2:b, t3:c,
+      thr:[['Watch','#E7A83B',10,b-5,0],['Severe','#EE8434',a+5,c-5,1],['Extreme','#D96565',b+5,95,2]].map(([l,col,min,max,i])=>({l,c:col,min,max,v:S.t[i],on:e=>{const t=[...S.t];t[i]=+e.target.value;this.setState({t});}})) };
+  }
+}
+</script>
+</body>
+</html>

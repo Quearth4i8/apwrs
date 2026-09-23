@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>html,body{margin:0;background:#06161E}a{color:#2BA6B8}a:hover{color:#9EDFF1}</style>
+</helmet>
+<div style="--color-bg:#0B2633;--color-surface:#0F3040;--s2:#163D4A;--s3:#1C4957;--color-text:#E6F1F5;--muted:#8FAAB4;--faint:#5C7883;--color-divider:rgba(255,255,255,.08);--divider-strong:rgba(255,255,255,.2);--color-accent:#2BA6B8;--color-accent-600:#5FC3D3;--color-accent-700:#197A91;--teal:#9EDFF1;--color-accent-100:rgba(43,166,184,.12);--color-neutral-100:rgba(255,255,255,.06);--map-land:#0E2A36;--map-water:#1B5A6E;--map-sea:#081D27;--glow:rgba(43,166,184,.16);--dot:rgba(255,255,255,.045);--font-mono:'JetBrains Mono',ui-monospace,monospace;color:var(--color-text);font-family:var(--font-body);font-variant-numeric:tabular-nums;padding:64px;display:flex;flex-direction:column;gap:28px;width:max-content">
+  <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;color:var(--muted)">APWRS · MOBILE · 390 × 844</span><span style="font-family:var(--font-heading);font-weight:600;font-size:40px;letter-spacing:-.02em">Mobile screens</span></div>
+  <div style="display:flex;gap:56px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">M1 · LANDING</span>
+      <div class="blueprint" data-screen-label="M1 Landing" style="width:390px;height:844px;overflow-y:auto;overflow-x:hidden;background:var(--color-bg);scrollbar-width:none">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 20px;font-family:var(--font-mono);font-size:12px"><span>9:41</span><span style="display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="wifi" s="13" hint-size="13px,13px"></dc-import><dc-import name="Icon" n="battery" s="15" hint-size="15px,15px"></dc-import></span></div>
+        <div style="display:flex;align-items:center;gap:10px;height:52px;padding:0 20px;border-bottom:1px solid var(--color-divider)"><span style="width:22px;height:22px;border:1px solid var(--color-accent);display:grid;place-items:center;position:relative"><span style="width:8px;height:12px;background:var(--color-accent);transform:translate(2px,-2px)"></span></span><span style="font-family:var(--font-heading);font-weight:600;font-size:19px">APWRS</span><span style="margin-left:auto;width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--color-divider)"><dc-import name="Icon" n="menu" s="18" hint-size="18px,18px"></dc-import></span></div>
+        <div style="position:relative;padding:36px 20px 28px;display:flex;flex-direction:column;gap:18px;background-image:linear-gradient(var(--color-divider) 1px,transparent 1px),linear-gradient(90deg,var(--color-divider) 1px,transparent 1px);background-size:48px 48px">
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 60%,var(--glow),transparent 70%),linear-gradient(180deg,transparent 60%,var(--color-bg))"></div>
+          <span style="position:relative;display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:4px 8px;border:1px solid var(--color-divider);background:var(--color-bg);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)"><span style="width:6px;height:6px;background:var(--color-accent)"></span>SEASON 2026/27 LIVE</span>
+          <h1 style="position:relative;margin:0;font-size:44px;line-height:.96;letter-spacing:-.03em">Plant on the right day, even in a drought year.</h1>
+          <p style="position:relative;margin:0;font-size:15px;line-height:1.5;color:var(--muted)">One risk score and a sowing window for every crop and site across North Africa.</p>
+          <div style="position:relative;display:flex;flex-direction:column;gap:10px">
+            <a href="#" class="btn btn-primary blueprint" style="height:48px;font-size:15px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Request access</a>
+            <a href="#" class="btn btn-secondary" style="height:48px;font-size:15px;color:var(--color-text)">Sign in</a>
+          </div>
+        </div>
+        <div style="margin:0 20px;border:1px solid var(--color-divider);position:relative">
+          <div style="height:260px;position:relative"><dc-import name="MapView" layer="risk" sensors="{{ true }}" sensor-ids="{{ false }}" labels="{{ false }}" hint-size="100%,260px" style="position:absolute;inset:0"></dc-import></div>
+          <div style="position:absolute;left:12px;bottom:12px;right:12px;padding:12px;border:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-bg) 92%,transparent);display:flex;align-items:center;gap:12px"><span style="font-family:var(--font-heading);font-weight:600;font-size:36px;line-height:1">58</span><div style="display:flex;flex-direction:column;gap:4px"><dc-import name="RiskBadge" level="severe" hint-size="70px,22px"></dc-import><span style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">ICHKEUL · TODAY</span></div></div>
+        </div>
+        <div style="padding:40px 20px 16px;display:flex;flex-direction:column;gap:10px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;color:var(--color-accent)">02 · HOW IT WORKS</span><h2 style="margin:0;font-size:30px;line-height:1;letter-spacing:-.02em">Data → model → a date you can act on.</h2></div>
+        <div style="padding:0 20px 40px;display:flex;flex-direction:column;align-items:stretch">
+          <div style="border:1px solid var(--color-divider);padding:12px 14px;display:flex;gap:10px;align-items:center;background:var(--color-surface)"><span style="color:var(--teal);display:flex"><dc-import name="Icon" n="database" s="16" hint-size="16px,16px"></dc-import></span><span style="font-size:14px">Climate · soil · satellite · indices</span></div>
+          <div style="width:1px;height:22px;background:var(--color-accent);margin-left:24px"></div>
+          <div style="border:1px solid color-mix(in srgb,var(--color-accent) 45%,transparent);padding:12px 14px;display:flex;gap:10px;align-items:center;background:var(--color-surface)"><span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="cpu" s="16" hint-size="16px,16px"></dc-import></span><span style="font-size:14px">AI forecasting model</span></div>
+          <div style="width:1px;height:22px;background:var(--color-accent);margin-left:24px"></div>
+          <div style="border:1px solid var(--color-divider);padding:12px 14px;display:flex;gap:10px;align-items:center;background:var(--color-surface)"><span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="sprout" s="16" hint-size="16px,16px"></dc-import></span><span style="font-size:14px">Planting recommendation</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">M2 · LOGIN</span>
+      <div class="blueprint" data-screen-label="M2 Login" style="width:390px;height:844px;overflow:hidden;background:var(--color-bg);display:flex;flex-direction:column">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 20px;font-family:var(--font-mono);font-size:12px"><span>9:41</span><span style="display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="wifi" s="13" hint-size="13px,13px"></dc-import><dc-import name="Icon" n="battery" s="15" hint-size="15px,15px"></dc-import></span></div>
+        <div style="height:220px;position:relative;border-bottom:1px solid var(--color-divider)"><dc-import name="MapView" layer="risk" labels="{{ false }}" grid="{{ false }}" hint-size="100%,220px" style="position:absolute;inset:0"></dc-import><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,var(--color-bg))"></div><div style="position:absolute;left:20px;bottom:16px;display:flex;align-items:center;gap:10px"><span style="width:26px;height:26px;border:1px solid var(--color-accent);display:grid;place-items:center;background:var(--color-bg)"><span style="width:10px;height:14px;background:var(--color-accent);transform:translate(3px,-2px)"></span></span><span style="font-family:var(--font-heading);font-weight:600;font-size:22px">APWRS</span></div></div>
+        <div style="padding:28px 20px;display:flex;flex-direction:column;gap:16px;flex:1">
+          <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;color:var(--color-accent)">SIGN IN</span><h1 style="margin:0;font-size:36px;line-height:1;letter-spacing:-.03em">Welcome back</h1></div>
+          <div class="field"><label>Email or username</label><input class="input" value="sana.benamor@inrat.tn" style="height:48px;background:var(--color-surface);font-size:15px"></div>
+          <div class="field"><label style="display:flex;justify-content:space-between"><span>Password</span><a href="#" style="font-size:12px;text-decoration:none">Forgot?</a></label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-surface);height:48px"><span style="flex:1;padding:0 12px;font-size:15px">••••••••••••</span><span style="width:48px;display:grid;place-items:center;color:var(--muted)"><dc-import name="Icon" n="eye" s="17" hint-size="17px,17px"></dc-import></span></div></div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:14px;min-height:44px"><span style="width:18px;height:18px;background:var(--color-accent);display:grid;place-items:center;color:var(--color-bg)"><dc-import name="Icon" n="check" s="13" sw="2.5" hint-size="13px,13px"></dc-import></span>Stay signed in</div>
+          <a href="#" class="btn btn-primary blueprint" style="height:50px;font-size:15.5px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Sign in</a>
+          <button class="btn btn-secondary" style="height:50px;font-size:15px;color:var(--color-text)"><dc-import name="Icon" n="key" s="16" hint-size="16px,16px"></dc-import>Institutional SSO</button>
+          <span style="margin-top:auto;text-align:center;font-size:13px;color:var(--muted)">No account? <a href="#" style="text-decoration:none">Request access</a></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">M3 · OVERVIEW</span>
+      <div class="blueprint" data-screen-label="M3 Overview" style="width:390px;height:844px;overflow:hidden;background:var(--color-bg);display:flex;flex-direction:column">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 20px;font-family:var(--font-mono);font-size:12px;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="wifi" s="13" hint-size="13px,13px"></dc-import><dc-import name="Icon" n="battery" s="15" hint-size="15px,15px"></dc-import></span></div>
+        <div style="display:flex;align-items:center;gap:8px;height:56px;padding:0 16px;border-bottom:1px solid var(--color-divider);flex:none">
+          <span style="display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--color-divider);font-size:14px"><dc-import name="Icon" n="pin" s="14" hint-size="14px,14px"></dc-import><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">TN</span>Ichkeul<dc-import name="Icon" n="down" s="14" hint-size="14px,14px"></dc-import></span>
+          <span style="height:40px;padding:0 10px;border:1px solid var(--color-divider);display:flex;align-items:center;font-family:var(--font-mono);font-size:12px">2026/27</span>
+          <span style="margin-left:auto;width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--color-divider);position:relative"><dc-import name="Icon" n="bell" s="17" hint-size="17px,17px"></dc-import><span style="position:absolute;top:9px;right:10px;width:6px;height:6px;background:#D96565"></span></span>
+        </div>
+        <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:18px 16px;display:flex;flex-direction:column;gap:14px;background-image:radial-gradient(circle at 1px 1px,var(--dot) 1px,transparent 0);background-size:20px 20px">
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">WED 23 SEP · 08:40</span><span style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.05">Ichkeul — conditions today</span></div>
+          <div class="blueprint" style="padding:16px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,rgba(238,132,52,.08),transparent)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">DROUGHT RISK · TODAY</span><dc-import name="RiskBadge" level="severe" hint-size="70px,22px"></dc-import></div>
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:var(--font-heading);font-weight:600;font-size:60px;line-height:1">58</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">/100</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:#EE8434">▲ 63 in 7 d</span></div>
+            <div style="display:flex;height:4px;gap:2px"><div style="flex:25;background:#38A88A"></div><div style="flex:25;background:#E7A83B"></div><div style="flex:25;background:#EE8434;position:relative"><span style="position:absolute;left:32%;top:-4px;bottom:-4px;width:2px;background:var(--color-text)"></span></div><div style="flex:25;background:#D96565"></div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--color-divider)">
+            <div style="padding:12px 14px;border-right:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)">RAIN · 30D</div><div style="display:flex;align-items:baseline;gap:4px"><span style="font-family:var(--font-heading);font-weight:600;font-size:28px">18.4</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">mm</span></div><div style="font-family:var(--font-mono);font-size:10.5px;color:#EE8434">−62%</div></div>
+            <div style="padding:12px 14px;border-bottom:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)">SOIL MOIST.</div><div style="display:flex;align-items:baseline;gap:4px"><span style="font-family:var(--font-heading);font-weight:600;font-size:28px">14.2</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">%</span></div><div style="font-family:var(--font-mono);font-size:10.5px;color:#EE8434">−3.1 pts</div></div>
+            <div style="padding:12px 14px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)">NDVI</div><div style="font-family:var(--font-heading);font-weight:600;font-size:28px">0.31</div><div style="font-family:var(--font-mono);font-size:10.5px;color:#E7A83B">−0.06</div></div>
+            <div style="padding:12px 14px"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted)">SENSORS</div><div style="font-family:var(--font-heading);font-weight:600;font-size:28px">19<span style="font-size:16px;color:var(--muted)">/24</span></div><div style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">2 offline</div></div>
+          </div>
+          <div style="height:180px;position:relative;border:1px solid var(--color-divider)"><dc-import name="MapView" layer="risk" sensors="{{ true }}" sensor-ids="{{ false }}" hint-size="100%,180px" style="position:absolute;inset:0"></dc-import></div>
+          <div class="blueprint" style="padding:16px;display:flex;flex-direction:column;gap:8px;border-color:color-mix(in srgb,var(--color-accent) 40%,transparent)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--color-accent)">NEXT WINDOW · DURUM WHEAT</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1">12 Nov → 04 Dec</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">Opens in 50 days · confidence 78%</span>
+          </div>
+          <div style="display:flex;flex-direction:column;border:1px solid var(--color-divider)">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:6px"><dc-import name="RiskBadge" level="extreme" hint-size="80px,22px"></dc-import><span style="font-size:14px">SPEI-3 crossed −2.0 in Mateur plain</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">08:12 · 14.2 km²</span></div>
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:6px"><dc-import name="RiskBadge" level="severe" hint-size="80px,22px"></dc-import><span style="font-size:14px">Soil moisture below 15% at ICH-S02</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">06:40</span></div>
+          </div>
+        </div>
+        <div style="flex:none;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--color-divider);background:var(--color-surface);padding-bottom:18px">
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--color-accent);box-shadow:inset 0 2px 0 var(--color-accent)"><dc-import name="Icon" n="dashboard" s="18" hint-size="18px,18px"></dc-import>Overview</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="map" s="18" hint-size="18px,18px"></dc-import>Map</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="gauge" s="18" hint-size="18px,18px"></dc-import>Risk</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="sprout" s="18" hint-size="18px,18px"></dc-import>Planting</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="more" s="18" hint-size="18px,18px"></dc-import>More</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">M4 · DROUGHT RISK</span>
+      <div class="blueprint" data-screen-label="M4 Drought Risk" style="width:390px;height:844px;overflow:hidden;background:var(--color-bg);display:flex;flex-direction:column">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 20px;font-family:var(--font-mono);font-size:12px;flex:none"><span>9:41</span><span style="display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="wifi" s="13" hint-size="13px,13px"></dc-import><dc-import name="Icon" n="battery" s="15" hint-size="15px,15px"></dc-import></span></div>
+        <div style="display:flex;align-items:center;gap:8px;height:56px;padding:0 16px;border-bottom:1px solid var(--color-divider);flex:none"><span style="font-family:var(--font-heading);font-weight:600;font-size:22px">Drought risk</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted)">TN / Ichkeul</span></div>
+        <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:16px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--color-divider)">
+            <sc-for list="{{ mh }}" as="h"><button onClick="{{ h.pick }}" style="all:unset;cursor:pointer;height:44px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;border-right:1px solid var(--color-divider);background:{{ h.bg }};color:{{ h.fg }}">{{ h.l }}</button></sc-for>
+          </div>
+          <div class="blueprint" style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 70%,rgba(238,132,52,.12),transparent 70%);pointer-events:none"></div>
+            <svg viewBox="0 0 300 170" style="width:100%;display:block;position:relative">
+              <path d="M30 150 A120 120 0 0 1 64.2 66.1" fill="none" stroke="#38A88A" stroke-width="14"></path><path d="M66.2 64.2 A120 120 0 0 1 148.6 30" fill="none" stroke="#E7A83B" stroke-width="14"></path><path d="M151.4 30 A120 120 0 0 1 233.8 64.2" fill="none" stroke="#EE8434" stroke-width="14"></path><path d="M235.8 66.1 A120 120 0 0 1 270 150" fill="none" stroke="#D96565" stroke-width="14"></path>
+              <line x1="150" y1="150" x2="{{ mnx }}" y2="{{ mny }}" style="stroke:var(--color-text);transition:all .5s" stroke-width="2"></line><rect x="144" y="144" width="12" height="12" style="fill:var(--color-bg);stroke:var(--color-text)" stroke-width="1.5"></rect>
+            </svg>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-top:-44px;position:relative"><span style="font-family:var(--font-heading);font-weight:600;font-size:56px;line-height:1">{{ mcur.s }}</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">/100</span></div>
+            <dc-import name="RiskBadge" score="{{ mcur.s }}" show-score="{{ false }}" hint-size="80px,22px"></dc-import>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:6px">{{ mcur.d }} · confidence {{ mcur.c }}% · ±{{ mcur.pm }}</div>
+          </div>
+          <div class="blueprint" style="padding:16px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,var(--color-accent-100),transparent 70%)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--color-accent)"><dc-import name="Icon" n="sparkles" s="13" hint-size="13px,13px"></dc-import>AI EXPLANATION</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:20px;line-height:1.2">Almost no rain since mid-August while heat keeps drying the topsoil.</span>
+            <span style="font-size:14px;color:var(--muted);line-height:1.55">18.4 mm in 30 days — a third of normal. Unless rain arrives around 8–14 Nov, risk will likely reach Extreme.</span>
+            <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--color-divider);padding-top:10px">
+              <div style="display:grid;grid-template-columns:110px 1fr 34px;gap:8px;align-items:center;font-size:12.5px"><span>Rainfall deficit</span><div style="height:6px;background:var(--color-neutral-100)"><div style="height:100%;width:84%;background:#EE8434"></div></div><span style="font-family:var(--font-mono);font-size:11px;text-align:right">38%</span></div>
+              <div style="display:grid;grid-template-columns:110px 1fr 34px;gap:8px;align-items:center;font-size:12.5px"><span>High temperature</span><div style="height:6px;background:var(--color-neutral-100)"><div style="height:100%;width:53%;background:#EE8434"></div></div><span style="font-family:var(--font-mono);font-size:11px;text-align:right">24%</span></div>
+              <div style="display:grid;grid-template-columns:110px 1fr 34px;gap:8px;align-items:center;font-size:12.5px"><span>Soil moisture</span><div style="height:6px;background:var(--color-neutral-100)"><div style="height:100%;width:42%;background:#E7A83B"></div></div><span style="font-family:var(--font-mono);font-size:11px;text-align:right">19%</span></div>
+            </div>
+          </div>
+          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">TREND · 90 D + 30 D FORECAST</span>
+            <svg viewBox="0 0 340 120" style="width:100%;display:block"><rect x="0" y="0" width="340" height="30" fill="#D96565" fill-opacity=".06"></rect><rect x="0" y="30" width="340" height="30" fill="#EE8434" fill-opacity=".06"></rect><path d="M0 92 L30 90 L60 86 L90 88 L120 80 L150 76 L180 72 L210 66 L240 58 L255 55" fill="none" style="stroke:var(--color-text)" stroke-width="1.75"></path><path d="M255 55 L280 50 L310 45 L340 40" fill="none" style="stroke:var(--color-accent)" stroke-width="2" stroke-dasharray="5 4"></path><path d="M255 55 L280 44 L310 33 L340 26 L340 54 L310 57 L280 56 Z" style="fill:var(--color-accent)" fill-opacity=".12"></path><line x1="255" y1="0" x2="255" y2="120" style="stroke:var(--color-text);stroke-opacity:.35" stroke-dasharray="3 3"></line></svg>
+          </div>
+        </div>
+        <div style="flex:none;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--color-divider);background:var(--color-surface);padding-bottom:18px">
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="dashboard" s="18" hint-size="18px,18px"></dc-import>Overview</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="map" s="18" hint-size="18px,18px"></dc-import>Map</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--color-accent);box-shadow:inset 0 2px 0 var(--color-accent)"><dc-import name="Icon" n="gauge" s="18" hint-size="18px,18px"></dc-import>Risk</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="sprout" s="18" hint-size="18px,18px"></dc-import>Planting</span>
+          <span style="height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--muted)"><dc-import name="Icon" n="more" s="18" hint-size="18px,18px"></dc-import>More</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const H=[['Today','23 Sep',58,82,6],['+7','30 Sep',63,76,8],['+14','07 Oct',67,68,11],['+30','23 Oct',71,57,15]];
+class Component extends DCLogic {
+  state={h:0};
+  renderVals(){
+    const c=H[this.state.h], t=Math.PI*(1-c[2]/100);
+    return { mh:H.map((h,i)=>({l:h[0],pick:()=>this.setState({h:i}),bg:this.state.h===i?'var(--s3)':'transparent',fg:this.state.h===i?'var(--color-text)':'var(--muted)'})),
+      mcur:{s:c[2],d:c[1],c:c[3],pm:c[4]}, mnx:(150+94*Math.cos(t)).toFixed(1), mny:(150-94*Math.sin(t)).toFixed(1) };
+  }
+}
+</script>
+</body>
+</html>

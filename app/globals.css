@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   APWRS — design tokens.
+   Ported from design/_ds/industry-.../styles.css plus the APWRS theme
+   overrides that App.dc.html applies at runtime. Every colour, space and
+   radius below is the single source of truth; components never hard-code.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* `:root` carries the dark set as the default so the page is fully themed
+   before next-themes sets data-theme (and if scripting is unavailable).
+   The light block below overrides it wherever that attribute is present. */
+:root,
+[data-theme="dark"] {
+  --ap-bg: #0b2633;
+  --ap-surface: #0f3040;
+  --ap-s2: #163d4a;
+  --ap-s3: #1c4957;
+  --ap-text: #e6f1f5;
+  --ap-muted: #8faab4;
+  --ap-faint: #5c7883;
+  --ap-divider: rgb(255 255 255 / 0.08);
+  --ap-divider-strong: rgb(255 255 255 / 0.2);
+  --ap-accent: #2ba6b8;
+  --ap-accent-600: #5fc3d3;
+  --ap-accent-700: #197a91;
+  --ap-teal: #9edff1;
+  --ap-accent-100: rgb(43 166 184 / 0.12);
+  --ap-accent-800: #9edff1;
+  --ap-neutral-100: rgb(255 255 255 / 0.06);
+  --ap-neutral-800: #c9dce2;
+  --ap-map-land: #0e2a36;
+  --ap-map-water: #1b5a6e;
+  --ap-map-sea: #081d27;
+  --ap-glow: rgb(43 166 184 / 0.14);
+  --ap-dot: rgb(255 255 255 / 0.045);
+  --ap-scrim: rgb(2 12 17 / 0.6);
+  --ap-shadow-pop: 0 20px 40px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --ap-bg: #f2fafc;
+  --ap-surface: #ffffff;
+  --ap-s2: #ffffff;
+  --ap-s3: #e4f1f5;
+  --ap-text: #142b35;
+  --ap-muted: #56727d;
+  --ap-faint: #8aa3ac;
+  --ap-divider: rgb(20 43 53 / 0.12);
+  --ap-divider-strong: rgb(20 43 53 / 0.3);
+  --ap-accent: #197a91;
+  --ap-accent-600: #146478;
+  --ap-accent-700: #0f5163;
+  --ap-teal: #2ba6b8;
+  --ap-accent-100: rgb(43 166 184 / 0.1);
+  --ap-accent-800: #0f5163;
+  --ap-neutral-100: rgb(20 43 53 / 0.05);
+  --ap-neutral-800: #23404c;
+  --ap-map-land: #e3eef1;
+  --ap-map-water: #9edff1;
+  --ap-map-sea: #cde9f1;
+  --ap-glow: rgb(43 166 184 / 0.12);
+  --ap-dot: rgb(20 43 53 / 0.07);
+  --ap-scrim: rgb(20 43 53 / 0.45);
+  --ap-shadow-pop: 0 20px 40px rgb(20 43 53 / 0.18);
+  color-scheme: light;
+}
+
+/* The farmer app runs a warmer light ramp (Farmer.dc.html LIGHT). */
+[data-surface="farmer"] {
+  --ap-muted: #4e6a75;
+  --ap-divider: rgb(20 43 53 / 0.12);
+}
+
+@theme inline {
+  --color-bg: var(--ap-bg);
+  --color-surface: var(--ap-surface);
+  --color-s2: var(--ap-s2);
+  --color-s3: var(--ap-s3);
+  --color-ink: var(--ap-text);
+  --color-muted: var(--ap-muted);
+  --color-faint: var(--ap-faint);
+  --color-divider: var(--ap-divider);
+  --color-divider-strong: var(--ap-divider-strong);
+  --color-accent: var(--ap-accent);
+  --color-accent-100: var(--ap-accent-100);
+  --color-accent-600: var(--ap-accent-600);
+  --color-accent-700: var(--ap-accent-700);
+  --color-accent-800: var(--ap-accent-800);
+  --color-teal: var(--ap-teal);
+  --color-neutral-100: var(--ap-neutral-100);
+  --color-neutral-800: var(--ap-neutral-800);
+
+  /* Risk ramp — fixed across themes so a score reads the same everywhere. */
+  --color-safe: #38a88a;
+  --color-watch: #e7a83b;
+  --color-severe: #ee8434;
+  --color-extreme: #d96565;
+  --color-extreme-ink: #e07b7b;
+
+  --font-heading: var(--font-barlow-condensed), system-ui, sans-serif;
+  --font-body: var(--font-barlow), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* NB: the Industry density scale (0.85x) is kept as its own namespace.
+     Redefining --spacing-1..8 here would silently retune every p-1/p-4 in
+     the app, so the DS steps are exposed as space-ds-* instead. */
+  --spacing-ds-1: 3.4px;
+  --spacing-ds-2: 6.8px;
+  --spacing-ds-3: 10.2px;
+  --spacing-ds-4: 13.6px;
+  --spacing-ds-6: 20.4px;
+  --spacing-ds-8: 27.2px;
+
+  --shadow-pop: var(--ap-shadow-pop);
+  --shadow-lift: 0 40px 80px -20px rgb(0 0 0 / 0.6);
+
+  --ease-out-expo: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-fade-up: fade-up 0.22s var(--ease-out-expo) both;
+  --animate-pop-in: pop-in 0.16s var(--ease-out-expo) both;
+  --animate-dash: dash 1.2s linear infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes dash { to { stroke-dashoffset: -24; } }
+@keyframes pulse-ring {
+  0% { opacity: 0.9; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+
+@layer base {
+  * { border-color: var(--ap-divider); }
+
+  html {
+    background: var(--ap-bg);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ap-bg);
+    color: var(--ap-text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+
+  /* Themed interaction states — never the browser default (readme.md). */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 2px solid var(--ap-accent);
+    outline-offset: 2px;
+  }
+  ::selection { background: color-mix(in srgb, var(--ap-accent) 30%, transparent); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--ap-s3);
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--ap-divider-strong); background-clip: content-box; }
+
+  input[type="range"] { accent-color: var(--ap-accent); }
+}
+
+@layer utilities {
+  /* The blueprint frame: square, hairline, with "+" registration marks.
+     A pseudo-element pair per corner keeps the markup to one class. */
+  .blueprint { position: relative; border: 1px solid var(--ap-divider); border-radius: 0; }
+  .blueprint > .bp-corner { position: absolute; width: 11px; height: 11px; color: color-mix(in srgb, var(--ap-text) 55%, transparent); pointer-events: none; }
+  .blueprint > .bp-corner::before,
+  .blueprint > .bp-corner::after { content: ""; position: absolute; background: currentColor; }
+  .blueprint > .bp-corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
+  .blueprint > .bp-corner::after { top: 5px; left: 0; width: 100%; height: 1px; }
+  .bp-tl { top: -6px; left: -6px; }
+  .bp-tr { top: -6px; right: -6px; }
+  .bp-bl { bottom: -6px; left: -6px; }
+  .bp-br { bottom: -6px; right: -6px; }
+
+  .dot-grid {
+    background-image: radial-gradient(circle at 1px 1px, var(--ap-dot) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  .rule-grid {
+    background-image:
+      linear-gradient(var(--ap-divider) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ap-divider) 1px, transparent 1px);
+    background-size: 80px 80px;
+    background-position: -1px -1px;
+  }
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

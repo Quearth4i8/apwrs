@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:24px;position:relative">
+  <div style="position:absolute;left:0;top:-120px;width:720px;height:360px;background:radial-gradient(ellipse at 30% 50%,var(--glow),transparent 65%);pointer-events:none"></div>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;position:relative">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">OVERVIEW · {{ site.cc }} / {{ site.name }} · WED 23 SEP 2026 · 08:40 CET</div>
+      <h1 style="margin:0;font-size:40px;letter-spacing:-.02em;line-height:1">{{ site.name }} — conditions today</h1>
+      <div style="font-size:14px;color:var(--muted)">Dry spell day 41. Drought risk is <span style="color:#EE8434">severe</span> and rising; next durum wheat window opens in 50 days.</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" style="height:36px;color:var(--color-text)"><dc-import name="Icon" n="download" s="15" hint-size="15px,15px"></dc-import>Export brief</button>
+      <button class="btn btn-primary blueprint" onClick="{{ goPlanting }}" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="sprout" s="15" hint-size="15px,15px"></dc-import>Planting windows</button>
+    </div>
+  </div>
+
+  <div class="blueprint" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:color-mix(in srgb,var(--color-surface) 70%,transparent)">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--color-divider)">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">RISK · TODAY</span><dc-import name="RiskBadge" level="severe" hint-size="70px,22px"></dc-import></div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:var(--font-heading);font-weight:600;font-size:48px;line-height:1;letter-spacing:-.02em">{{ k1 }}</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">/100</span></div>
+      <div style="height:4px;background:var(--s3);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ k1w }}%;background:linear-gradient(90deg,#38A88A,#E7A83B 45%,#EE8434)"></div><div style="position:absolute;left:25%;top:-3px;bottom:-3px;width:1px;background:var(--color-bg)"></div><div style="position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--color-bg)"></div><div style="position:absolute;left:75%;top:-3px;bottom:-3px;width:1px;background:var(--color-bg)"></div></div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">conf. 82% · SPI-3 −1.42</div>
+    </div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--color-divider)">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">RISK · +7 DAYS</span><dc-import name="RiskBadge" level="severe" hint-size="70px,22px"></dc-import></div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:var(--font-heading);font-weight:600;font-size:48px;line-height:1;letter-spacing:-.02em">{{ k2 }}</span><span style="font-family:var(--font-mono);font-size:12px;color:#EE8434">▲ 5</span></div>
+      <svg viewBox="0 0 120 28" preserveAspectRatio="none" style="width:100%;height:28px;display:block"><path d="M0 20 L17 19 L34 17 L51 18 L68 14 L85 12 L102 10 L120 8" fill="none" stroke="#EE8434" stroke-width="1.5" vector-effect="non-scaling-stroke"></path><path d="M0 20 L17 19 L34 17 L51 18 L68 14 L85 12 L102 10 L120 8 L120 28 L0 28Z" fill="#EE8434" fill-opacity=".1"></path></svg>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">peak 66 on Tue 29 Sep</div>
+    </div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--color-divider)">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">RAINFALL · 30D</span><span style="color:var(--teal);display:flex"><dc-import name="Icon" n="rain" s="15" hint-size="15px,15px"></dc-import></span></div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:var(--font-heading);font-weight:600;font-size:48px;line-height:1;letter-spacing:-.02em">{{ k3 }}</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">mm</span></div>
+      <svg viewBox="0 0 120 28" preserveAspectRatio="none" style="width:100%;height:28px;display:block"><g fill="var(--teal)"><rect x="2" y="18" width="4" height="10"></rect><rect x="10" y="26" width="4" height="2"></rect><rect x="18" y="22" width="4" height="6"></rect><rect x="42" y="12" width="4" height="16"></rect><rect x="50" y="24" width="4" height="4"></rect><rect x="82" y="26" width="4" height="2"></rect><rect x="106" y="20" width="4" height="8"></rect></g><path d="M0 6H120" stroke="var(--muted)" stroke-dasharray="2 3" stroke-width="1" vector-effect="non-scaling-stroke"></path></svg>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span style="color:#EE8434">−62%</span> vs 1991–2020 normal</div>
+    </div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--color-divider)">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">SOIL MOISTURE</span><span style="color:var(--teal);display:flex"><dc-import name="Icon" n="droplet" s="15" hint-size="15px,15px"></dc-import></span></div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:var(--font-heading);font-weight:600;font-size:48px;line-height:1;letter-spacing:-.02em">{{ k4 }}</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">% VWC</span></div>
+      <svg viewBox="0 0 120 28" preserveAspectRatio="none" style="width:100%;height:28px;display:block"><path d="M0 6 L20 8 L40 11 L60 13 L80 17 L100 19 L120 21" fill="none" stroke="var(--teal)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></svg>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span style="color:#EE8434">−3.1 pts</span> in 7 days · 0–30 cm</div>
+    </div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">NDVI · SENTINEL-2</span><span style="color:var(--color-accent);display:flex"><dc-import name="Icon" n="leaf" s="15" hint-size="15px,15px"></dc-import></span></div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:var(--font-heading);font-weight:600;font-size:48px;line-height:1;letter-spacing:-.02em">{{ k5 }}</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">index</span></div>
+      <svg viewBox="0 0 120 28" preserveAspectRatio="none" style="width:100%;height:28px;display:block"><path d="M0 8 L20 7 L40 9 L60 12 L80 14 L100 17 L120 18" fill="none" stroke="var(--color-accent)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path><path d="M0 10 L120 10" stroke="var(--muted)" stroke-dasharray="2 3" stroke-width="1" vector-effect="non-scaling-stroke"></path></svg>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span style="color:#E7A83B">−0.06</span> vs 5-yr median · 21 Sep</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:24px">
+    <div class="blueprint" style="display:flex;flex-direction:column;transition:border-color .2s" style-hover="border-color:var(--divider-strong)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--color-divider)">
+        <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Risk map</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">1 km grid · model run 06:00 UTC</span></div>
+        <button class="btn btn-ghost" onClick="{{ goMap }}" style="color:var(--color-accent)">Open live map<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button>
+      </div>
+      <div style="height:360px;position:relative"><dc-import name="MapView" layer="risk" sensors="{{ true }}" legend="{{ true }}" sensor-ids="{{ false }}" hint-size="100%,360px" style="position:absolute;inset:0"></dc-import></div>
+    </div>
+
+    <div class="blueprint" style="display:flex;flex-direction:column;transition:border-color .2s" style-hover="border-color:var(--divider-strong)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--color-divider)">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Next planting window</span>
+        <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">DURUM WHEAT · RAINFED</span>
+      </div>
+      <div style="padding:20px 18px;display:flex;flex-direction:column;gap:18px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--color-accent)">OPTIMAL SOWING</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:34px;line-height:1;letter-spacing:-.02em">12 Nov → 04 Dec</span>
+            <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)">23 days · opens in 50 days</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">CONFIDENCE</span><span style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1">78%</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-family:var(--font-mono);font-size:10px;color:var(--muted)"><span>OCT</span><span>NOV</span><span>DEC</span><span>JAN</span></div>
+          <div style="display:flex;height:22px;gap:2px">
+            <div style="flex:30;background:repeating-linear-gradient(135deg,rgba(217,101,101,.35) 0 4px,transparent 4px 8px);border:1px solid rgba(217,101,101,.5)"></div>
+            <div style="flex:11;background:rgba(231,168,59,.25);border:1px solid rgba(231,168,59,.55)"></div>
+            <div style="flex:23;background:rgba(43,166,184,.3);border:1px solid var(--color-accent);position:relative"><span style="position:absolute;left:24%;top:-5px;bottom:-5px;width:2px;background:var(--color-text)"></span></div>
+            <div style="flex:14;background:rgba(231,168,59,.25);border:1px solid rgba(231,168,59,.55)"></div>
+            <div style="flex:45;background:repeating-linear-gradient(135deg,rgba(217,101,101,.35) 0 4px,transparent 4px 8px);border:1px solid rgba(217,101,101,.5)"></div>
+          </div>
+          <div style="display:flex;gap:14px;font-family:var(--font-mono);font-size:10px;color:var(--muted)"><span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:var(--color-accent)"></span>Optimal</span><span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#E7A83B"></span>Marginal</span><span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#D96565"></span>Risky</span><span style="margin-left:auto">▮ best day 17 Nov</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;border-top:1px solid var(--color-divider)">
+          <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:13px"><span style="color:var(--teal);display:flex;margin-top:2px"><dc-import name="Icon" n="rain" s="14" hint-size="14px,14px"></dc-import></span><span style="flex:1">First effective rain (&gt;20 mm/5d) expected 8–14 Nov</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">p=0.71</span></div>
+          <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-divider);font-size:13px"><span style="color:var(--teal);display:flex;margin-top:2px"><dc-import name="Icon" n="thermo" s="14" hint-size="14px,14px"></dc-import></span><span style="flex:1">Soil temperature falls below 20 °C at 5 cm</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">~10 Nov</span></div>
+        </div>
+        <button class="btn btn-secondary" onClick="{{ goPlanting }}" style="height:36px;color:var(--color-text);margin-top:auto">See all crops &amp; reasons<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:24px">
+    <div class="blueprint" style="display:flex;flex-direction:column;transition:border-color .2s" style-hover="border-color:var(--divider-strong)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--color-divider)">
+        <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Latest alerts</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">4 unread</span></div>
+        <button class="btn btn-ghost" onClick="{{ goAlerts }}" style="color:var(--color-accent)">Inbox<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button>
+      </div>
+      <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 120px 74px;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid var(--color-divider);cursor:pointer" style-hover="background:var(--color-neutral-100)">
+          <dc-import name="RiskBadge" level="{{ a.lv }}" hint-size="80px,22px"></dc-import>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.t }}</span><span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.d }}</span></div>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ a.r }}</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:right">{{ a.time }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div class="blueprint" style="display:flex;flex-direction:column;transition:border-color .2s" style-hover="border-color:var(--divider-strong)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--color-divider)">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Sensor health</span>
+        <button class="btn btn-ghost" onClick="{{ goSensors }}" style="color:var(--color-accent)">All stations<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--color-divider)">
+          <div style="padding:12px 14px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--muted)">ONLINE</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px;color:var(--teal)">19</div></div>
+          <div style="padding:12px 14px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--muted)">DEGRADED</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px;color:#E7A83B">3</div></div>
+          <div style="padding:12px 14px"><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--muted)">OFFLINE</div><div style="font-family:var(--font-heading);font-weight:600;font-size:30px;color:#E07B7B">2</div></div>
+        </div>
+        <div style="display:flex;height:6px;gap:2px"><div style="flex:19;background:var(--teal)"></div><div style="flex:3;background:#E7A83B"></div><div style="flex:2;background:#D96565"></div></div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ issues }}" as="i" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--color-divider);font-size:13px">
+              <span style="width:6px;height:6px;background:{{ i.c }};flex:none"></span>
+              <span style="font-family:var(--font-mono);font-size:11.5px;width:70px">{{ i.id }}</span>
+              <span style="flex:1;color:var(--muted)">{{ i.msg }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ i.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state={t:0};
+  componentDidMount(){ const t0=performance.now(); const f=n=>{const t=Math.min(1,(n-t0)/1100);this.setState({t:1-Math.pow(1-t,3)});if(t<1)this.raf=requestAnimationFrame(f);}; this.raf=requestAnimationFrame(f); this.to=setTimeout(()=>this.setState({t:1}),1400); }
+  componentWillUnmount(){ cancelAnimationFrame(this.raf); }
+  renderVals(){
+    const t=this.state.t, nav=p=>()=>this.props.onNav&&this.props.onNav(p);
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'},
+      k1:Math.round(58*t), k1w:58*t, k2:Math.round(63*t), k3:(18.4*t).toFixed(1), k4:(14.2*t).toFixed(1), k5:(0.31*t).toFixed(2),
+      goPlanting:nav('planting'), goMap:nav('map'), goAlerts:nav('alerts'), goSensors:nav('sensors'),
+      alerts:[{lv:'extreme',t:'SPEI-3 crossed −2.0 in southern Mateur plain',d:'Zone M-07 · 14.2 km² now in Extreme',r:'Mateur',time:'08:12'},
+        {lv:'severe',t:'Soil moisture below 15% VWC at ICH-S02',d:'Lowest September value since 2017',r:'Ichkeul S',time:'06:40'},
+        {lv:'watch',t:'Lac Ichkeul level down 11 cm in 14 days',d:'Salinity rising at north shore gauge',r:'Ichkeul N',time:'Yest.'},
+        {lv:'severe',t:'LST anomaly +4.3 °C (MODIS 8-day)',d:'Heat stress on late olive harvest',r:'Bizerte W',time:'Yest.'}],
+      issues:[{id:'BIZ-S03',msg:'No data for 26 h',v:'offline',c:'#D96565'},{id:'ICH-S04',msg:'Battery low',v:'11%',c:'#E7A83B'},{id:'MAT-W02',msg:'Weak GSM signal',v:'−104 dBm',c:'#E7A83B'}] };
+  }
+}
+</script>
+</body>
+</html>

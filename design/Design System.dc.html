@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>html,body{margin:0;background:#0B2633}a{color:#2BA6B8}a:hover{color:#9EDFF1}@keyframes apShimmer{0%{background-position:-300px 0}100%{background-position:300px 0}}@keyframes apSpin{to{transform:rotate(360deg)}}</style>
+</helmet>
+<div style="--color-bg:#0B2633;--color-surface:#0F3040;--s2:#163D4A;--s3:#1C4957;--color-text:#E6F1F5;--muted:#8FAAB4;--faint:#5C7883;--color-divider:rgba(255,255,255,.08);--divider-strong:rgba(255,255,255,.2);--color-accent:#2BA6B8;--color-accent-600:#5FC3D3;--color-accent-700:#197A91;--teal:#9EDFF1;--color-accent-100:rgba(43,166,184,.12);--color-neutral-100:rgba(255,255,255,.06);--map-land:#0E2A36;--map-water:#1B5A6E;--map-sea:#081D27;--glow:rgba(43,166,184,.16);--dot:rgba(255,255,255,.045);--font-mono:'JetBrains Mono',ui-monospace,monospace;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-variant-numeric:tabular-nums;min-height:100vh">
+  <div style="max-width:1280px;margin:0 auto;padding:56px 40px 96px;display:flex;flex-direction:column;gap:64px;border-left:1px solid var(--color-divider);border-right:1px solid var(--color-divider)">
+    <div style="display:flex;flex-direction:column;gap:12px;position:relative">
+      <div style="position:absolute;left:-40px;top:-56px;width:600px;height:300px;background:radial-gradient(ellipse at 30% 40%,var(--glow),transparent 65%);pointer-events:none"></div>
+      <span style="position:relative;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--color-accent)">APWRS · DESIGN SYSTEM · v1.0</span>
+      <h1 style="position:relative;margin:0;font-size:64px;line-height:1;letter-spacing:-.03em">Field manual</h1>
+      <p style="position:relative;margin:0;font-size:16px;color:var(--muted);max-width:640px">Built on the Industry blueprint grammar — square hairline frames with registration marks — retuned to a deep marine ground. Risk colours are reserved for the risk scale.</p>
+    </div>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">01</span><h2 style="margin:0;font-size:28px">Colour tokens</h2></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <sc-for list="{{ themes }}" as="t">
+          <div class="blueprint" style="padding:18px;background:{{ t.bg }};display:flex;flex-direction:column;gap:12px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:{{ t.muted }}">{{ t.name }}</span>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+              <sc-for list="{{ t.sw }}" as="s"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:56px;background:{{ s.v }};border:1px solid {{ t.bd }}"></div><span style="font-family:var(--font-mono);font-size:10.5px;color:{{ t.fg }}">{{ s.k }}</span><span style="font-family:var(--font-mono);font-size:10px;color:{{ t.muted }}">{{ s.v }}</span></div></sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">02</span><h2 style="margin:0;font-size:28px">Risk scale · 0–100</h2><span style="margin-left:auto;font-size:13px;color:var(--muted)">The only place warm colours appear.</span></div>
+      <div class="blueprint" style="display:grid;grid-template-columns:repeat(4,1fr)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <sc-for list="{{ risk }}" as="r"><div style="padding:18px;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;gap:12px"><div style="height:10px;background:{{ r.c }}"></div><div style="display:flex;justify-content:space-between;align-items:center"><dc-import name="RiskBadge" level="{{ r.lv }}" hint-size="80px,22px"></dc-import><span style="font-family:var(--font-mono);font-size:12px">{{ r.range }}</span></div><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ r.c }}</span><span style="font-size:13px;color:var(--muted);line-height:1.45">{{ r.d }}</span></div></sc-for>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">BADGE WITH SCORE</span><dc-import name="RiskBadge" score="12" hint-size="90px,22px"></dc-import><dc-import name="RiskBadge" score="38" hint-size="90px,22px"></dc-import><dc-import name="RiskBadge" score="58" hint-size="90px,22px"></dc-import><dc-import name="RiskBadge" score="81" hint-size="90px,22px"></dc-import></div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">03</span><h2 style="margin:0;font-size:28px">Type</h2><span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted)">Barlow Condensed · Barlow · JetBrains Mono</span></div>
+      <div style="display:flex;flex-direction:column;border-top:1px solid var(--color-divider)">
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">DISPLAY · 76 / −3.5%</span><span style="font-family:var(--font-heading);font-weight:600;font-size:76px;line-height:.95;letter-spacing:-.035em">Plant on the right day</span></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">H1 · 36–40 / −2%</span><span style="font-family:var(--font-heading);font-weight:600;font-size:38px;letter-spacing:-.02em">Drought risk outlook</span></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">H3 CARD · 18</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Next planting window</span></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">BODY · 14 / 1.55</span><span style="font-size:14px;line-height:1.55;max-width:620px">Evapotranspiration is running at 5.1 mm/day, so the soil is losing water faster than it is replenished. Leave ~30% extra width for French strings.</span></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">DATA NUMERAL · 48</span><span style="font-family:var(--font-heading);font-weight:600;font-size:48px;line-height:1">58 <span style="font-family:var(--font-mono);font-size:13px;color:var(--muted);font-weight:400">/100</span>  18.4 <span style="font-family:var(--font-mono);font-size:13px;color:var(--muted);font-weight:400">mm</span></span></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">MONO · 11–12</span><span style="font-family:var(--font-mono);font-size:12px">37.163°N 9.674°E · 23 SEP 2026 08:40 CET · 14.2 % VWC · ET₀ 5.1 mm/d</span></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--color-divider)"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">LABEL · 10.5 / +10%</span><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">RISK · +7 DAYS · SOIL MOISTURE</span></div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">04</span><h2 style="margin:0;font-size:28px">Spacing &amp; grid</h2></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:10px"><sc-for list="{{ space }}" as="s"><div style="display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:12px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">{{ s.k }}</span><div style="height:12px;width:{{ s.v }}px;background:var(--color-accent)"></div><span style="font-family:var(--font-mono);font-size:11px;text-align:right">{{ s.v }}px</span></div></sc-for></div>
+        <div class="blueprint" style="height:220px;position:relative;background-image:linear-gradient(90deg,rgba(43,166,184,.08) 0 calc(100%/12 - 24px),transparent 0);background-size:calc(100%/12 + 2px) 100%;display:flex;align-items:flex-end;padding:14px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">12 columns · 24 gutter · 32 page margin · radius 0 (frames) · 1 px hairline @ 8%</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">05</span><h2 style="margin:0;font-size:28px">Buttons, inputs, tags</h2></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div class="blueprint" style="padding:22px;display:flex;flex-direction:column;gap:16px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary blueprint" style="height:36px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><dc-import name="Icon" n="sprout" s="15" hint-size="15px,15px"></dc-import>Primary</button>
+            <button class="btn btn-secondary" style="height:36px;color:var(--color-text)">Secondary</button>
+            <button class="btn btn-ghost" style="color:var(--color-accent)">Ghost<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button>
+            <button class="btn btn-secondary btn-icon" style="color:var(--color-text)"><dc-import name="Icon" n="download" s="16" hint-size="16px,16px"></dc-import></button>
+            <button class="btn btn-primary" disabled style="height:36px">Disabled</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tag tag-accent">Optimal</span><span class="tag tag-neutral">Rainfed</span><span class="tag tag-outline" style="color:var(--teal);border-color:var(--teal)">Sentinel-2</span><span style="font-family:var(--font-mono);font-size:11px;padding:2px 7px;border:1px solid var(--color-divider)">CHIRPS</span></div>
+          <div style="display:flex;border:1px solid var(--color-divider);width:fit-content"><span style="padding:6px 12px;font-size:12.5px;background:var(--s3)">Rainfed</span><span style="padding:6px 12px;font-size:12.5px;color:var(--muted);border-left:1px solid var(--color-divider)">Drip</span><span style="padding:6px 12px;font-size:12.5px;color:var(--muted);border-left:1px solid var(--color-divider)">Sprinkler</span></div>
+        </div>
+        <div class="blueprint" style="padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div class="field"><label>Text <span style="color:#E07B7B">*</span></label><input class="input" value="Ichkeul South Met" style="background:var(--color-surface)"></div>
+          <div class="field"><label>With unit</label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-surface);height:36px"><input value="14.2" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding:0 10px;border-left:1px solid var(--color-divider);height:100%;display:flex;align-items:center">% VWC</span></div></div>
+          <div class="field"><label>Focus</label><input class="input" value="37.1121" style="background:var(--color-surface);border-color:var(--color-accent);font-family:var(--font-mono)"></div>
+          <div class="field"><label>Error</label><input class="input" value="84.20" style="background:var(--color-surface);border-color:#D96565;font-family:var(--font-mono)"><div style="font-family:var(--font-mono);font-size:10.5px;color:#E07B7B;margin-top:4px">Outside 0–60 %</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">06</span><h2 style="margin:0;font-size:28px">Cards &amp; tables</h2></div>
+      <div style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start">
+        <div class="blueprint" style="padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" style-hover="border-color:var(--divider-strong)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">RAINFALL · 30D</span><span style="color:var(--teal);display:flex"><dc-import name="Icon" n="rain" s="15" hint-size="15px,15px"></dc-import></span></div>
+          <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:var(--font-heading);font-weight:600;font-size:44px;line-height:1">18.4</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">mm</span></div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span style="color:#EE8434">−62%</span> vs normal · hover brightens border</div>
+        </div>
+        <div class="blueprint">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <table class="table" style="font-size:13px"><thead><tr><th style="padding:10px 16px;font-family:var(--font-mono);font-size:10px">ZONE</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">KM²</th><th style="font-family:var(--font-mono);font-size:10px">RISK</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right;padding-right:16px">Δ7D</th></tr></thead>
+          <tbody><tr><td style="padding:10px 16px;font-family:var(--font-mono)">M-07</td><td style="font-family:var(--font-mono);text-align:right">14.2</td><td><dc-import name="RiskBadge" score="81" hint-size="90px,22px"></dc-import></td><td style="font-family:var(--font-mono);text-align:right;padding-right:16px;color:#EE8434">+9</td></tr><tr><td style="padding:10px 16px;font-family:var(--font-mono)">I-03</td><td style="font-family:var(--font-mono);text-align:right">22.8</td><td><dc-import name="RiskBadge" score="64" hint-size="90px,22px"></dc-import></td><td style="font-family:var(--font-mono);text-align:right;padding-right:16px;color:#EE8434">+4</td></tr><tr><td style="padding:10px 16px;font-family:var(--font-mono)">T-01</td><td style="font-family:var(--font-mono);text-align:right">9.7</td><td><dc-import name="RiskBadge" score="22" hint-size="90px,22px"></dc-import></td><td style="font-family:var(--font-mono);text-align:right;padding-right:16px;color:var(--teal)">−1</td></tr></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">07</span><h2 style="margin:0;font-size:28px">Charts &amp; map controls</h2></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div class="blueprint" style="padding:18px;display:flex;flex-direction:column;gap:12px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <svg viewBox="0 0 520 200" style="width:100%;display:block"><rect x="0" y="0" width="520" height="40" fill="#D96565" fill-opacity=".05"></rect><rect x="0" y="40" width="520" height="40" fill="#EE8434" fill-opacity=".05"></rect><g style="stroke:var(--color-text);stroke-opacity:.08"><path d="M0 40H520M0 80H520M0 120H520M0 160H520"></path></g><sc-for list="{{ bars }}" as="b"><rect x="{{ b.x }}" y="{{ b.y }}" width="14" height="{{ b.h }}" style="fill:var(--teal)" fill-opacity=".7"></rect></sc-for><path d="M0 150 L80 140 L160 132 L240 118 L320 100 L360 92" fill="none" style="stroke:var(--color-text)" stroke-width="1.75"></path><path d="M360 92 L440 76 L520 64" fill="none" style="stroke:var(--color-accent)" stroke-width="2" stroke-dasharray="6 4"></path><path d="M360 92 L440 62 L520 42 L520 86 L440 90 Z" style="fill:var(--color-accent)" fill-opacity=".12"></path><line x1="360" y1="0" x2="360" y2="200" style="stroke:var(--color-text);stroke-opacity:.35" stroke-dasharray="3 3"></line></svg>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span>— observed 1.75 px</span><span style="color:var(--color-accent)">- - forecast 2 px dashed</span><span>▒ 80% band 12%</span><span style="color:var(--teal)">▮ precipitation</span><span>┆ today marker</span></div>
+        </div>
+        <div class="blueprint" style="height:280px;position:relative;overflow:hidden">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <dc-import name="MapView" layer="risk" sensors="{{ true }}" legend="{{ true }}" labels="{{ false }}" hint-size="100%,280px" style="position:absolute;inset:0"></dc-import>
+          <div style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;border:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-bg) 92%,transparent)"><span style="width:34px;height:34px;display:grid;place-items:center"><dc-import name="Icon" n="plus" s="15" hint-size="15px,15px"></dc-import></span><span style="width:34px;height:34px;display:grid;place-items:center;border-top:1px solid var(--color-divider)"><span style="width:12px;height:1.5px;background:currentColor"></span></span><span style="width:34px;height:34px;display:grid;place-items:center;border-top:1px solid var(--color-divider)"><dc-import name="Icon" n="layers" s="15" hint-size="15px,15px"></dc-import></span></div>
+          <div style="position:absolute;top:12px;left:12px;display:flex;border:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-bg) 92%,transparent);font-size:12px"><span style="padding:7px 10px;background:var(--s3);display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="mountain" s="13" hint-size="13px,13px"></dc-import>Topography</span><span style="padding:7px 10px;color:var(--muted);border-left:1px solid var(--color-divider);display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="satellite" s="13" hint-size="13px,13px"></dc-import>Satellite</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--color-divider);padding-bottom:10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">08</span><h2 style="margin:0;font-size:28px">States</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+        <div class="blueprint" style="height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background-image:radial-gradient(circle at 1px 1px,var(--dot) 1px,transparent 0);background-size:16px 16px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span style="width:44px;height:44px;display:grid;place-items:center;border:1px dashed var(--divider-strong);color:var(--muted)"><dc-import name="Icon" n="radio" s="20" hint-size="20px,20px"></dc-import></span>
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:19px">No sensors at this site</span>
+          <span style="font-size:13px;color:var(--muted)">Register a station to start streaming readings.</span>
+          <button class="btn btn-secondary" style="height:32px;color:var(--color-text)"><dc-import name="Icon" n="plus" s="14" hint-size="14px,14px"></dc-import>Register sensor</button>
+        </div>
+        <div class="blueprint" style="height:220px;padding:20px;display:flex;flex-direction:column;gap:12px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span style="width:12px;height:12px;border:1.5px solid var(--color-divider);border-top-color:var(--color-accent);border-radius:50%;animation:apSpin .8s linear infinite"></span>LOADING MODEL RUN…</div>
+          <div style="height:40px;width:40%;background:linear-gradient(90deg,var(--color-neutral-100) 0,rgba(255,255,255,.12) 50%,var(--color-neutral-100) 100%);background-size:600px 100%;animation:apShimmer 1.4s linear infinite"></div>
+          <div style="height:12px;background:linear-gradient(90deg,var(--color-neutral-100) 0,rgba(255,255,255,.12) 50%,var(--color-neutral-100) 100%);background-size:600px 100%;animation:apShimmer 1.4s linear infinite"></div>
+          <div style="height:12px;width:80%;background:linear-gradient(90deg,var(--color-neutral-100) 0,rgba(255,255,255,.12) 50%,var(--color-neutral-100) 100%);background-size:600px 100%;animation:apShimmer 1.4s linear infinite"></div>
+          <div style="flex:1;background:linear-gradient(90deg,var(--color-neutral-100) 0,rgba(255,255,255,.12) 50%,var(--color-neutral-100) 100%);background-size:600px 100%;animation:apShimmer 1.4s linear infinite"></div>
+        </div>
+        <div class="blueprint" style="height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;border-color:rgba(217,101,101,.45);background:rgba(217,101,101,.05)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span style="color:#E07B7B;display:flex"><dc-import name="Icon" n="alert" s="22" hint-size="22px,22px"></dc-import></span>
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:19px">Couldn’t load ERA5-Land data</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">ERR 504 · upstream timeout · 06:02 UTC</span>
+          <button class="btn btn-secondary" style="height:32px;color:var(--color-text)"><dc-import name="Icon" n="refresh" s="14" hint-size="14px,14px"></dc-import>Retry</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const sw=o=>Object.entries(o).map(([k,v])=>({k,v}));
+    return {
+      themes:[{name:'DARK · DEFAULT',bg:'#0B2633',fg:'#E6F1F5',muted:'#8FAAB4',bd:'rgba(255,255,255,.12)',sw:sw({'bg':'#0B2633','surface':'#0F3040','surface-2':'#163D4A','surface-3':'#1C4957','text':'#E6F1F5','muted':'#8FAAB4','accent · secondary':'#2BA6B8','primary · sky':'#9EDFF1'})},
+        {name:'LIGHT',bg:'#F2FAFC',fg:'#142B35',muted:'#56727D',bd:'rgba(20,43,53,.14)',sw:sw({'bg':'#F2FAFC','surface':'#FFFFFF','surface-3':'#E4F1F5','divider':'#D3E3E9','text':'#142B35','muted':'#56727D','accent · secondary':'#197A91','primary · sky':'#2BA6B8'})}],
+      risk:[['safe','0–24','#38A88A','Normal conditions. Sowing and field work unrestricted.'],['watch','25–49','#E7A83B','Below-normal moisture. Monitor and prepare contingencies.'],['severe','50–74','#EE8434','Crop stress likely. Adjust planting and irrigation.'],['extreme','75–100','#D96565','Failure risk. Postpone sowing; protect perennials.']].map(r=>({lv:r[0],range:r[1],c:r[2],d:r[3]})),
+      space:[['4',4],['8',8],['12',12],['16',16],['20',20],['24',24],['32',32],['48',48],['64',64]].map(([k,v])=>({k:'sp-'+k,v})),
+      bars:[4,0,12,0,0,20,0,6,0,0,30,44,18,52,36,60].map((v,i)=>({x:10+i*32,y:(200-v).toFixed(0),h:v})) };
+  }
+}
+</script>
+</body>
+</html>

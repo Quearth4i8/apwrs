@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">DATA · MANUAL ENTRY</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Manual entry</h1>
+      <div style="font-size:14px;color:var(--muted)">Record a field observation. Fields marked <span style="color:#E07B7B">*</span> are required; everything else is optional.</div>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">Draft autosaved 08:41</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">SHARED METADATA · APPLIES TO ALL GROUPS</span>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr .8fr 1fr 1fr .8fr;gap:12px">
+          <div class="field"><label>Site <span style="color:#E07B7B">*</span></label><div class="input" style="display:flex;align-items:center;justify-content:space-between;background:var(--color-bg);font-size:13px">{{ site.name }}, {{ site.cc }}<dc-import name="Icon" n="down" s="13" hint-size="13px,13px"></dc-import></div></div>
+          <div class="field"><label>Date <span style="color:#E07B7B">*</span></label><input class="input" value="2026-09-23" style="background:var(--color-bg);font-family:var(--font-mono);font-size:13px"></div>
+          <div class="field"><label>Time <span style="color:#E07B7B">*</span></label><input class="input" value="08:30" style="background:var(--color-bg);font-family:var(--font-mono);font-size:13px"></div>
+          <div class="field"><label>Latitude <span style="color:#E07B7B">*</span></label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-bg);height:36px"><input value="37.1121" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:10px">°N</span></div></div>
+          <div class="field"><label>Longitude <span style="color:#E07B7B">*</span></label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-bg);height:36px"><input value="9.7358" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:10px">°E</span></div></div>
+          <div class="field"><label>Altitude</label><div style="display:flex;align-items:center;border:1px solid var(--color-divider);background:var(--color-bg);height:36px"><input value="22" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding-right:10px">m</span></div></div>
+        </div>
+      </div>
+
+      <div class="blueprint">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid var(--color-divider)">
+          <sc-for list="{{ tabs }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 14px;font-size:13px;border-right:1px solid var(--color-divider);background:{{ t.bg }};box-shadow:inset 0 -2px 0 {{ t.edge }};color:{{ t.fg }}"><dc-import name="Icon" n="{{ t.icon }}" s="15" hint-size="15px,15px"></dc-import><span style="flex:1">{{ t.n }}</span><span style="font-family:var(--font-mono);font-size:10px;color:{{ t.cc }}">{{ t.count }}</span></button></sc-for>
+        </div>
+        <div style="padding:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 16px">
+          <sc-for list="{{ fields }}" as="f" hint-placeholder-count="6">
+            <div class="field"><label style="display:flex;justify-content:space-between"><span>{{ f.l }} <span style="color:{{ f.rc }}">{{ f.rq }}</span></span><span style="font-family:var(--font-mono);font-size:10px;color:var(--faint)">{{ f.opt }}</span></label>
+              <div style="display:flex;align-items:center;border:1px solid {{ f.bd }};background:var(--color-bg);height:36px" style-hover="border-color:var(--divider-strong)"><input value="{{ f.v }}" onChange="{{ f.on }}" placeholder="{{ f.ph }}" style="flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--color-text);font-family:var(--font-mono);font-size:13px;padding:0 10px"><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding:0 10px;border-left:1px solid var(--color-divider);height:100%;display:flex;align-items:center">{{ f.u }}</span></div>
+              <sc-if value="{{ f.err }}"><div style="font-family:var(--font-mono);font-size:10.5px;color:#E07B7B;margin-top:4px">Required</div></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--color-divider)"><button class="btn btn-secondary" onClick="{{ prev }}" style="height:34px;color:var(--color-text)"><dc-import name="Icon" n="left" s="14" hint-size="14px,14px"></dc-import>{{ prevL }}</button><button class="btn btn-secondary" onClick="{{ nextG }}" style="height:34px;color:var(--color-text)">{{ nextL }}<dc-import name="Icon" n="right" s="14" hint-size="14px,14px"></dc-import></button></div>
+      </div>
+    </div>
+
+    <div class="blueprint" style="position:sticky;top:20px;display:flex;flex-direction:column">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="padding:14px 18px;border-bottom:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Summary</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ total }} values</span></div>
+      <div style="padding:12px 18px;border-bottom:1px solid var(--color-divider);font-family:var(--font-mono);font-size:11px;color:var(--muted);line-height:1.7">{{ site.name }} · 2026-09-23 08:30<br>37.1121°N 9.7358°E · 22 m</div>
+      <sc-for list="{{ summary }}" as="s">
+        <div style="padding:10px 18px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:500">{{ s.n }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:{{ s.c }}">{{ s.st }}</span></div>
+          <sc-for list="{{ s.items }}" as="i"><div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--muted)"><span>{{ i.l }}</span><span style="color:var(--color-text)">{{ i.v }}</span></div></sc-for>
+        </div>
+      </sc-for>
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+        <sc-if value="{{ missing }}"><div style="font-size:12px;color:#E7A83B;display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="alert" s="13" hint-size="13px,13px"></dc-import>{{ missingText }}</div></sc-if>
+        <sc-if value="{{ saved }}"><div style="font-size:12px;color:var(--color-accent);display:flex;gap:6px;align-items:center"><dc-import name="Icon" n="check" s="13" hint-size="13px,13px"></dc-import>Saved as record MR-2026-1187</div></sc-if>
+        <button class="btn btn-primary blueprint" onClick="{{ save }}" style="height:38px;width:100%"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Save {{ total }} values</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const G=[
+ {id:'soil',n:'Soil',icon:'droplet',f:[['Soil moisture (VWC)','%',1,'14.1'],['Soil temperature','°C',1,'21.6'],['Electrical conductivity','dS/m',0,'4.8'],['pH','—',0,''],['Probe depth','cm',1,'30'],['Organic matter','%',0,'']]},
+ {id:'climate',n:'Climate',icon:'sun',f:[['Rainfall (24 h)','mm',1,'0.0'],['Max temperature','°C',1,'31.8'],['Min temperature','°C',1,'19.2'],['Relative humidity','%',0,'41'],['Wind speed','m/s',0,''],['Solar radiation','MJ/m²',0,'']]},
+ {id:'drought',n:'Drought Indices',icon:'gauge',f:[['SPI-1','σ',0,''],['SPI-3','σ',1,''],['SPEI-3','σ',1,''],['PDSI','—',0,''],['Reference period','years',0,'1991–2020'],['Source','—',0,'']]},
+ {id:'agri',n:'Agricultural',icon:'sprout',f:[['Parcel ID','—',1,''],['Crop','—',1,''],['Growth stage','BBCH',0,''],['Irrigation applied','mm',0,''],['Sowing date','date',0,''],['Expected yield','t/ha',0,'']]},
+ {id:'rs',n:'Remote Sensing',icon:'satellite',f:[['NDVI','index',0,''],['NDWI','index',0,''],['LST','°C',0,''],['Cloud cover','%',0,''],['Sentinel tile','—',0,''],['Acquisition date','date',0,'']]},
+ {id:'hydro',n:'Hydrology',icon:'waves',f:[['Water level','m',1,''],['Salinity','g/L',0,''],['Flow rate','m³/s',0,''],['Gauge ID','—',1,''],['Turbidity','NTU',0,''],['Water temperature','°C',0,'']]}];
+class Component extends DCLogic {
+  state={g:0,vals:Object.fromEntries(G.flatMap((g,gi)=>g.f.map((f,fi)=>[gi+'-'+fi,f[3]]))),saved:false,tried:false};
+  renderVals(){
+    const S=this.state, g=G[S.g];
+    const filled=gi=>G[gi].f.filter((f,fi)=>S.vals[gi+'-'+fi]).length;
+    const reqMissing=gi=>G[gi].f.filter((f,fi)=>f[2]&&!S.vals[gi+'-'+fi]).length;
+    const touched=gi=>filled(gi)>0;
+    const summary=G.map((gr,gi)=>({gi,n:gr.n,items:gr.f.map((f,fi)=>({l:f[0],v:S.vals[gi+'-'+fi]?`${S.vals[gi+'-'+fi]} ${f[1]==='—'?'':f[1]}`:''})).filter(i=>i.v)})).filter(s=>s.items.length).map(s=>{const m=reqMissing(s.gi);return{...s,st:m?`${m} REQUIRED MISSING`:'COMPLETE',c:m?'#E7A83B':'var(--color-accent)'};});
+    const miss=G.map((_,gi)=>touched(gi)?reqMissing(gi):0).reduce((a,b)=>a+b,0);
+    const total=Object.values(S.vals).filter(Boolean).length;
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'},
+      tabs:G.map((t,i)=>{const on=S.g===i,f=filled(i),m=touched(i)&&reqMissing(i);return{n:t.n,icon:t.icon,count:f?`${f}/${t.f.length}`:'—',cc:m?'#E7A83B':f?'var(--color-accent)':'var(--faint)',pick:()=>this.setState({g:i}),bg:on?'var(--color-neutral-100)':'transparent',edge:on?'var(--color-accent)':'transparent',fg:on?'var(--color-text)':'var(--muted)'};}),
+      fields:g.f.map((f,fi)=>{const k=S.g+'-'+fi,v=S.vals[k],err=S.tried&&f[2]&&!v&&touched(S.g);return{l:f[0],u:f[1],rq:f[2]?'*':'',rc:'#E07B7B',opt:f[2]?'':'OPTIONAL',v,ph:f[2]?'required':'—',err,bd:err?'#D96565':'var(--color-divider)',on:e=>this.setState({vals:{...S.vals,[k]:e.target.value},saved:false})};}),
+      prev:()=>this.setState({g:Math.max(0,S.g-1)}), nextG:()=>this.setState({g:Math.min(5,S.g+1)}), prevL:S.g?G[S.g-1].n:'—', nextL:S.g<5?G[S.g+1].n:'—',
+      summary, total, missing:miss>0, missingText:`${miss} required field${miss>1?'s':''} missing in started groups`, saved:S.saved,
+      save:()=>this.setState({tried:true,saved:miss===0}) };
+  }
+}
+</script>
+</body>
+</html>

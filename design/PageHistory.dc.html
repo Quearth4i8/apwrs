@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">HISTORY · {{ site.cc }} / {{ site.name }} · REFERENCE 2016–2026 · ERA5-LAND 1981–</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">{{ title }}</h1>
+    </div>
+    <div style="position:relative">
+      <button class="btn btn-secondary" onClick="{{ toggleExp }}" style="height:36px;color:var(--color-text)"><dc-import name="Icon" n="download" s="15" hint-size="15px,15px"></dc-import>Export<dc-import name="Icon" n="down" s="14" hint-size="14px,14px"></dc-import></button>
+      <sc-if value="{{ exp }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;right:0;top:42px;width:220px;background:var(--s2);border:1px solid var(--divider-strong);padding:6px;z-index:10;box-shadow:0 20px 40px rgba(0,0,0,.3)">
+          <sc-for list="{{ exports }}" as="e"><button onClick="{{ toggleExp }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;height:32px;padding:0 10px;font-size:13px" style-hover="background:var(--s3)"><span>{{ e.l }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ e.f }}</span></button></sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <div style="display:flex;border-bottom:1px solid var(--color-divider)">
+    <sc-for list="{{ tabs }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;padding:10px 16px;font-size:13.5px;margin-bottom:-1px;border-bottom:2px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }}</button></sc-for>
+  </div>
+
+  <sc-if value="{{ isCompare }}" hint-placeholder-val="{{ true }}">
+    <div class="blueprint" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr))">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="padding:18px 20px;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;gap:8px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">CURRENT · 23 SEP 2026</span><span style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:44px;line-height:1">58</span><dc-import name="RiskBadge" level="severe" hint-size="70px,22px"></dc-import></span></div>
+      <div style="padding:18px 20px;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;gap:8px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">10-YEAR MEAN · SEPTEMBER</span><span style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:44px;line-height:1">42</span><span style="font-family:var(--font-mono);font-size:12px;color:#EE8434">+16 above</span></span></div>
+      <div style="padding:18px 20px;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;gap:8px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">PERCENTILE · 1981–2026</span><span style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:44px;line-height:1">P84</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">of 46 Septembers</span></span></div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:8px"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">RETURN FREQUENCY</span><span style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:44px;line-height:1">1 in 6</span><span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">years · score ≥ 58</span></span></div>
+    </div>
+
+    <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between"><span style="font-family:var(--font-heading);font-weight:600;font-size:17px">Percentile tiers</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">SEPTEMBER RISK SCORE DISTRIBUTION</span></div>
+      <div style="position:relative;padding-top:22px">
+        <div style="position:absolute;left:84%;top:0;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;padding:1px 6px;background:var(--color-text);color:var(--color-bg)">2026 · P84</div>
+        <div style="position:absolute;left:84%;top:18px;bottom:-4px;width:2px;background:var(--color-text)"></div>
+        <div style="display:grid;grid-template-columns:25fr 25fr 25fr 15fr 10fr;gap:2px;height:34px">
+          <div style="background:rgba(56,168,138,.18);border:1px solid rgba(56,168,138,.4);display:flex;align-items:center;padding:0 10px;font-family:var(--font-mono);font-size:10.5px;color:#38A88A">P0–25 · WET</div>
+          <div style="background:rgba(56,168,138,.08);border:1px solid rgba(56,168,138,.25);display:flex;align-items:center;padding:0 10px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">P25–50 · NORMAL</div>
+          <div style="background:rgba(231,168,59,.1);border:1px solid rgba(231,168,59,.35);display:flex;align-items:center;padding:0 10px;font-family:var(--font-mono);font-size:10.5px;color:#E7A83B">P50–75 · DRY</div>
+          <div style="background:rgba(238,132,52,.14);border:1px solid rgba(238,132,52,.45);display:flex;align-items:center;padding:0 10px;font-family:var(--font-mono);font-size:10.5px;color:#EE8434">P75–90 · V. DRY</div>
+          <div style="background:rgba(217,101,101,.14);border:1px solid rgba(217,101,101,.5);display:flex;align-items:center;padding:0 8px;font-family:var(--font-mono);font-size:10.5px;color:#E07B7B">P90+</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px">
+      <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between"><span style="font-family:var(--font-heading);font-weight:600;font-size:17px">Annual trend · September score</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">TREND +1.6 / YR</span></div>
+        <svg viewBox="0 0 560 250" style="width:100%;display:block">
+          <g style="stroke:var(--color-text);stroke-opacity:.08"><path d="M30 20H550M30 70H550M30 120H550M30 170H550M30 220H550"></path></g>
+          <sc-for list="{{ years }}" as="y"><g><rect x="{{ y.x }}" y="{{ y.y }}" width="30" height="{{ y.h }}" fill="{{ y.c }}" fill-opacity="{{ y.o }}" stroke="{{ y.st }}" stroke-width="{{ y.sw }}"></rect><text x="{{ y.tx }}" y="{{ y.ty }}" text-anchor="middle" style="font-family:'JetBrains Mono',monospace;fill:var(--color-text)" font-size="10" fill-opacity="{{ y.to }}">{{ y.v }}</text><text x="{{ y.tx }}" y="238" text-anchor="middle" style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="9.5">{{ y.l }}</text></g></sc-for>
+          <line x1="44" y1="{{ tr1 }}" x2="536" y2="{{ tr2 }}" style="stroke:var(--color-text);stroke-opacity:.5" stroke-dasharray="5 4"></line>
+          <line x1="30" y1="{{ meanY }}" x2="550" y2="{{ meanY }}" style="stroke:var(--teal)" stroke-opacity=".7"></line><text x="548" y="{{ meanYt }}" text-anchor="end" style="font-family:'JetBrains Mono',monospace;fill:var(--teal)" font-size="9">MEAN 42</text>
+          <g style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="9.5"><text x="24" y="24" text-anchor="end">80</text><text x="24" y="124" text-anchor="end">40</text><text x="24" y="224" text-anchor="end">0</text></g>
+        </svg>
+      </div>
+      <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:17px">Year vs year</span>
+          <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11.5px">
+            <select value="{{ ya }}" onChange="{{ onYa }}" style="height:28px;background:var(--color-bg);color:var(--color-text);border:1px solid var(--color-accent);font:inherit;padding:0 6px"><sc-for list="{{ yopts }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select>
+            <span style="color:var(--muted)">vs</span>
+            <select value="{{ yb }}" onChange="{{ onYb }}" style="height:28px;background:var(--color-bg);color:var(--color-text);border:1px solid var(--teal);font:inherit;padding:0 6px"><sc-for list="{{ yopts }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select>
+          </div>
+        </div>
+        <svg viewBox="0 0 560 250" style="width:100%;display:block">
+          <g style="stroke:var(--color-text);stroke-opacity:.08"><path d="M30 20H550M30 70H550M30 120H550M30 170H550M30 220H550"></path></g>
+          <path d="{{ pa }}" fill="none" style="stroke:var(--color-accent)" stroke-width="2"></path>
+          <path d="{{ pb }}" fill="none" style="stroke:var(--teal)" stroke-width="2" stroke-dasharray="6 4"></path>
+          <g style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="9.5"><text x="24" y="24" text-anchor="end">100</text><text x="24" y="124" text-anchor="end">50</text><text x="24" y="224" text-anchor="end">0</text><sc-for list="{{ mlab }}" as="m"><text x="{{ m.x }}" y="238" text-anchor="middle">{{ m.l }}</text></sc-for></g>
+        </svg>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--color-divider);font-family:var(--font-mono);font-size:11px">
+          <div style="padding:8px 12px;border-right:1px solid var(--color-divider)"><div style="color:var(--muted);font-size:10px">PEAK</div><span style="color:var(--color-accent)">{{ sa.peak }}</span> / <span style="color:var(--teal)">{{ sb.peak }}</span></div>
+          <div style="padding:8px 12px;border-right:1px solid var(--color-divider)"><div style="color:var(--muted);font-size:10px">SEASON RAIN</div><span style="color:var(--color-accent)">{{ sa.rain }}</span> / <span style="color:var(--teal)">{{ sb.rain }}</span> mm</div>
+          <div style="padding:8px 12px"><div style="color:var(--muted);font-size:10px">DAYS ≥ SEVERE</div><span style="color:var(--color-accent)">{{ sa.days }}</span> / <span style="color:var(--teal)">{{ sb.days }}</span></div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isArchive }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px">
+      <sc-for list="{{ seasons }}" as="s" hint-placeholder-count="8">
+        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:border-color .2s" style-hover="border-color:var(--divider-strong)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ s.y }}</span><dc-import name="RiskBadge" score="{{ s.peak }}" hint-size="90px,22px"></dc-import></div>
+          <svg viewBox="0 0 200 40" preserveAspectRatio="none" style="width:100%;height:40px;display:block"><path d="{{ s.spark }}" fill="none" stroke="{{ s.c }}" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></svg>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-family:var(--font-mono);font-size:11px;border-top:1px solid var(--color-divider);padding-top:10px"><div><div style="font-size:9.5px;color:var(--muted)">RAIN</div>{{ s.rain }} mm</div><div><div style="font-size:9.5px;color:var(--muted)">WHEAT</div>{{ s.yield }} t/ha</div><div><div style="font-size:9.5px;color:var(--muted)">SOWN</div>{{ s.sown }}</div></div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.45">{{ s.note }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const YS=[[2016,38],[2017,52],[2018,29],[2019,35],[2020,47],[2021,44],[2022,66],[2023,61],[2024,49],[2025,40],[2026,58]];
+const Yv=v=>220-v*2.5;
+const MON=['S','O','N','D','J','F','M','A','M','J','J','A'];
+const curve=y=>{const s=YS.find(a=>a[0]===+y)[1];return MON.map((_,i)=>{const seas=Math.cos((i-1)/12*Math.PI*2)*-18;return Math.max(5,Math.min(95,s-8+seas*.8+(i<3?8-i*4:0)+6*Math.sin(i*1.3+(+y))));});};
+const mx=i=>40+i*(500/11);
+const path=a=>'M'+a.map((v,i)=>`${mx(i).toFixed(1)} ${(220-v*2).toFixed(1)}`).join('L');
+const RC=s=>s<25?'#38A88A':s<50?'#E7A83B':s<75?'#EE8434':'#D96565';
+class Component extends DCLogic {
+  state={tab:this.props.tab ?? 'compare',ya:'2026',yb:'2022',exp:false};
+  componentDidUpdate(pp){ if(pp.tab!==this.props.tab)this.setState({tab:this.props.tab}); }
+  renderVals(){
+    const S=this.state, ca=curve(S.ya), cb=curve(S.yb);
+    const st=(c,y)=>({peak:Math.round(Math.max(...c)),rain:Math.round(620-YS.find(a=>a[0]===+y)[1]*4.6),days:c.filter(v=>v>=50).length*30});
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'}, title:S.tab==='compare'?'Historical comparison':'Seasonal archive',
+      tabs:[['compare','Historical comparison'],['archive','Seasonal archive']].map(([id,label])=>({label,pick:()=>this.setState({tab:id}),bd:S.tab===id?'var(--color-accent)':'transparent',fg:S.tab===id?'var(--color-text)':'var(--muted)'})),
+      isCompare:S.tab==='compare', isArchive:S.tab==='archive', exp:S.exp, toggleExp:()=>this.setState(s=>({exp:!s.exp})),
+      exports:[{l:'Data table',f:'CSV'},{l:'Spreadsheet',f:'XLSX'},{l:'Report with charts',f:'PDF'},{l:'Chart image',f:'PNG'}],
+      years:YS.map(([y,v],i)=>{const cur=y===2026;return{x:44+i*46,y:Yv(v).toFixed(1),h:(v*2.5).toFixed(1),c:RC(v),o:cur?.95:.35,st:cur?'var(--color-text)':'none',sw:cur?1.5:0,tx:59+i*46,ty:(Yv(v)-6).toFixed(1),v,to:cur?1:.6,l:"'"+String(y).slice(2)};}),
+      tr1:Yv(36).toFixed(1), tr2:Yv(52).toFixed(1), meanY:Yv(42).toFixed(1), meanYt:(Yv(42)-5).toFixed(1),
+      yopts:YS.map(a=>String(a[0])).reverse(), ya:S.ya, yb:S.yb, onYa:e=>this.setState({ya:e.target.value}), onYb:e=>this.setState({yb:e.target.value}),
+      pa:path(ca), pb:path(cb), mlab:MON.map((l,i)=>({l,x:mx(i).toFixed(1)})), sa:st(ca,S.ya), sb:st(cb,S.yb),
+      seasons:[['2025/26',47,512,2.9,'18 Nov','Near-normal season; late-March rains rescued grain fill.'],['2024/25',55,441,2.3,'02 Dec','Dry autumn delayed sowing by two weeks.'],['2023/24',71,338,1.4,'14 Dec','Second consecutive drought year; Sidi Salem reservoir at 18%.'],['2022/23',78,301,1.1,'20 Dec','Worst season in record; 60% of rainfed durum not harvested.'],['2021/22',52,468,2.6,'22 Nov','Hot spring (+2.1 °C) cut yields despite average rainfall.'],['2020/21',49,497,2.8,'15 Nov','Good establishment; localized hail in April.'],['2019/20',39,588,3.3,'10 Nov','Wet autumn; optimal window fully used.'],['2018/19',31,654,3.6,'08 Nov','Best season in reference period.']].map(s=>{const c=RC(s[1]);let d='M0 '+(40-s[1]*.35);for(let i=1;i<=10;i++)d+=`L${i*20} ${(40-Math.max(4,s[1]*.4-Math.abs(i-4)*3+4*Math.sin(i+s[1]))*.8).toFixed(1)}`;return{y:s[0],peak:s[1],rain:s[2],yield:s[3].toFixed(1),sown:s[4],note:s[5],c,spark:d};}) };
+  }
+}
+</script>
+</body>
+</html>

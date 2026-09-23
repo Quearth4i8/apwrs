@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/styles.css">
+  <script src="_ds/industry-6b19fe34-368f-49a0-9508-8f86145dc3c5/_ds_bundle.js"></script>
+</helmet>
+<div style="padding:28px 32px 48px;display:flex;flex-direction:column;gap:22px;position:relative">
+  <div style="position:absolute;left:0;top:40px;width:640px;height:420px;background:radial-gradient(ellipse at 30% 50%,var(--glow),transparent 65%);pointer-events:none"></div>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;position:relative">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted)">ANALYSIS · DROUGHT RISK · {{ site.cc }} / {{ site.name }}</div>
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.02em;line-height:1">Drought risk outlook</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">
+      <span>SCALE 0–100</span>
+      <span style="display:flex;gap:2px"><span style="padding:3px 8px;border:1px solid rgba(56,168,138,.45);color:#38A88A">SAFE &lt;25</span><span style="padding:3px 8px;border:1px solid rgba(231,168,59,.45);color:#E7A83B">WATCH 25–50</span><span style="padding:3px 8px;border:1px solid rgba(238,132,52,.45);color:#EE8434">SEVERE 50–75</span><span style="padding:3px 8px;border:1px solid rgba(217,101,101,.5);color:#E07B7B">EXTREME &gt;75</span></span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;position:relative" class="blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <sc-for list="{{ hz }}" as="h" hint-placeholder-count="4">
+      <button onClick="{{ h.pick }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:16px 20px;border-right:1px solid var(--color-divider);background:{{ h.bg }};box-shadow:inset 0 -2px 0 {{ h.edge }};transition:background .15s" style-hover="background:var(--color-neutral-100)">
+        <span style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">{{ h.label }}</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">{{ h.date }}</span></span>
+        <span style="display:flex;align-items:baseline;gap:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:40px;line-height:1">{{ h.s }}</span><dc-import name="RiskBadge" score="{{ h.s }}" show-score="{{ false }}" hint-size="80px,22px"></dc-import></span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">confidence {{ h.c }}% · ±{{ h.pm }}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px;position:relative">
+    <div class="blueprint" style="padding:20px 24px;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="align-self:stretch;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)"><span>COMPOSITE RISK · {{ cur.label }}</span><span>{{ cur.date }}</span></div>
+      <svg viewBox="0 0 300 180" style="width:100%;max-width:420px;display:block">
+        <path d="M30 150 A120 120 0 0 1 64.2 66.1" fill="none" stroke="#38A88A" stroke-width="16"></path>
+        <path d="M66.2 64.2 A120 120 0 0 1 148.6 30" fill="none" stroke="#E7A83B" stroke-width="16"></path>
+        <path d="M151.4 30 A120 120 0 0 1 233.8 64.2" fill="none" stroke="#EE8434" stroke-width="16"></path>
+        <path d="M235.8 66.1 A120 120 0 0 1 270 150" fill="none" stroke="#D96565" stroke-width="16"></path>
+        <path d="{{ band }}" fill="none" stroke="var(--color-text)" stroke-opacity=".25" stroke-width="30"></path>
+        <g style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="9"><text x="18" y="168">0</text><text x="46" y="52">25</text><text x="143" y="16">50</text><text x="240" y="52">75</text><text x="266" y="168">100</text></g>
+        <line x1="150" y1="150" x2="{{ nx }}" y2="{{ ny }}" style="stroke:var(--color-text);transition:all .5s cubic-bezier(.2,.8,.2,1)" stroke-width="2"></line>
+        <rect x="144" y="144" width="12" height="12" style="fill:var(--color-bg);stroke:var(--color-text)" stroke-width="1.5"></rect>
+      </svg>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:-54px"><span style="font-family:var(--font-heading);font-weight:600;font-size:64px;line-height:1;letter-spacing:-.03em">{{ cur.s }}</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--muted)">/100</span></div>
+      <dc-import name="RiskBadge" score="{{ cur.s }}" show-score="{{ false }}" hint-size="80px,22px"></dc-import>
+      <div style="align-self:stretch;display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--color-divider);margin-top:14px">
+        <div style="padding:10px 12px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">CONFIDENCE</div><div style="font-family:var(--font-mono);font-size:15px">{{ cur.c }}%</div></div>
+        <div style="padding:10px 12px;border-right:1px solid var(--color-divider)"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">80% INTERVAL</div><div style="font-family:var(--font-mono);font-size:15px">{{ cur.lo }}–{{ cur.hi }}</div></div>
+        <div style="padding:10px 12px"><div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">P(EXTREME)</div><div style="font-family:var(--font-mono);font-size:15px">{{ cur.pe }}%</div></div>
+      </div>
+    </div>
+
+    <div class="blueprint" style="padding:22px 24px;display:flex;flex-direction:column;gap:16px;background:linear-gradient(180deg,var(--color-accent-100),transparent 60%)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--color-accent)"><dc-import name="Icon" n="sparkles" s="14" hint-size="14px,14px"></dc-import>AI EXPLANATION<span style="margin-left:auto;color:var(--muted)">APWRS-LSTM v2.4 · ensemble n=50</span></div>
+      <div style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1.15;letter-spacing:-.01em;text-wrap:pretty">Risk is severe because almost no rain has fallen since mid-August while heat keeps drying the topsoil.</div>
+      <div style="font-size:14px;line-height:1.65;color:var(--muted);text-wrap:pretty">Ichkeul received <span style="color:var(--color-text);font-family:var(--font-mono);font-size:13px">18.4 mm</span> in the last 30 days, about a third of normal. Evapotranspiration is running at <span style="color:var(--color-text);font-family:var(--font-mono);font-size:13px">5.1 mm/day</span>, so the soil is losing water faster than it is replenished. Unless the rain expected around 8–14 November arrives, risk will likely reach the Extreme band before the durum wheat window opens.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--color-divider);padding-top:14px">
+        <sc-for list="{{ drv }}" as="d"><div style="display:grid;grid-template-columns:170px minmax(0,1fr) 48px;gap:12px;align-items:center;font-size:13px"><span>{{ d.n }}</span><div style="height:8px;background:var(--color-neutral-100)"><div style="height:100%;width:{{ d.w }}%;background:{{ d.c }}"></div></div><span style="font-family:var(--font-mono);font-size:12px;text-align:right">{{ d.w }}%</span></div></sc-for>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:auto"><button class="btn btn-secondary" onClick="{{ goDrivers }}" style="height:34px;color:var(--color-text)">All risk drivers<dc-import name="Icon" n="arrow" s="14" hint-size="14px,14px"></dc-import></button><button class="btn btn-ghost" onClick="{{ goPlanting }}" style="color:var(--color-accent)">Impact on planting windows</button></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--color-divider)">
+    <sc-for list="{{ tabs }}" as="t"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;padding:10px 16px;font-size:13.5px;margin-bottom:-1px;border-bottom:2px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }}</button></sc-for>
+  </div>
+
+  <sc-if value="{{ isTrend }}" hint-placeholder-val="{{ true }}">
+    <div class="blueprint" style="padding:18px 20px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Risk trend · 90 days observed + 30 days forecast</span><span style="display:flex;gap:16px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)"><span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:var(--color-text)"></span>Observed</span><span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:0;border-top:2px dashed var(--color-accent)"></span>Forecast</span><span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:8px;background:var(--color-accent-100)"></span>80% band</span></span></div>
+      <svg viewBox="0 0 1000 280" style="width:100%;display:block">
+        <rect x="40" y="10" width="950" height="60" fill="#D96565" fill-opacity=".05"></rect><rect x="40" y="70" width="950" height="60" fill="#EE8434" fill-opacity=".05"></rect><rect x="40" y="130" width="950" height="60" fill="#E7A83B" fill-opacity=".04"></rect>
+        <g style="stroke:var(--color-text);stroke-opacity:.1"><path d="M40 10H990M40 70H990M40 130H990M40 190H990M40 250H990"></path></g>
+        <g style="font-family:'JetBrains Mono',monospace;fill:var(--muted)" font-size="10"><text x="30" y="14" text-anchor="end">100</text><text x="30" y="74" text-anchor="end">75</text><text x="30" y="134" text-anchor="end">50</text><text x="30" y="194" text-anchor="end">25</text><text x="30" y="254" text-anchor="end">0</text>
+          <text x="40" y="272">25 Jun</text><text x="237" y="272">25 Jul</text><text x="435" y="272">24 Aug</text><text x="712" y="272" style="fill:var(--color-text)">23 Sep · today</text><text x="930" y="272">23 Oct</text></g>
+        <path d="{{ bandPath }}" style="fill:var(--color-accent)" fill-opacity=".12"></path>
+        <line x1="{{ todayX }}" y1="10" x2="{{ todayX }}" y2="250" style="stroke:var(--color-text);stroke-opacity:.4" stroke-dasharray="3 3"></line>
+        <path d="{{ obsPath }}" fill="none" style="stroke:var(--color-text)" stroke-width="1.75"></path>
+        <path d="{{ fcPath }}" fill="none" style="stroke:var(--color-accent)" stroke-width="2" stroke-dasharray="6 4"></path>
+        <rect x="{{ todayXm }}" y="{{ todayYm }}" width="8" height="8" style="fill:var(--color-bg);stroke:var(--color-text)" stroke-width="1.5"></rect>
+      </svg>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isSpatial }}" hint-placeholder-val="{{ false }}">
+    <div class="blueprint" style="display:grid;grid-template-columns:minmax(0,1fr) 420px">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="height:460px;position:relative"><dc-import name="MapView" layer="risk" legend="{{ true }}" opacity="{{ 0.55 }}" hint-size="100%,460px" style="position:absolute;inset:0"></dc-import></div>
+      <div style="border-left:1px solid var(--color-divider);display:flex;flex-direction:column">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted)">AREA BY CLASS · 278.7 KM²</span>
+          <div style="display:flex;height:10px;gap:2px"><div style="flex:18.4;background:#38A88A"></div><div style="flex:96.1;background:#E7A83B"></div><div style="flex:142.7;background:#EE8434"></div><div style="flex:21.5;background:#D96565"></div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-family:var(--font-mono);font-size:11px;gap:4px"><span><span style="color:#38A88A">■</span> 18.4</span><span><span style="color:#E7A83B">■</span> 96.1</span><span><span style="color:#EE8434">■</span> 142.7</span><span><span style="color:#D96565">■</span> 21.5</span></div>
+        </div>
+        <table class="table" style="font-size:13px">
+          <thead><tr><th style="padding:10px 18px;font-family:var(--font-mono);font-size:10px">ZONE</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right">KM²</th><th style="font-family:var(--font-mono);font-size:10px">RISK</th><th style="font-family:var(--font-mono);font-size:10px;text-align:right;padding-right:18px">Δ7D</th></tr></thead>
+          <tbody><sc-for list="{{ zones }}" as="z"><tr><td style="padding:10px 18px"><div style="display:flex;flex-direction:column"><span style="font-family:var(--font-mono);font-size:11.5px">{{ z.id }}</span><span style="font-size:12px;color:var(--muted)">{{ z.n }}</span></div></td><td style="font-family:var(--font-mono);text-align:right">{{ z.a }}</td><td><dc-import name="RiskBadge" score="{{ z.s }}" hint-size="90px,22px"></dc-import></td><td style="font-family:var(--font-mono);text-align:right;padding-right:18px;color:{{ z.dc }}">{{ z.d }}</td></tr></sc-for></tbody>
+        </table>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const H=[['TODAY','23 Sep',58,82,6,11],['+7 DAYS','30 Sep',63,76,8,17],['+14 DAYS','07 Oct',67,68,11,24],['+30 DAYS','23 Oct',71,57,15,33]];
+const pt=v=>{const t=Math.PI*(1-v/100);return[150+120*Math.cos(t),150-120*Math.sin(t)];};
+const X=i=>40+i*(950/119), Y=v=>250-v*2.4;
+const obs=[],fc=[],hi=[],lo=[];
+for(let i=0;i<90;i++){const v=24+34*(i/89)**1.4+4*Math.sin(i/6)+2*Math.cos(i/2.3);obs.push([X(i),Y(i===89?58:v)]);}
+for(let i=89;i<120;i++){const k=i-89,v=58+13*(k/30)**.8+1.5*Math.sin(k/3),w=2+13*(k/30);fc.push([X(i),Y(v)]);hi.push([X(i),Y(v+w)]);lo.push([X(i),Y(v-w)]);}
+const P=a=>'M'+a.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L');
+const BAND=P(hi)+'L'+lo.reverse().map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L')+'Z';
+class Component extends DCLogic {
+  state={h:0,tab:'trend'};
+  renderVals(){
+    const S=this.state, c=H[S.h], [nx,ny]=pt(c[2]).map(n=>150+(n-150)*.78), nav=p=>()=>this.props.onNav&&this.props.onNav(p);
+    const a=pt(c[2]-c[4]),b=pt(c[2]+c[4]);
+    return { site:this.props.site ?? {cc:'TN',name:'Ichkeul'},
+      hz:H.map((h,i)=>({label:h[0],date:h[1],s:h[2],c:h[3],pm:h[4],pick:()=>this.setState({h:i}),bg:S.h===i?'var(--color-neutral-100)':'transparent',edge:S.h===i?'var(--color-accent)':'transparent'})),
+      cur:{label:c[0],date:c[1],s:c[2],c:c[3],lo:c[2]-c[4],hi:c[2]+c[4],pe:c[5]}, nx:nx.toFixed(1), ny:ny.toFixed(1),
+      band:`M${a[0].toFixed(1)} ${a[1].toFixed(1)} A120 120 0 0 1 ${b[0].toFixed(1)} ${b[1].toFixed(1)}`,
+      drv:[{n:'Rainfall deficit',w:38,c:'#EE8434'},{n:'High temperature',w:24,c:'#EE8434'},{n:'Soil moisture decline',w:19,c:'#E7A83B'}],
+      goDrivers:nav('drivers'), goPlanting:nav('planting'),
+      tabs:[['trend','Risk trend'],['spatial','Spatial risk']].map(([id,label])=>({label,pick:()=>this.setState({tab:id}),bd:S.tab===id?'var(--color-accent)':'transparent',fg:S.tab===id?'var(--color-text)':'var(--muted)'})),
+      isTrend:S.tab==='trend', isSpatial:S.tab==='spatial', obsPath:P(obs), fcPath:P(fc), bandPath:BAND, todayX:X(89).toFixed(1), todayXm:(X(89)-4).toFixed(1), todayYm:(Y(58)-4).toFixed(1),
+      zones:[['M-07','Mateur plain south',14.2,81,'+9'],['M-04','Mateur plain north',31.6,69,'+6'],['I-03','Ichkeul west (Joumine)',22.8,64,'+4'],['B-02','Bizerte plateau west',41.3,57,'+3'],['I-01','Ichkeul north shore',18.9,44,'+2'],['T-01','Tinja wetland edge',9.7,22,'−1']].map(z=>({id:z[0],n:z[1],a:z[2].toFixed(1),s:z[3],d:z[4],dc:z[4][0]==='+'?'#EE8434':'var(--teal)'})) };
+  }
+}
+</script>
+</body>
+</html>

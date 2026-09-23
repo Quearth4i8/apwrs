@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<sc-if value="{{ isSafe }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid rgba(56,168,138,.4);background:rgba(56,168,138,.1);color:#38A88A;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums"><span style="width:6px;height:6px;background:#38A88A"></span>{{ label }}<sc-if value="{{ show }}"><span style="opacity:.75">{{ score }}</span></sc-if></span></sc-if><sc-if value="{{ isWatch }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid rgba(231,168,59,.45);background:rgba(231,168,59,.1);color:#E7A83B;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums"><span style="width:6px;height:6px;background:#E7A83B"></span>{{ label }}<sc-if value="{{ show }}"><span style="opacity:.75">{{ score }}</span></sc-if></span></sc-if><sc-if value="{{ isSevere }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid rgba(238,132,52,.45);background:rgba(238,132,52,.11);color:#EE8434;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums"><span style="width:6px;height:6px;background:#EE8434"></span>{{ label }}<sc-if value="{{ show }}"><span style="opacity:.75">{{ score }}</span></sc-if></span></sc-if><sc-if value="{{ isExtreme }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid rgba(217,101,101,.5);background:rgba(217,101,101,.12);color:#E07B7B;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums"><span style="width:6px;height:6px;background:#D96565"></span>{{ label }}<sc-if value="{{ show }}"><span style="opacity:.75">{{ score }}</span></sc-if></span></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:140,&quot;height&quot;:30},&quot;score&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:58,&quot;tsType&quot;:&quot;number&quot;},&quot;level&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;safe&quot;,&quot;watch&quot;,&quot;severe&quot;,&quot;extreme&quot;],&quot;default&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;showScore&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals(){
+    const p=this.props; const s=Number(p.score ?? 58);
+    const lv = p.level || (s<25?'safe':s<50?'watch':s<75?'severe':'extreme');
+    const L={safe:'Safe',watch:'Watch',severe:'Severe',extreme:'Extreme'};
+    return { isSafe:lv==='safe', isWatch:lv==='watch', isSevere:lv==='severe', isExtreme:lv==='extreme', label:L[lv], score:Math.round(s), show: p.showScore!==false && p.showScore!=='false' && p.level==null };
+  }
+}
+</script>
+</body>
+</html>
