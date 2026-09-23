@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Blueprint, PageHeader, TabStrip } from "@/components/ui/primitives";
+import { Panel, PageHeader, TabStrip } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
 import { climateFile, CROPS, STATIONS } from "@/lib/climate";
 
@@ -41,7 +41,7 @@ export function PageDatasets({ tab: initial }: { tab: "datasets" | "activity" })
 
       {tab === "datasets" ? (
         <>
-          <Blueprint className="overflow-x-auto">
+          <Panel className="overflow-x-auto">
             <table className="w-full min-w-[820px] border-collapse text-[13px]">
               <thead>
                 <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
@@ -113,7 +113,7 @@ export function PageDatasets({ tab: initial }: { tab: "datasets" | "activity" })
                 </tr>
               </tbody>
             </table>
-          </Blueprint>
+          </Panel>
 
           <Provenance>
             Generated {new Date(climateFile.generatedAt).toISOString().slice(0, 10)} &middot; everything the app

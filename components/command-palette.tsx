@@ -6,7 +6,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon, type IconName } from "@/components/icon";
-import { Corners } from "@/components/ui/primitives";
 import { COUNTRIES, NAV, type PageId } from "@/lib/data";
 import { useConsole } from "@/components/app-context";
 
@@ -148,9 +147,8 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -6, scale: 0.99 }}
         transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-        className="blueprint fixed left-1/2 top-[110px] z-50 w-[min(600px,calc(100vw-32px))] -translate-x-1/2 border-divider-strong bg-s2 shadow-pop"
+        className="panel fixed left-1/2 top-[110px] z-50 w-[min(600px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden bg-s2 shadow-pop"
       >
-        <Corners />
         <VisuallyHidden>
           <Dialog.Title>Command palette</Dialog.Title>
         </VisuallyHidden>
@@ -185,9 +183,10 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
                     key={`${g.label}-${it.label}`}
                     onClick={it.run}
                     onMouseEnter={() => setCursor(i)}
-                    className={`flex h-9 w-full items-center gap-2.5 px-2.5 text-left text-[13.5px] transition-colors duration-100 ${
+                    className={`mx-1 flex h-9 items-center gap-2.5 rounded-inset px-2.5 text-left text-[13.5px] transition-colors duration-100 ${
                       active === i ? "bg-s3" : ""
                     }`}
+                    style={{ width: "calc(100% - 0.5rem)" }}
                   >
                     <span className="text-muted">
                       <Icon name={it.icon} size={15} />

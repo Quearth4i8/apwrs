@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, Button, Field, Input, PageHeader, UnitInput } from "@/components/ui/primitives";
+import { Panel, Button, Field, Input, PageHeader, UnitInput } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { stationForSite } from "@/lib/climate";
 
@@ -49,7 +49,7 @@ export function PageManual() {
       />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <Blueprint className="flex flex-col">
+        <Panel className="flex flex-col">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-5 py-3.5">
             <span className="font-heading text-lg font-semibold">Observation</span>
             <span className="font-mono text-[10.5px] text-muted">
@@ -101,9 +101,9 @@ export function PageManual() {
             ET&#8320; is not entered by hand &mdash; it is computed from temperature, humidity, radiation and wind by
             FAO-56 Penman&ndash;Monteith once the other values are present.
           </div>
-        </Blueprint>
+        </Panel>
 
-        <Blueprint className="flex flex-col xl:sticky xl:top-5">
+        <Panel className="flex flex-col xl:sticky xl:top-5">
           <div className="flex items-baseline justify-between border-b border-divider px-4.5 py-3.5">
             <span className="font-heading text-lg font-semibold">Summary</span>
             <span className="font-mono text-[10.5px] text-muted">
@@ -143,7 +143,7 @@ export function PageManual() {
               Save observation
             </Button>
           </div>
-        </Blueprint>
+        </Panel>
       </div>
 
       <Provenance>

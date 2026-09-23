@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
-import { Blueprint } from "@/components/ui/primitives";
+import { Panel } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
 import { CROPS, STATIONS, type Station } from "@/lib/climate";
 import { conditionsFor, decadeLabel, suitability, type DecadeSuitability } from "@/lib/metrics";
@@ -106,7 +106,7 @@ export function FarmerContent({
             transition={{ duration: 0.3 }}
             className="lg:row-span-2"
           >
-            <Blueprint
+            <Panel
               className="flex h-full flex-col gap-4 px-5 py-5.5"
               style={{ background: verdict.bg, borderColor: verdict.border }}
             >
@@ -158,11 +158,11 @@ export function FarmerContent({
                 <Icon name="volume" size={20} />
                 {speaking ? t.stop : t.listen}
               </button>
-            </Blueprint>
+            </Panel>
           </motion.div>
 
           {/* Dryness, from the measured index */}
-          <Blueprint className="flex flex-col gap-3.5 bg-surface p-4">
+          <Panel className="flex flex-col gap-3.5 bg-surface p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-base font-semibold">{t.dryness}</span>
               <span className="text-[13px] text-muted">{station.name}</span>
@@ -213,7 +213,7 @@ export function FarmerContent({
                 {lang === "fr" ? "Pas de mesure pour ce mois." : "No measurement for this month."}
               </p>
             )}
-          </Blueprint>
+          </Panel>
 
           {/* Real forecast */}
           <div className="flex flex-col gap-2.5">
@@ -302,7 +302,7 @@ export function FarmerContent({
       {tab === "help" && (
         <>
           <h1 className="font-heading text-[30px] font-semibold leading-none lg:col-span-2">{t.help}</h1>
-          <Blueprint className="flex flex-col gap-3.5 bg-surface p-4.5">
+          <Panel className="flex flex-col gap-3.5 bg-surface p-4.5">
             <span className="text-base font-semibold">
               {lang === "fr" ? "D’où viennent ces chiffres ?" : "Where these numbers come from"}
             </span>
@@ -321,7 +321,7 @@ export function FarmerContent({
             <Provenance>
               {station.coverage.days.toLocaleString("en-GB")} {lang === "fr" ? "jours mesurés" : "days measured"}
             </Provenance>
-          </Blueprint>
+          </Panel>
           <NoData
             icon="phone"
             title={lang === "fr" ? "Aucun conseiller assigné" : "No advisor assigned"}

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
-import { Blueprint, PageHeader, Segmented } from "@/components/ui/primitives";
+import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { STATIONS, type Station } from "@/lib/climate";
 
@@ -59,7 +59,7 @@ export function PageSensors() {
       />
 
       {view === "table" ? (
-        <Blueprint className="overflow-x-auto">
+        <Panel className="overflow-x-auto">
           <table className="w-full min-w-[880px] border-collapse text-[13px]">
             <thead>
               <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
@@ -116,16 +116,16 @@ export function PageSensors() {
               })}
             </tbody>
           </table>
-        </Blueprint>
+        </Panel>
       ) : (
-        <Blueprint className="relative h-[560px]">
+        <Panel className="relative h-[560px]">
           <MapView layer="none" sensors className="absolute inset-0" />
-        </Blueprint>
+        </Panel>
       )}
 
       {/* ── Measured variables ────────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Blueprint className="flex flex-col gap-3.5 px-5 py-4.5">
+        <Panel className="flex flex-col gap-3.5 px-5 py-4.5">
           <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
             MEASURED AT {selected.name.toUpperCase()}
           </span>
@@ -147,9 +147,9 @@ export function PageSensors() {
             ))}
           </div>
           <Provenance>Seven variables, {selected.coverage.days.toLocaleString("en-GB")} days, no gaps</Provenance>
-        </Blueprint>
+        </Panel>
 
-        <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+        <Panel className="flex flex-col gap-3 px-5 py-4.5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="font-heading text-lg font-semibold">Last 90 days at {selected.name}</span>
             <span className="font-mono text-[10.5px] text-muted">
@@ -157,7 +157,7 @@ export function PageSensors() {
             </span>
           </div>
           <RecentRain station={selected} />
-        </Blueprint>
+        </Panel>
       </div>
     </div>
   );

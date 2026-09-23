@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
+import { Panel, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { stationForSite, type Station } from "@/lib/climate";
 import { conditionsFor, indexBand, MONTH_ABBR } from "@/lib/metrics";
@@ -59,7 +59,7 @@ export function PageRisk() {
       />
 
       {/* ── Index standing ────────────────────────────────────────────── */}
-      <Blueprint className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <Panel className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <IndexCell
           label="SPEI-3"
           sub="water balance"
@@ -103,11 +103,11 @@ export function PageRisk() {
           </span>
           <span className="font-mono text-[11px] text-muted">to {cond.asOf}</span>
         </div>
-      </Blueprint>
+      </Panel>
 
       {/* ── Standing + explanation ────────────────────────────────────── */}
       <div className="relative grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Blueprint className="flex flex-col items-center gap-3 px-6 py-5">
+        <Panel className="flex flex-col items-center gap-3 px-6 py-5">
           <div className="flex w-full justify-between font-mono text-[10.5px] tracking-[0.1em] text-muted">
             <span>SPEI-3 &middot; {spei3?.label ?? "—"}</span>
             <span>{station.name}</span>
@@ -129,9 +129,9 @@ export function PageRisk() {
           <Provenance>
             log-logistic fitted per calendar month over {station.coverage.years} years
           </Provenance>
-        </Blueprint>
+        </Panel>
 
-        <Blueprint
+        <Panel
           className="flex flex-col gap-4 px-6 py-5.5"
           style={{ background: "linear-gradient(180deg, var(--ap-accent-100), transparent 60%)" }}
         >
@@ -178,7 +178,7 @@ export function PageRisk() {
               Compare against the full record
             </Link>
           </div>
-        </Blueprint>
+        </Panel>
       </div>
 
       <TabStrip
@@ -191,7 +191,7 @@ export function PageRisk() {
       />
 
       {tab === "trend" ? (
-        <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+        <Panel className="flex flex-col gap-3 px-5 py-4.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="font-heading text-lg font-semibold">
               SPEI-3 &middot; every fitted month, {station.coverage.from.slice(0, 4)}&ndash;
@@ -203,11 +203,11 @@ export function PageRisk() {
           </div>
           <SpeiSeries station={station} />
           <Provenance>Bars below &minus;1 are the months the index classes as in drought</Provenance>
-        </Blueprint>
+        </Panel>
       ) : (
-        <Blueprint className="relative h-[520px]">
+        <Panel className="relative h-[520px]">
           <MapView layer="risk" sensors legend className="absolute inset-0" />
-        </Blueprint>
+        </Panel>
       )}
     </div>
   );

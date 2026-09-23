@@ -38,6 +38,13 @@
   --ap-dot: rgb(255 255 255 / 0.045);
   --ap-scrim: rgb(2 12 17 / 0.6);
   --ap-shadow-pop: 0 20px 40px rgb(0 0 0 / 0.35);
+
+  /* Panels sit just above the page, edged rather than outlined. */
+  --ap-panel: rgb(255 255 255 / 0.022);
+  --ap-panel-border: rgb(255 255 255 / 0.10);
+  --ap-panel-border-hover: rgb(255 255 255 / 0.18);
+  --ap-panel-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 6px 20px -12px rgb(0 0 0 / 0.5);
+  --ap-panel-top: inset 0 1px 0 rgb(255 255 255 / 0.045);
   color-scheme: dark;
 }
 
@@ -66,6 +73,12 @@
   --ap-dot: rgb(20 43 53 / 0.07);
   --ap-scrim: rgb(20 43 53 / 0.45);
   --ap-shadow-pop: 0 20px 40px rgb(20 43 53 / 0.18);
+
+  --ap-panel: #ffffff;
+  --ap-panel-border: rgb(20 43 53 / 0.10);
+  --ap-panel-border-hover: rgb(20 43 53 / 0.2);
+  --ap-panel-shadow: 0 1px 2px rgb(20 43 53 / 0.05), 0 6px 20px -12px rgb(20 43 53 / 0.18);
+  --ap-panel-top: inset 0 1px 0 rgb(255 255 255 / 0.6);
   color-scheme: light;
 }
 
@@ -115,6 +128,15 @@
   --spacing-ds-6: 20.4px;
   --spacing-ds-8: 27.2px;
 
+  --color-panel: var(--ap-panel);
+  --color-panel-border: var(--ap-panel-border);
+
+  /* Named so they cannot collide with Tailwind's own rounded-* scale. */
+  --radius-control: 7px;
+  --radius-panel: 11px;
+  --radius-inset: 5px;
+
+  --shadow-panel: var(--ap-panel-shadow);
   --shadow-pop: var(--ap-shadow-pop);
   --shadow-lift: 0 40px 80px -20px rgb(0 0 0 / 0.6);
 
@@ -187,18 +209,28 @@
 }
 
 @layer utilities {
-  /* The blueprint frame: square, hairline, with "+" registration marks.
-     A pseudo-element pair per corner keeps the markup to one class. */
-  .blueprint { position: relative; border: 1px solid var(--ap-divider); border-radius: 0; }
-  .blueprint > .bp-corner { position: absolute; width: 11px; height: 11px; color: color-mix(in srgb, var(--ap-text) 55%, transparent); pointer-events: none; }
-  .blueprint > .bp-corner::before,
-  .blueprint > .bp-corner::after { content: ""; position: absolute; background: currentColor; }
-  .blueprint > .bp-corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
-  .blueprint > .bp-corner::after { top: 5px; left: 0; width: 100%; height: 1px; }
-  .bp-tl { top: -6px; left: -6px; }
-  .bp-tr { top: -6px; right: -6px; }
-  .bp-bl { bottom: -6px; left: -6px; }
-  .bp-br { bottom: -6px; right: -6px; }
+  /* Panels are edged surfaces, not drawn frames: a soft radius, a hairline
+     that lifts on hover, a hint of elevation and a top highlight so they
+     read as sitting above the page rather than cut into it. */
+  .panel {
+    position: relative;
+    border: 1px solid var(--ap-panel-border);
+    border-radius: var(--radius-panel);
+    background: var(--ap-panel);
+    box-shadow: var(--ap-panel-shadow), var(--ap-panel-top);
+  }
+  .panel-hover {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .panel-hover:hover {
+    border-color: var(--ap-panel-border-hover);
+    box-shadow:
+      0 2px 4px rgb(0 0 0 / 0.16),
+      0 12px 28px -14px rgb(0 0 0 / 0.45),
+      var(--ap-panel-top);
+  }
+  /* Children that run to a rounded edge need to be clipped to it. */
+  .panel-clip { overflow: hidden; }
 
   .dot-grid {
     background-image: radial-gradient(circle at 1px 1px, var(--ap-dot) 1px, transparent 0);

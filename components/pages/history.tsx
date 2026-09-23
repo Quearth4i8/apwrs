@@ -4,7 +4,7 @@ import * as React from "react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
 import { Menu, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
-import { Blueprint, PageHeader, Segmented, TabStrip } from "@/components/ui/primitives";
+import { Panel, PageHeader, Segmented, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { STATIONS, stationForSite, type Station } from "@/lib/climate";
 import { indexBand, MONTH_ABBR, rainfallPercentile } from "@/lib/metrics";
@@ -130,7 +130,7 @@ function Compare({
 
   return (
     <>
-      <Blueprint className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <Panel className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {(
           [
             [
@@ -173,10 +173,10 @@ function Compare({
             {note && <span className="font-mono text-[11px] text-muted">{note}</span>}
           </div>
         ))}
-      </Blueprint>
+      </Panel>
 
       {/* ── Full record ───────────────────────────────────────────────── */}
-      <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+      <Panel className="flex flex-col gap-3 px-5 py-4.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="font-heading text-[17px] font-semibold">
             Every year on record &middot; {station.coverage.from.slice(0, 4)}&ndash;{station.coverage.to.slice(0, 4)}
@@ -243,10 +243,10 @@ function Compare({
           {station.name} &middot; {station.coverage.days.toLocaleString("en-GB")} daily observations &middot;
           {metric === "spei" ? " SPEI-3 fitted per calendar month" : " measured totals"}
         </Provenance>
-      </Blueprint>
+      </Panel>
 
       {/* ── Year vs year ──────────────────────────────────────────────── */}
-      <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+      <Panel className="flex flex-col gap-3 px-5 py-4.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-heading text-[17px] font-semibold">Year against year &middot; monthly rainfall</span>
           <div className="flex items-center gap-2 font-mono text-[11.5px]">
@@ -257,7 +257,7 @@ function Compare({
         </div>
 
         <MonthlyCompare station={station} a={a} b={b} yearA={yearA} yearB={yearB} />
-      </Blueprint>
+      </Panel>
     </>
   );
 }
@@ -360,7 +360,7 @@ function Archive({ station }: { station: Station }) {
             "M" + months.map((m, i) => `${(i * 200) / 11} ${(40 - (m.p / max) * 36).toFixed(1)}`).join("L");
           const wetter = y.precip >= meanPrecip;
           return (
-            <Blueprint key={y.year} hoverable className="flex flex-col gap-3 px-4.5 py-4">
+            <Panel key={y.year} hoverable className="flex flex-col gap-3 px-4.5 py-4">
               <div className="flex items-center justify-between">
                 <span className="font-heading text-[22px] font-semibold">{y.year}</span>
                 <span
@@ -400,7 +400,7 @@ function Archive({ station }: { station: Station }) {
                   </>
                 )}
               </div>
-            </Blueprint>
+            </Panel>
           );
         })}
       </div>

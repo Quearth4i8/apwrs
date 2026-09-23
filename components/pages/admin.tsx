@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
-import { Blueprint, Button, PageHeader, Segmented, TabStrip } from "@/components/ui/primitives";
+import { Panel, Button, PageHeader, Segmented, TabStrip } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
 import { SOIL_MODEL, STATIONS, type Station } from "@/lib/climate";
 
@@ -59,7 +59,7 @@ function Regions() {
 
   return (
     <>
-      <Blueprint className="grid min-h-[520px] grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <Panel className="grid min-h-[520px] grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)]">
         <div className="border-b border-divider p-2.5 xl:border-b-0 xl:border-r">
           <div className="flex h-8 items-center gap-2 px-2 text-[13px] font-semibold">
             <span className="font-mono text-[10.5px] text-muted">TN</span>
@@ -117,7 +117,7 @@ function Regions() {
             <MapView layer="none" sensors className="absolute inset-0" />
           </div>
         </div>
-      </Blueprint>
+      </Panel>
 
       <Provenance>
         The only sites that exist are the two stations the record was measured at &mdash; coordinates from the
@@ -176,7 +176,7 @@ function Settings() {
       </div>
 
       {/* Real model constants, not preferences. */}
-      <Blueprint className="flex flex-col">
+      <Panel className="flex flex-col">
         <div className="border-b border-divider px-5 py-3.5 font-heading text-lg font-semibold">Model constants</div>
         <SettingsRow label="Field capacity">
           <span className="font-mono text-[13px]">{SOIL_MODEL.fieldCapacityMm} mm</span>
@@ -199,17 +199,17 @@ function Settings() {
         <div className="px-5 py-3.5 text-[12.5px] leading-[1.5] text-muted">
           Alert thresholds used to live here. They are not shown because nothing evaluates them &mdash; see Alerts.
         </div>
-      </Blueprint>
+      </Panel>
     </div>
   );
 }
 
 function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Blueprint className="flex flex-col">
+    <Panel className="flex flex-col">
       <div className="border-b border-divider px-5 py-3.5 font-heading text-lg font-semibold">{title}</div>
       {children}
-    </Blueprint>
+    </Panel>
   );
 }
 

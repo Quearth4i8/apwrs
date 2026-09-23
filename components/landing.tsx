@@ -7,7 +7,7 @@ import { Brand } from "@/components/brand";
 import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
 import { ThemeScope } from "@/components/theme-provider";
-import { Blueprint, ButtonLink, Corners, Input, RiskBadge } from "@/components/ui/primitives";
+import { Panel, ButtonLink, Input, RiskBadge } from "@/components/ui/primitives";
 import { useIntro } from "@/lib/hooks";
 import {
   LANDING_FAQ,
@@ -101,7 +101,7 @@ export function Landing() {
               </div>
             </div>
 
-            <Blueprint className="bg-bg shadow-lift">
+            <Panel className="bg-bg shadow-lift">
               <div className="flex h-9.5 items-center gap-2.5 border-b border-divider px-3.5 font-mono text-[11px] text-muted">
                 <span className="flex gap-1.25">
                   <span className="size-2 border border-divider-strong" />
@@ -117,7 +117,7 @@ export function Landing() {
               <div className="relative h-[clamp(320px,42vw,440px)]">
                 <MapView layer="risk" sensors interactive={false} opacity={0.48} className="absolute inset-0" />
 
-                <Blueprint className="absolute bottom-4.5 left-4.5 flex w-[250px] flex-col gap-2.5 bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] p-4 backdrop-blur-lg">
+                <Panel className="absolute bottom-4.5 left-4.5 flex w-[250px] flex-col gap-2.5 bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] p-4 backdrop-blur-lg">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[10px] tracking-[0.1em] text-muted">DROUGHT RISK &middot; TODAY</span>
                     <RiskBadge level="severe" />
@@ -137,7 +137,7 @@ export function Landing() {
                     </div>
                     <div className="flex-1" style={{ background: "#D96565" }} />
                   </div>
-                </Blueprint>
+                </Panel>
 
                 <div className="absolute right-4.5 top-4.5 hidden flex-col gap-1 border bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3.5 py-3 sm:flex"
                   style={{ borderColor: "color-mix(in srgb, var(--ap-accent) 45%, transparent)" }}
@@ -149,7 +149,7 @@ export function Landing() {
                   <span className="font-heading text-[22px] font-semibold">12 Nov &rarr; 04 Dec</span>
                 </div>
               </div>
-            </Blueprint>
+            </Panel>
           </div>
         </section>
 
@@ -231,7 +231,7 @@ export function Landing() {
 
             <div className="relative flex flex-col gap-3.5">
               {LANDING_INPUTS.map((n) => (
-                <Blueprint key={n.t} className="flex items-center gap-3 bg-surface px-3.5 py-3">
+                <Panel key={n.t} className="flex items-center gap-3 bg-surface px-3.5 py-3">
                   <span className="grid size-8.5 flex-none place-items-center border border-divider text-teal">
                     <Icon name={n.icon} size={17} />
                   </span>
@@ -240,13 +240,13 @@ export function Landing() {
                     <span className="font-mono text-[10.5px] text-muted">{n.d}</span>
                   </span>
                   <span className="absolute -right-[5px] top-1/2 -mt-1 hidden size-2 border-[1.5px] border-accent bg-bg xl:block" />
-                </Blueprint>
+                </Panel>
               ))}
             </div>
 
             <div className="hidden xl:block" />
 
-            <Blueprint
+            <Panel
               className="flex flex-col gap-3.5 bg-surface p-5.5"
               style={{
                 borderColor: "color-mix(in srgb, var(--ap-accent) 45%, transparent)",
@@ -271,11 +271,11 @@ export function Landing() {
                   </span>
                 ))}
               </div>
-            </Blueprint>
+            </Panel>
 
             <div className="hidden xl:block" />
 
-            <Blueprint className="flex flex-col gap-3.5 bg-surface p-5.5">
+            <Panel className="flex flex-col gap-3.5 bg-surface p-5.5">
               <span className="absolute -left-[5px] top-1/2 -mt-1 hidden size-2 border-[1.5px] border-accent bg-bg xl:block" />
               <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">PLANTING RECOMMENDATION</span>
               <div className="flex flex-col gap-2">
@@ -300,7 +300,7 @@ export function Landing() {
               <span className="text-[13.5px] leading-[1.5] text-muted">
                 Optimal, marginal and risky sowing periods &mdash; each with the reasons and warnings behind it.
               </span>
-            </Blueprint>
+            </Panel>
           </div>
         </section>
 
@@ -335,7 +335,7 @@ export function Landing() {
               Open science, fused with your field data.
             </h2>
           </div>
-          <Blueprint className="grid sm:grid-cols-2 xl:grid-cols-6">
+          <Panel className="grid sm:grid-cols-2 xl:grid-cols-6">
             {LANDING_SOURCES.map((s) => (
               <div key={s.n} className="flex flex-col gap-2.5 border-b border-r border-divider px-5 py-5.5">
                 <span className="font-heading text-2xl font-semibold">{s.n}</span>
@@ -343,7 +343,7 @@ export function Landing() {
                 <span className="mt-auto font-mono text-[11px] text-teal">{s.r}</span>
               </div>
             ))}
-          </Blueprint>
+          </Panel>
         </section>
 
         {/* ── Regions ──────────────────────────────────────────────────── */}
@@ -363,7 +363,7 @@ export function Landing() {
               ))}
             </div>
           </div>
-          <Blueprint style={{ background: "var(--ap-map-sea)" }}>
+          <Panel style={{ background: "var(--ap-map-sea)" }}>
             <svg viewBox="0 0 880 400" className="block w-full">
               <defs>
                 <pattern id="apdots" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -420,7 +420,7 @@ export function Landing() {
                 MEDITERRANEAN SEA
               </text>
             </svg>
-          </Blueprint>
+          </Panel>
         </section>
 
         {/* ── Partners ─────────────────────────────────────────────────── */}
@@ -503,7 +503,6 @@ export function Landing() {
               type="submit"
               className="relative flex h-11 items-center justify-center border border-accent bg-accent px-5 font-heading text-[15px] font-semibold text-bg transition-colors hover:bg-accent-600 active:bg-accent-700"
             >
-              <Corners />
               Request access
             </button>
           </form>

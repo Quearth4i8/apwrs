@@ -7,7 +7,7 @@ import { Brand } from "@/components/brand";
 import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
 import { ThemeScope } from "@/components/theme-provider";
-import { Blueprint, Button, ButtonLink, Field, Input, RiskBadge } from "@/components/ui/primitives";
+import { Panel, Button, ButtonLink, Field, Input, RiskBadge } from "@/components/ui/primitives";
 
 type View = "login" | "forgot";
 type Role = "expert" | "farmer";
@@ -192,7 +192,7 @@ export function LoginView({ initialView }: { initialView: View }) {
                 </div>
 
                 {sent ? (
-                  <Blueprint
+                  <Panel
                     className="flex gap-3 p-4.5"
                     style={{
                       borderColor: "color-mix(in srgb, var(--ap-accent) 45%, transparent)",
@@ -209,7 +209,7 @@ export function LoginView({ initialView }: { initialView: View }) {
                         Didn&rsquo;t get it? Resend in <span className="font-mono">0:58</span>.
                       </span>
                     </div>
-                  </Blueprint>
+                  </Panel>
                 ) : (
                   <form
                     className="flex flex-col gap-4"
@@ -251,7 +251,7 @@ export function LoginView({ initialView }: { initialView: View }) {
           style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, var(--ap-glow), transparent 70%)" }}
         />
         <div className="absolute inset-16 flex flex-col justify-center gap-6">
-          <Blueprint className="bg-bg shadow-lift">
+          <Panel className="bg-bg shadow-lift">
             <div className="flex h-9.5 items-center justify-between border-b border-divider px-3.5 font-mono text-[11px] text-muted">
               <span>BIZERTE GOVERNORATE &middot; DROUGHT RISK</span>
               <span>23 SEP 2026</span>
@@ -259,7 +259,7 @@ export function LoginView({ initialView }: { initialView: View }) {
             <div className="relative h-[420px]">
               <MapView layer="risk" sensors legend interactive={false} className="absolute inset-0" />
             </div>
-          </Blueprint>
+          </Panel>
 
           <div className="grid grid-cols-3 border border-divider bg-bg">
             {(

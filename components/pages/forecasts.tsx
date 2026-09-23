@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, PageHeader } from "@/components/ui/primitives";
+import { Panel, PageHeader } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
 import { SOIL_MODEL, stationForSite, type Station } from "@/lib/climate";
 import { useForecast, type ForecastPayload } from "@/lib/use-forecast";
@@ -66,7 +66,7 @@ function ForecastBody({ station, data }: { station: Station; data: ForecastPaylo
 
   return (
     <>
-      <Blueprint className="grid grid-cols-2 xl:grid-cols-4">
+      <Panel className="grid grid-cols-2 xl:grid-cols-4">
         {(
           [
             ["RAIN · NEXT 7 D", `${sum(next7, "precip").toFixed(1)}`, "mm"],
@@ -92,10 +92,10 @@ function ForecastBody({ station, data }: { station: Station; data: ForecastPaylo
             </span>
           </div>
         ))}
-      </Blueprint>
+      </Panel>
 
       {/* ── Daily rain + ET0 ──────────────────────────────────────────── */}
-      <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+      <Panel className="flex flex-col gap-3 px-5 py-4.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="font-heading text-lg font-semibold">Rainfall and reference evapotranspiration</span>
           <span className="font-mono text-[10.5px] text-muted">DAILY &middot; mm</span>
@@ -116,10 +116,10 @@ function ForecastBody({ station, data }: { station: Station; data: ForecastPaylo
           </span>
         </div>
         <Provenance>{data.source} &middot; issued {new Date(data.generatedAt).toISOString().slice(0, 16).replace("T", " ")} UTC</Provenance>
-      </Blueprint>
+      </Panel>
 
       {/* ── Water balance ─────────────────────────────────────────────── */}
-      <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+      <Panel className="flex flex-col gap-3 px-5 py-4.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="font-heading text-lg font-semibold">Modelled root-zone water balance</span>
           <span className="font-mono text-[10.5px] text-muted">
@@ -131,10 +131,10 @@ function ForecastBody({ station, data }: { station: Station; data: ForecastPaylo
           A single-coefficient FAO-56 balance driven by the forecast above. This is a model, not a probe reading
           &mdash; the station record carries no soil measurements.
         </div>
-      </Blueprint>
+      </Panel>
 
       {/* ── Daily table ───────────────────────────────────────────────── */}
-      <Blueprint className="overflow-x-auto">
+      <Panel className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-[13px]">
           <thead>
             <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
@@ -179,7 +179,7 @@ function ForecastBody({ station, data }: { station: Station; data: ForecastPaylo
             })}
           </tbody>
         </table>
-      </Blueprint>
+      </Panel>
     </>
   );
 }

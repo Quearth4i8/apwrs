@@ -311,25 +311,25 @@ export function MapView({
       </Map>
 
       {mapError && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit max-w-[90%] border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 text-center font-mono text-[10.5px] text-extreme-ink backdrop-blur">
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit max-w-[90%] rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 text-center font-mono text-[10.5px] text-extreme-ink backdrop-blur">
           basemap error &middot; {mapError}
         </div>
       )}
 
       {error && !mapError && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
           live risk surface unavailable &middot; basemap only
         </div>
       )}
 
       {!payload && !error && layer !== "none" && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
           loading risk surface&hellip;
         </div>
       )}
 
       {legend && (
-        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-2.5 border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-2.5 py-[7px] font-mono text-[10px] uppercase tracking-[0.06em] text-muted backdrop-blur-md">
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-2.5 rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-2.5 py-[7px] font-mono text-[10px] uppercase tracking-[0.06em] text-muted backdrop-blur-md">
           {(
             [
               ["Safe", "#38A88A"],

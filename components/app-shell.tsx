@@ -9,7 +9,7 @@ import { Brand } from "@/components/brand";
 import { CommandPalette } from "@/components/command-palette";
 import { useConsole } from "@/components/app-context";
 import { useMounted, useTheme } from "@/components/theme-provider";
-import { Menu, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Panel, PanelRow } from "@/components/ui/dropdown";
+import { Menu, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Popover, PopoverRow } from "@/components/ui/dropdown";
 import { COUNTRIES, FARM_NAV, IDENTITY, NAV, SEASONS } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -218,7 +218,7 @@ export function AppShell({
           <div className="mx-2 hidden h-[22px] w-px bg-divider xl:block" />
 
           {/* Site picker — two panes, country then site. */}
-          <Panel
+          <Popover
             align="start"
             className="w-[min(460px,calc(100vw-24px))]"
             trigger={
@@ -235,7 +235,7 @@ export function AppShell({
               <div className="border-b border-divider p-2 sm:border-b-0 sm:border-r">
                 <div className="px-2 py-1.5 font-mono text-[10px] tracking-[0.1em] text-faint">COUNTRY</div>
                 {COUNTRIES.map((c) => (
-                  <PanelRow key={c.cc} selected={c.cc === browse} onClick={() => setBrowse(c.cc)} className="h-8">
+                  <PopoverRow key={c.cc} selected={c.cc === browse} onClick={() => setBrowse(c.cc)} className="h-8">
                     <span className="flex items-center gap-2">
                       <span className="w-[18px] font-mono text-[10.5px] text-muted">{c.cc}</span>
                       {c.name}
@@ -243,7 +243,7 @@ export function AppShell({
                     <span className="ml-auto">
                       <Icon name="right" size={13} />
                     </span>
-                  </PanelRow>
+                  </PopoverRow>
                 ))}
               </div>
               <div className="p-2">
@@ -253,7 +253,7 @@ export function AppShell({
                 {browseCountry.sites.map((s) => {
                   const on = site.cc === browseCountry.cc && site.name === s.name;
                   return (
-                    <PanelRow
+                    <PopoverRow
                       key={s.name}
                       onClick={() => setSite(browseCountry.cc, s.name)}
                       className="min-h-10 py-1"
@@ -267,12 +267,12 @@ export function AppShell({
                           <Icon name="check" size={14} />
                         </span>
                       )}
-                    </PanelRow>
+                    </PopoverRow>
                   );
                 })}
               </div>
             </div>
-          </Panel>
+          </Popover>
 
           {/* Season — analyst control, hidden for the farmer. */}
           {!isFarmer && (

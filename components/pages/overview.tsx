@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, ButtonLink, Kicker, RiskBadge } from "@/components/ui/primitives";
+import { Panel, ButtonLink, Kicker, RiskBadge } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { CROPS, SOIL_MODEL, stationForSite } from "@/lib/climate";
 import { conditionsFor, decadeLabel, indexBand, suitability } from "@/lib/metrics";
@@ -77,7 +77,7 @@ export function PageOverview() {
       </div>
 
       {/* ── Measured standing ─────────────────────────────────────────── */}
-      <Blueprint
+      <Panel
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5"
         style={{ background: "color-mix(in srgb, var(--ap-surface) 70%, transparent)" }}
       >
@@ -152,12 +152,12 @@ export function PageOverview() {
           foot={next7Rain == null ? "loading forecast" : "Open-Meteo forecast"}
           last
         />
-      </Blueprint>
+      </Panel>
 
       {/* ── Map + next window ─────────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <motion.div {...CARD_IN}>
-          <Blueprint hoverable className="flex h-full flex-col">
+          <Panel hoverable className="flex h-full flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3.5">
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className="font-heading text-lg font-semibold">Risk surface</span>
@@ -174,11 +174,11 @@ export function PageOverview() {
             <div className="relative h-[360px]">
               <MapView layer="risk" sensors legend className="absolute inset-0" />
             </div>
-          </Blueprint>
+          </Panel>
         </motion.div>
 
         <motion.div {...CARD_IN} transition={{ ...CARD_IN.transition, delay: 0.06 }}>
-          <Blueprint hoverable className="flex h-full flex-col">
+          <Panel hoverable className="flex h-full flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3.5">
               <span className="font-heading text-lg font-semibold">Next reliable sowing period</span>
               <span className="font-mono text-[10.5px] text-muted">RAINFALL ADEQUACY</span>
@@ -238,13 +238,13 @@ export function PageOverview() {
                 <Icon name="arrow" size={14} />
               </ButtonLink>
             </div>
-          </Blueprint>
+          </Panel>
         </motion.div>
       </div>
 
       {/* ── Record context ────────────────────────────────────────────── */}
       <motion.div {...CARD_IN} transition={{ ...CARD_IN.transition, delay: 0.1 }}>
-        <Blueprint className="flex flex-col gap-4 px-5 py-4.5">
+        <Panel className="flex flex-col gap-4 px-5 py-4.5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <span className="font-heading text-lg font-semibold">
               Where {latest.year} sits in {station.coverage.years} years
@@ -274,7 +274,7 @@ export function PageOverview() {
             {station.name} &middot; {station.coverage.days.toLocaleString("en-GB")} daily observations &middot; soil
             storage modelled from FC {SOIL_MODEL.fieldCapacityMm} / WP {SOIL_MODEL.wiltingPointMm} mm
           </Provenance>
-        </Blueprint>
+        </Panel>
       </motion.div>
     </div>
   );

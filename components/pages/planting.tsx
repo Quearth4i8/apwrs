@@ -4,7 +4,7 @@ import * as React from "react";
 import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, PageHeader, Segmented } from "@/components/ui/primitives";
+import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { CROPS, stationForSite, type Crop } from "@/lib/climate";
 import { decadeLabel, MONTH_ABBR, suitability, WATER_CLASS, type DecadeSuitability } from "@/lib/metrics";
@@ -64,7 +64,7 @@ export function PagePlanting() {
       />
 
       {/* ── Crop selector ─────────────────────────────────────────────── */}
-      <Blueprint className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
+      <Panel className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
         {CROPS.map((c) => {
           const on = cropId === c.id;
           return (
@@ -92,10 +92,10 @@ export function PagePlanting() {
             </button>
           );
         })}
-      </Blueprint>
+      </Panel>
 
       {/* ── Crop facts, straight from the workbook ────────────────────── */}
-      <Blueprint className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
+      <Panel className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
         {(
           [
             ["STATED SOWING", MONTH_ABBR[crop.plantingMonth - 1]],
@@ -111,10 +111,10 @@ export function PagePlanting() {
             <div className="font-mono text-[15px]">{v}</div>
           </div>
         ))}
-      </Blueprint>
+      </Panel>
 
       {/* ── Calendar ──────────────────────────────────────────────────── */}
-      <Blueprint className="flex flex-col overflow-x-auto">
+      <Panel className="flex flex-col overflow-x-auto">
         <div className="min-w-[720px]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-5 py-3.5">
             <span className="font-heading text-lg font-semibold">
@@ -163,12 +163,12 @@ export function PagePlanting() {
             <span className="ml-auto">36 ten-day periods &middot; {decades[0]?.years ?? 0} years each</span>
           </div>
         </div>
-      </Blueprint>
+      </Panel>
 
       {/* ── Best period + method ──────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         {best && (
-          <Blueprint className="flex flex-col gap-3.5 px-5 py-4.5">
+          <Panel className="flex flex-col gap-3.5 px-5 py-4.5">
             <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
               MOST RELIABLE RAIN &middot; {crop.name.toUpperCase()}
             </span>
@@ -197,10 +197,10 @@ export function PagePlanting() {
             <Provenance>
               {station.name} &middot; {best.years} years replayed &middot; establishment = P(&ge;20 mm in 21 days)
             </Provenance>
-          </Blueprint>
+          </Panel>
         )}
 
-        <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+        <Panel className="flex flex-col gap-3 px-5 py-4.5">
           <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">HOW THIS IS COMPUTED</span>
           <ol className="m-0 flex list-none flex-col gap-2.5 p-0 text-[13.5px] leading-[1.55]">
             {[
@@ -232,7 +232,7 @@ export function PagePlanting() {
             Heat and frost days are counted and shown, but do not affect the class &mdash; without a base
             temperature per crop, turning them into a verdict would be guesswork.
           </div>
-        </Blueprint>
+        </Panel>
       </div>
     </div>
   );

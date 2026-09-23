@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon, type IconName } from "@/components/icon";
-import { Blueprint } from "@/components/ui/primitives";
+import { Panel } from "@/components/ui/primitives";
 
 /**
  * Shown wherever the product would otherwise display figures it does not
@@ -23,7 +23,7 @@ export function NoData({
   className?: string;
 }) {
   return (
-    <Blueprint className={className}>
+    <Panel className={className}>
       <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
         <span className="grid size-11 place-items-center border border-divider text-muted">
           <Icon name={icon} size={20} />
@@ -34,7 +34,7 @@ export function NoData({
           NEEDS &middot; {needs}
         </span>
       </div>
-    </Blueprint>
+    </Panel>
   );
 }
 

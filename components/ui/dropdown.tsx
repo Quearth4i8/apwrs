@@ -9,18 +9,18 @@ import { cn } from "@/lib/utils";
 /**
  * Dropdowns are Radix primitives underneath, so they carry real roving
  * focus, typeahead, Escape/outside-dismiss and correct ARIA. The surface is
- * the design system's: square corners, hairline border, a lifted shadow,
- * and a short fade-and-rise on open driven by Radix's data-state.
+ * the same soft-edged surface the page panels use, with a short fade-and-rise
+ * on open driven by Radix's data-state.
  */
 
 const SURFACE =
-  "z-50 min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-none border border-divider-strong " +
+  "z-50 min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-panel border border-panel-border " +
   "bg-s2 p-1.5 text-ink shadow-pop outline-none " +
   "data-[state=open]:animate-[pop-in_0.16s_var(--ease-out-expo)_both] " +
   "data-[state=closed]:opacity-0 data-[state=closed]:transition-opacity data-[state=closed]:duration-100";
 
 const ITEM =
-  "relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-none px-2.5 text-[13px] outline-none " +
+  "relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-inset px-2.5 text-[13px] outline-none " +
   "transition-colors duration-100 data-[highlighted]:bg-s3 data-[disabled]:pointer-events-none data-[disabled]:opacity-45";
 
 /* ── Trigger surface shared by the header controls ───────────────────── */
@@ -33,7 +33,7 @@ export const MenuTrigger = React.forwardRef<
     <button
       ref={ref}
       className={cn(
-        "flex h-8 items-center gap-2 border border-divider px-2.5 text-[13px] text-ink",
+        "flex h-8 items-center gap-2 rounded-control border border-divider px-2.5 text-[13px] text-ink",
         "transition-colors duration-150 hover:border-divider-strong hover:bg-neutral-100",
         "data-[state=open]:border-accent data-[state=open]:bg-accent-100",
         className,
@@ -113,7 +113,7 @@ export function MenuSeparator() {
 
 /* ── Popover panel (the two-pane site picker) ────────────────────────── */
 
-export function Panel({
+export function Popover({
   trigger,
   children,
   align = "start",
@@ -138,7 +138,7 @@ export function Panel({
           align={align}
           sideOffset={sideOffset}
           className={cn(
-            "z-50 rounded-none border border-divider-strong bg-s2 text-ink shadow-pop outline-none",
+            "z-50 overflow-hidden rounded-panel border border-panel-border bg-s2 text-ink shadow-pop outline-none",
             "data-[state=open]:animate-[pop-in_0.16s_var(--ease-out-expo)_both]",
             className,
           )}
@@ -150,10 +150,10 @@ export function Panel({
   );
 }
 
-export const PanelClose = PopoverPrimitive.Close;
+export const PopoverClose = PopoverPrimitive.Close;
 
-/** A row inside a panel list — same affordance as MenuItem without the menu. */
-export function PanelRow({
+/** A row inside a popover list — same affordance as MenuItem without the menu. */
+export function PopoverRow({
   children,
   onClick,
   selected,

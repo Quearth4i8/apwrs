@@ -4,7 +4,7 @@ import * as React from "react";
 import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { MapView, type SurfaceInfo } from "@/components/map-view";
-import { Blueprint, PageHeader } from "@/components/ui/primitives";
+import { Panel, PageHeader } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
 
 /**
@@ -50,7 +50,7 @@ export function PageDrivers() {
         />
       ) : (
         <>
-          <Blueprint className="flex flex-col">
+          <Panel className="flex flex-col">
             <div className="grid grid-cols-[minmax(0,1fr)_84px_64px] gap-4 border-b border-divider px-5 py-3 font-mono text-[10px] tracking-[0.1em] text-muted sm:grid-cols-[240px_minmax(0,1fr)_84px_64px]">
               <span>FACTOR</span>
               <span className="hidden sm:block">WEIGHT</span>
@@ -96,10 +96,10 @@ export function PageDrivers() {
               Weights sum to {(Object.values(surface.weights).reduce((a, b) => a + b, 0) * 100).toFixed(0)}%. Lower
               entropy means a more dispersed factor, and so a larger weight.
             </div>
-          </Blueprint>
+          </Panel>
 
           <div className="grid gap-6 xl:grid-cols-2">
-            <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+            <Panel className="flex flex-col gap-3 px-5 py-4.5">
               <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">THE METHOD</span>
               <ol className="m-0 flex list-none flex-col gap-2.5 p-0 text-[13.5px] leading-[1.55]">
                 {[
@@ -115,9 +115,9 @@ export function PageDrivers() {
                 ))}
               </ol>
               <Provenance>{surface.source}</Provenance>
-            </Blueprint>
+            </Panel>
 
-            <Blueprint className="flex flex-col gap-3 px-5 py-4.5">
+            <Panel className="flex flex-col gap-3 px-5 py-4.5">
               <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">WHAT IS NOT IN HERE</span>
               <div className="flex flex-col gap-3 text-[13.5px] leading-[1.55]">
                 <p className="m-0">
@@ -142,7 +142,7 @@ export function PageDrivers() {
                   </div>
                 ))}
               </div>
-            </Blueprint>
+            </Panel>
           </div>
         </>
       )}

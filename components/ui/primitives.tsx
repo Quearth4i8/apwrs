@@ -4,38 +4,30 @@ import * as React from "react";
 import { cn, riskLevel, RISK_COLOR, RISK_LABEL, type RiskLevel } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Blueprint — the wireframe frame every card, figure and primary button
-   wears: square, hairline-bordered, with "+" registration marks at the
-   corners. The four marks are required by the system, so they ship with
-   the component rather than being hand-written per use.
+   Panel — the single container every card, figure and dialog uses.
+
+   This replaced the design system's "blueprint" frame: square corners with
+   "+" registration marks at each one. Those read as drafting marks rather
+   than interface, and four of them on every card is a lot of visual noise
+   carrying no information. A panel is an edged surface instead — soft
+   radius, hairline border, a hint of elevation — so the content leads and
+   the container recedes.
    ───────────────────────────────────────────────────────────────────── */
 
-export function Corners() {
-  return (
-    <>
-      <i className="bp-corner bp-tl" />
-      <i className="bp-corner bp-tr" />
-      <i className="bp-corner bp-bl" />
-      <i className="bp-corner bp-br" />
-    </>
-  );
-}
-
-export const Blueprint = React.forwardRef<
+export const Panel = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div"> & { hoverable?: boolean }
->(function Blueprint({ className, children, hoverable, ...props }, ref) {
+  React.ComponentPropsWithoutRef<"div"> & {
+    hoverable?: boolean;
+    /** Clip children to the rounded edge (tables, maps, full-bleed rows). */
+    clip?: boolean;
+  }
+>(function Panel({ className, children, hoverable, clip = true, ...props }, ref) {
   return (
     <div
       ref={ref}
-      className={cn(
-        "blueprint",
-        hoverable && "transition-colors duration-200 hover:border-divider-strong",
-        className,
-      )}
+      className={cn("panel", clip && "overflow-hidden", hoverable && "panel-hover", className)}
       {...props}
     >
-      <Corners />
       {children}
     </div>
   );
@@ -49,14 +41,14 @@ export const Blueprint = React.forwardRef<
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 const BUTTON_BASE =
-  "relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-none " +
+  "relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-control " +
   "font-heading text-[14px] font-semibold leading-tight " +
-  "transition-[background-color,border-color,color,transform] duration-150 ease-out " +
+  "transition-[background-color,border-color,color,transform,box-shadow] duration-150 ease-out " +
   "active:translate-y-px disabled:pointer-events-none disabled:opacity-45";
 
 const BUTTON_VARIANT: Record<ButtonVariant, string> = {
   primary:
-    "border border-accent bg-accent text-bg hover:bg-accent-600 active:bg-accent-700",
+    "border border-accent bg-accent text-bg shadow-[0_1px_2px_rgb(0_0_0/0.18)] hover:bg-accent-600 active:bg-accent-700",
   secondary:
     "border border-divider text-ink hover:border-divider-strong hover:bg-neutral-100 active:bg-[color-mix(in_srgb,var(--ap-text)_14%,transparent)]",
   ghost:
@@ -68,20 +60,16 @@ const BUTTON_VARIANT: Record<ButtonVariant, string> = {
 export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
   variant?: ButtonVariant;
   size?: "sm" | "md" | "lg";
-  /** Primary buttons get the blueprint marks; opt out for dense toolbars. */
-  marks?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant = "secondary", size = "md", marks, children, ...props },
+  { className, variant = "secondary", size = "md", children, ...props },
   ref,
 ) {
-  const showMarks = marks ?? variant === "primary";
   const sizing =
     size === "sm" ? "h-[30px] px-3 text-[12.5px]" : size === "lg" ? "h-11 px-5 text-[15px]" : "h-9 px-3.5";
   return (
     <button ref={ref} className={cn(BUTTON_BASE, BUTTON_VARIANT[variant], sizing, className)} {...props}>
-      {showMarks && <Corners />}
       {children}
     </button>
   );
@@ -90,9 +78,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
 /** Same surface as Button, for real links. */
 export const ButtonLink = React.forwardRef<
   HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<"a"> & { variant?: ButtonVariant; size?: "sm" | "md" | "lg"; marks?: boolean }
->(function ButtonLink({ className, variant = "secondary", size = "md", marks, children, ...props }, ref) {
-  const showMarks = marks ?? variant === "primary";
+  React.ComponentPropsWithoutRef<"a"> & { variant?: ButtonVariant; size?: "sm" | "md" | "lg" }
+>(function ButtonLink({ className, variant = "secondary", size = "md", children, ...props }, ref) {
   const sizing =
     size === "sm" ? "h-[30px] px-3 text-[12.5px]" : size === "lg" ? "h-11 px-5 text-[15px]" : "h-9 px-3.5";
   return (
@@ -101,7 +88,6 @@ export const ButtonLink = React.forwardRef<
       className={cn(BUTTON_BASE, BUTTON_VARIANT[variant], sizing, "no-underline", className)}
       {...props}
     >
-      {showMarks && <Corners />}
       {children}
     </a>
   );
@@ -117,7 +103,7 @@ export const IconButton = React.forwardRef<
       title={label}
       aria-label={label}
       className={cn(
-        "grid size-8 flex-none place-items-center rounded-none border border-divider text-ink",
+        "grid size-8 flex-none place-items-center rounded-control border border-divider text-ink",
         "transition-colors duration-150 hover:border-divider-strong hover:bg-neutral-100",
         className,
       )}
@@ -156,7 +142,7 @@ export function RiskBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap border px-2",
+        "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap rounded-inset border px-2",
         "font-mono text-[10.5px] uppercase tracking-[0.06em] tabular-nums",
         className,
       )}
@@ -217,7 +203,11 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div className={cn("flex border border-divider", size === "sm" ? "h-[30px]" : "h-[34px]", className)}>
+    <div className={cn(
+        "flex overflow-hidden rounded-control border border-divider",
+        size === "sm" ? "h-[30px]" : "h-[34px]",
+        className,
+      )}>
       {options.map((o, i) => {
         const on = o.value === value;
         return (
@@ -259,14 +249,14 @@ export function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={cn("relative h-4 w-[30px] flex-none border transition-colors duration-150", className)}
+      className={cn("relative h-4 w-[30px] flex-none rounded-full border transition-colors duration-150", className)}
       style={{
         borderColor: checked ? "var(--ap-accent)" : "var(--ap-divider-strong)",
         background: checked ? "var(--ap-accent-100)" : "transparent",
       }}
     >
       <span
-        className="absolute top-[2px] size-2.5 transition-[left] duration-150 ease-out"
+        className="absolute top-[2px] size-2.5 rounded-full transition-[left] duration-150 ease-out"
         style={{ left: checked ? 16 : 2, background: checked ? "var(--ap-accent)" : "var(--ap-muted)" }}
       />
     </button>
@@ -359,7 +349,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.ComponentPropsWith
       <input
         ref={ref}
         className={cn(
-          "h-9 w-full rounded-none border border-divider bg-bg px-2.5 text-sm text-ink caret-accent",
+          "h-9 w-full rounded-control border border-divider bg-bg px-2.5 text-sm text-ink caret-accent",
           "transition-colors duration-150 placeholder:text-faint",
           "hover:border-[color-mix(in_srgb,var(--ap-text)_45%,transparent)]",
           "focus-visible:border-accent focus-visible:outline-offset-0",
@@ -380,7 +370,7 @@ export function UnitInput({
   return (
     <div
       className={cn(
-        "flex h-9 items-center border border-divider bg-bg transition-colors duration-150",
+        "flex h-9 items-center overflow-hidden rounded-control border border-divider bg-bg transition-colors duration-150",
         "focus-within:border-accent hover:border-divider-strong",
         className,
       )}

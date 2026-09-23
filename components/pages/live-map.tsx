@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { MapView, type MapCell, type SurfaceInfo } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
-import { Blueprint, Button, RiskBadge, Toggle } from "@/components/ui/primitives";
+import { Panel, Button, RiskBadge, Toggle } from "@/components/ui/primitives";
 import { STATIONS } from "@/lib/climate";
 
 type Layer = "risk" | "none";
@@ -62,7 +62,7 @@ export function PageLiveMap() {
       />
 
       {/* ── Layer panel ───────────────────────────────────────────────── */}
-      <Blueprint className="absolute left-5 top-5 z-10 w-[272px] max-w-[calc(100vw-40px)] bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] backdrop-blur-lg">
+      <Panel className="absolute left-5 top-5 z-10 w-[272px] max-w-[calc(100vw-40px)] bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] backdrop-blur-lg">
         <div className="flex items-center gap-2 border-b border-divider px-3.5 py-3">
           <Icon name="layers" size={15} />
           <span className="font-heading text-base font-semibold">Layers</span>
@@ -78,7 +78,7 @@ export function PageLiveMap() {
                 key={o.id}
                 onClick={() => setLayer(o.id)}
                 aria-pressed={on}
-                className="flex h-[30px] items-center gap-2.5 border px-2 text-[13px] transition-colors hover:border-divider-strong"
+                className="flex h-[30px] items-center gap-2.5 rounded-inset border px-2 text-[13px] transition-colors hover:border-divider-strong"
                 style={{
                   borderColor: on ? "color-mix(in srgb, var(--ap-accent) 40%, transparent)" : "transparent",
                   background: on ? "var(--ap-accent-100)" : "transparent",
@@ -159,11 +159,11 @@ export function PageLiveMap() {
             </span>
           )}
         </div>
-      </Blueprint>
+      </Panel>
 
       {/* ── Provenance ────────────────────────────────────────────────── */}
       {surface && (
-        <div className="absolute bottom-5 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-3 border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3.5 py-2 font-mono text-[10.5px] text-muted backdrop-blur-lg lg:flex">
+        <div className="absolute bottom-5 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-3 rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3.5 py-2 font-mono text-[10.5px] text-muted backdrop-blur-lg lg:flex">
           <span className="size-1.5 bg-accent" />
           <span>{surface.source}</span>
           <span className="h-3 w-px bg-divider" />
@@ -253,7 +253,7 @@ export function PageLiveMap() {
 
       {/* ── Station key ───────────────────────────────────────────────── */}
       {stations && (
-        <div className="absolute right-5 top-[104px] z-10 hidden flex-col gap-1.5 border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-2.5 backdrop-blur-lg xl:flex">
+        <div className="absolute right-5 top-[104px] z-10 hidden flex-col gap-1.5 rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-2.5 backdrop-blur-lg xl:flex">
           <span className="font-mono text-[10px] tracking-[0.1em] text-faint">GROUND STATIONS</span>
           {STATIONS.map((s) => (
             <span key={s.id} className="flex items-center gap-2 font-mono text-[10.5px] text-muted">
