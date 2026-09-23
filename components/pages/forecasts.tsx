@@ -4,6 +4,7 @@ import * as React from "react";
 import { useConsole } from "@/components/app-context";
 import { Panel, PageHeader } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
+import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
 import { SOIL_MODEL, stationForSite, type Station } from "@/lib/climate";
 import { useForecast, type ForecastPayload } from "@/lib/use-forecast";
 
@@ -218,8 +219,20 @@ function DailyChart({ days }: { days: { date: string; precip: number | null; et0
   const y = (v: number) => PAD.t + innerH - (v / max) * innerH;
   const firstFuture = days.findIndex((d) => d.forecast);
 
+  const hover = useBarHover(days.length, PAD.l, PAD.r, W);
+  const at = hover.index == null ? null : days[hover.index];
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full">
+    <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+      <HoverReadout hover={hover} left={PAD.l} right={PAD.r} width={W}>
+        {at && (
+          <>
+            {at.date} &middot; rain {(at.precip ?? 0).toFixed(1)} mm &middot; ET&#8320;{" "}
+            {(at.et0 ?? 0).toFixed(1)} mm{at.forecast ? " · forecast" : ""}
+          </>
+        )}
+      </HoverReadout>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block w-full">
       <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
         {[0, 0.5, 1].map((f) => (
           <line key={f} x1={PAD.l} x2={W - PAD.r} y1={PAD.t + innerH * f} y2={PAD.t + innerH * f} />
@@ -237,14 +250,12 @@ function DailyChart({ days }: { days: { date: string; precip: number | null; et0
             width={Math.max(0.8, bw - 0.6)}
             height={h}
             fill="var(--ap-teal)"
-            fillOpacity={d.forecast ? 0.55 : 0.9}
-          >
-            <title>
-              {d.date}: {v.toFixed(1)} mm
-            </title>
-          </rect>
+            fillOpacity={hover.index === i ? 1 : d.forecast ? 0.55 : 0.9}
+          />
         );
       })}
+
+      <HoverGuide hover={hover} left={PAD.l} right={PAD.r} width={W} top={PAD.t} bottom={PAD.t + innerH} />
 
       <path
         d={"M" + days.map((d, i) => `${(PAD.l + i * bw + bw / 2).toFixed(1)} ${y(d.et0 ?? 0).toFixed(1)}`).join("L")}
@@ -270,7 +281,8 @@ function DailyChart({ days }: { days: { date: string; precip: number | null; et0
         <text x={PAD.l} y={H - 8}>{days[0].date}</text>
         <text x={W - PAD.r} y={H - 8} textAnchor="end">{days[days.length - 1].date}</text>
       </g>
-    </svg>
+      </svg>
+    </div>
   );
 }
 

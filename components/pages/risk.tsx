@@ -8,6 +8,7 @@ import { MapView } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
 import { Panel, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
+import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
 import { stationForSite, type Station } from "@/lib/climate";
 import { conditionsFor, indexBand, MONTH_ABBR } from "@/lib/metrics";
 import { riskLevel } from "@/lib/utils";
@@ -310,15 +311,31 @@ function SpeiSeries({ station }: { station: Station }) {
   const h = 210;
   const padL = 34;
   const padB = 24;
-  const innerW = w - padL - 10;
+  const padR = 10;
+  const innerW = w - padL - padR;
   const innerH = h - 12 - padB;
   const bw = innerW / series.length;
   const scale = 3;
   const y = (v: number) => 12 + innerH / 2 - (Math.max(-scale, Math.min(scale, v)) / scale) * (innerH / 2);
   const zero = y(0);
 
+  const hover = useBarHover(series.length, padL, padR, w);
+  const atMonth = hover.index == null ? null : station.months[hover.index];
+  const atValue = hover.index == null ? null : series[hover.index];
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
+    <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+      <HoverReadout hover={hover} left={padL} right={padR} width={w}>
+        {atMonth && (
+          <>
+            {MONTH_ABBR[atMonth.m - 1]} {atMonth.y} &middot;{" "}
+            {atValue == null
+              ? "no value"
+              : `SPEI-3 ${atValue > 0 ? "+" : ""}${atValue.toFixed(2)} · ${indexBand(atValue)}`}
+          </>
+        )}
+      </HoverReadout>
+      <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
       <rect x={padL} y={y(-1)} width={innerW} height={y(-3) - y(-1)} fill="#D96565" fillOpacity={0.06} />
       <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.1 }}>
         {[-2, -1, 0, 1, 2].map((t) => (
@@ -330,7 +347,6 @@ function SpeiSeries({ station }: { station: Station }) {
         if (v == null) return null;
         const top = Math.min(y(v), zero);
         const hh = Math.abs(y(v) - zero);
-        const m = station.months[i];
         return (
           <rect
             key={i}
@@ -339,14 +355,12 @@ function SpeiSeries({ station }: { station: Station }) {
             width={Math.max(0.7, bw - 0.4)}
             height={Math.max(0.6, hh)}
             fill={v <= -1 ? "#D96565" : v < 0 ? "#E7A83B" : "var(--ap-accent)"}
-            fillOpacity={v <= -1 ? 0.95 : 0.7}
-          >
-            <title>
-              {MONTH_ABBR[m.m - 1]} {m.y}: {v.toFixed(2)}
-            </title>
-          </rect>
+            fillOpacity={hover.index === i ? 1 : v <= -1 ? 0.95 : 0.7}
+          />
         );
       })}
+
+      <HoverGuide hover={hover} left={padL} right={padR} width={w} top={12} bottom={h - padB} />
 
       <line x1={padL} x2={w - 10} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.4 }} />
 
@@ -359,7 +373,8 @@ function SpeiSeries({ station }: { station: Station }) {
         <text x={padL} y={h - 6}>{station.months[0].y}</text>
         <text x={w - 10} y={h - 6} textAnchor="end">{station.months[station.months.length - 1].y}</text>
       </g>
-    </svg>
+      </svg>
+    </div>
   );
 }
 

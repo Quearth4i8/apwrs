@@ -5,6 +5,7 @@ import { Icon } from "@/components/icon";
 import { MapView } from "@/components/map-view";
 import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
+import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
 import { STATIONS, type Station } from "@/lib/climate";
 
 /**
@@ -170,8 +171,19 @@ function RecentRain({ station }: { station: Station }) {
   const h = 150;
   const bw = w / rows.length;
 
+  const hover = useBarHover(rows.length, 0, 0, w);
+  const at = hover.index == null ? null : rows[hover.index];
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
+    <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+      <HoverReadout hover={hover} left={0} right={0} width={w}>
+        {at && (
+          <>
+            {at.date} &middot; {at.precip.toFixed(1)} mm
+          </>
+        )}
+      </HoverReadout>
+      <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
       <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
         <line x1={0} x2={w} y1={h - 20} y2={h - 20} />
         <line x1={0} x2={w} y1={(h - 20) / 2} y2={(h - 20) / 2} />
@@ -186,14 +198,12 @@ function RecentRain({ station }: { station: Station }) {
             width={Math.max(1, bw - 0.8)}
             height={bh}
             fill="var(--ap-teal)"
-            fillOpacity={0.85}
-          >
-            <title>
-              {r.date}: {r.precip.toFixed(1)} mm
-            </title>
-          </rect>
+            fillOpacity={hover.index === i ? 1 : 0.85}
+          />
         );
       })}
+
+      <HoverGuide hover={hover} left={0} right={0} width={w} top={0} bottom={h - 20} />
       <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
         <text x={2} y={12}>
           {max.toFixed(0)} mm
@@ -205,6 +215,7 @@ function RecentRain({ station }: { station: Station }) {
           {rows[rows.length - 1].date}
         </text>
       </g>
-    </svg>
+      </svg>
+    </div>
   );
 }
