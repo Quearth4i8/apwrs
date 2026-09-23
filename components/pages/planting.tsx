@@ -15,6 +15,8 @@ import {
   decadeLabel,
   DECADES_PER_YEAR,
   MONTH_ABBR,
+  periodScore,
+  reliableWindow,
   seasonMonths,
   seasonOrder,
   suitability,
@@ -208,7 +210,12 @@ export function PagePlanting() {
 
       {/* ── Detail for the selected crop ──────────────────────────────── */}
       {current ? (
-        <CropDetail crop={current.crop} decades={current.decades} stationYears={station.coverage.years} />
+        <CropDetail
+          crop={current.crop}
+          decades={current.decades}
+          stationId={station.id}
+          stationYears={station.coverage.years}
+        />
       ) : (
         <Panel className="flex items-center gap-3 px-5 py-4 text-[13px] text-muted">
           <Icon name="info" size={14} />
@@ -365,15 +372,16 @@ function bandTitle(crop: Crop, run: ReturnType<typeof bands>[number]) {
 function CropDetail({
   crop,
   decades,
+  stationId,
   stationYears,
 }: {
   crop: Crop;
   decades: DecadeSuitability[];
+  stationId: string;
   stationYears: number;
 }) {
-  const best = [...decades].sort(
-    (a, b) => b.establishmentProb - a.establishmentProb || b.rainfedCoverage - a.rainfedCoverage,
-  )[0];
+  const window = reliableWindow(stationId, crop.id);
+  const best = window?.peak ?? bestPeriodOf(decades);
 
   return (
     <motion.div
@@ -385,17 +393,29 @@ function CropDetail({
     >
       <Panel className="flex flex-col gap-3.5 px-5 py-4.5">
         <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
-          {crop.name.toUpperCase()} &middot; MOST RELIABLE RAIN
+          {crop.name.toUpperCase()} &middot; RAIN-RELIABLE WINDOW
         </span>
-        <span className="font-heading text-[clamp(24px,3vw,32px)] font-semibold leading-none">
-          {decadeLabel(best.decade)}
-          <span className="text-muted"> &rarr; </span>
-          {decadeLabel((best.decade + 1) % DECADES_PER_YEAR)}
-        </span>
+        {window ? (
+          <>
+            <span className="font-heading text-[clamp(22px,2.6vw,30px)] font-semibold leading-none">
+              {decadeLabel(window.startDecade)}
+              <span className="text-muted"> &rarr; </span>
+              {decadeLabel((window.endDecade + 1) % DECADES_PER_YEAR)}
+            </span>
+            <span className="font-mono text-[11.5px] text-muted">
+              {window.days} days open
+              {window.runs > 1 && ` · longest of ${window.runs} windows`}
+            </span>
+          </>
+        ) : (
+          <span className="font-heading text-[22px] font-semibold leading-none text-muted">
+            Never rain-reliable here
+          </span>
+        )}
         <div className="grid grid-cols-2 border-l border-t border-divider">
           {(
             [
-              ["ESTABLISHMENT", `${(best.establishmentProb * 100).toFixed(0)}%`],
+              ["ESTABLISHMENT †", `${(best.establishmentProb * 100).toFixed(0)}%`],
               ["RAINFED COVERAGE", `${(best.rainfedCoverage * 100).toFixed(0)}%`],
               ["CYCLE RAIN", `${best.rainMm.toFixed(0)} mm`],
               ["CYCLE ETc", `${best.etcMm.toFixed(0)} mm`],
@@ -409,9 +429,14 @@ function CropDetail({
             </div>
           ))}
         </div>
-        <span className="font-mono text-[10.5px] leading-[1.4] text-faint">
-          heat and frost are counted and shown, but do not set the band
-        </span>
+        <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-[1.45] text-faint">
+          <span>figures are for the best period inside the window, {decadeLabel(best.decade)}</span>
+          <span>
+            &dagger; establishment counts rain after sowing, so it depends on the date, not the crop &mdash; it
+            reads the same across crops sown together
+          </span>
+          <span>heat and frost are counted and shown, but do not set the band</span>
+        </div>
       </Panel>
 
       <Panel className="flex flex-col gap-4 px-5 py-4.5">
@@ -506,4 +531,9 @@ function KcCurve({ crop }: { crop: Crop }) {
       </g>
     </svg>
   );
+}
+
+/** Fallback when a crop has no rain-reliable window at all. */
+function bestPeriodOf(decades: DecadeSuitability[]): DecadeSuitability {
+  return [...decades].sort((a, b) => periodScore(b) - periodScore(a))[0];
 }

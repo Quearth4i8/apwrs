@@ -14,6 +14,7 @@ import {
   decadeLabel,
   decadesUntil,
   indexBand,
+  periodScore,
   suitability,
   type DecadeSuitability,
 } from "@/lib/metrics";
@@ -301,7 +302,7 @@ function upcomingWindow(stationId: string) {
     for (const d of suitability(stationId, crop.id)) {
       if (d.water !== "reliable") continue;
       const wait = decadesUntil(d.decade);
-      if (!best || wait < best.wait || (wait === best.wait && d.establishmentProb > best.decade.establishmentProb)) {
+      if (!best || wait < best.wait || (wait === best.wait && periodScore(d) > periodScore(best.decade))) {
         best = { crop, decade: d, wait };
       }
     }

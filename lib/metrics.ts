@@ -51,6 +51,31 @@ export function decadeLabel(decade: number) {
 export const MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
 
+/**
+ * Ranking a sowing period for a given crop.
+ *
+ * `establishmentProb` counts rain in the 21 days after sowing, which involves
+ * no crop term at all — it is a property of the date. Ranking on it first
+ * therefore returned the same "best" period for every crop, which looked like
+ * a hard-coded value because it may as well have been one.
+ *
+ * The crop-dependent quantity is rainfed coverage: cycle rainfall against the
+ * cycle's ETc, and ETc comes from the crop's own Kc curve and cycle length. A
+ * crop needs both — to germinate, and then to be carried to harvest — so the
+ * score is their product, readable as "chance of establishing x share of the
+ * water demand rain actually met".
+ */
+export function periodScore(d: DecadeSuitability): number {
+  return d.establishmentProb * d.rainfedCoverage;
+}
+
+/** The best sowing period for this crop, by that score. */
+export function bestPeriod(stationId: string, cropId: string): DecadeSuitability | null {
+  const decades = suitability(stationId, cropId);
+  if (!decades.length) return null;
+  return [...decades].sort((a, b) => periodScore(b) - periodScore(a))[0];
+}
+
 /* ── Season calendar layout ──────────────────────────────────────────── */
 
 /**
@@ -121,6 +146,36 @@ export function bands(decades: DecadeSuitability[]): {
     else out.push({ water: row.water, start: i, span: 1, first: row });
   });
   return out;
+}
+
+/**
+ * The crop's longest unbroken run of rain-reliable sowing periods.
+ *
+ * This is the figure that actually separates the crops: a single best period
+ * lands on the same date for most of them, because autumn is simply when the
+ * rain arrives, whereas how long that window stays open depends on the
+ * crop's own cycle length and water demand — 40 days for durum wheat here,
+ * 170 for faba bean.
+ */
+export function reliableWindow(stationId: string, cropId: string) {
+  const runs = bands(suitability(stationId, cropId)).filter((r) => r.water === "reliable");
+  if (!runs.length) return null;
+  const best = runs.reduce((a, b) => (b.span > a.span ? b : a));
+  const order = seasonOrder();
+  return {
+    startDecade: order[best.start],
+    endDecade: order[(best.start + best.span - 1) % DECADES_PER_YEAR],
+    periods: best.span,
+    days: best.span * 10,
+    runs: runs.length,
+    /** Highest-scoring period inside the window. */
+    peak: suitability(stationId, cropId)
+      .filter((d) => {
+        const i = order.indexOf(d.decade);
+        return i >= best.start && i < best.start + best.span;
+      })
+      .sort((a, b) => periodScore(b) - periodScore(a))[0],
+  };
 }
 
 /** Where a crop stands today, and when its next reliable period opens. */
