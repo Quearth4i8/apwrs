@@ -50,6 +50,98 @@ export function decadeLabel(decade: number) {
 
 export const MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
+
+/* ── Season calendar layout ──────────────────────────────────────────── */
+
+/**
+ * The agricultural year here starts in September, not January: the decisive
+ * decisions are autumn sowings, and a calendar that splits them across two
+ * rows of the chart hides the thing the page exists to show. Decade 24
+ * begins 3 September.
+ */
+export const SEASON_START_DECADE = 24;
+export const DECADES_PER_YEAR = 36;
+
+/** Decade indices in season order, starting at September. */
+export function seasonOrder(): number[] {
+  return Array.from(
+    { length: DECADES_PER_YEAR },
+    (_, i) => (SEASON_START_DECADE + i) % DECADES_PER_YEAR,
+  );
+}
+
+/** Mid-point date of a ten-day period, used for labels and grouping. */
+export function decadeDate(decade: number): Date {
+  const d = new Date(Date.UTC(2001, 0, 1));
+  d.setUTCDate(d.getUTCDate() + decade * 10 + 5);
+  return d;
+}
+
+/** Month header cells for the season grid: label plus how many decades it spans. */
+export function seasonMonths(): { label: string; span: number }[] {
+  const out: { label: string; span: number }[] = [];
+  for (const dec of seasonOrder()) {
+    const label = MONTH_ABBR[decadeDate(dec).getUTCMonth()];
+    const last = out[out.length - 1];
+    if (last && last.label === label) last.span += 1;
+    else out.push({ label, span: 1 });
+  }
+  return out;
+}
+
+/** The ten-day period containing today. */
+export function currentDecade(now = new Date()): number {
+  const doy = Math.floor(
+    (Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) -
+      Date.UTC(now.getUTCFullYear(), 0, 1)) /
+      86_400_000,
+  );
+  return Math.min(DECADES_PER_YEAR - 1, Math.floor(doy / 10));
+}
+
+/** How many ten-day periods until a decade comes round again. */
+export function decadesUntil(target: number, from = currentDecade()): number {
+  return (target - from + DECADES_PER_YEAR) % DECADES_PER_YEAR;
+}
+
+/** Contiguous runs of one class, in season order — the bands on the chart. */
+export function bands(decades: DecadeSuitability[]): {
+  water: DecadeSuitability["water"];
+  start: number;
+  span: number;
+  first: DecadeSuitability;
+}[] {
+  const byDecade = new Map(decades.map((d) => [d.decade, d]));
+  const out: { water: DecadeSuitability["water"]; start: number; span: number; first: DecadeSuitability }[] = [];
+  seasonOrder().forEach((dec, i) => {
+    const row = byDecade.get(dec);
+    if (!row) return;
+    const last = out[out.length - 1];
+    if (last && last.water === row.water && last.start + last.span === i) last.span += 1;
+    else out.push({ water: row.water, start: i, span: 1, first: row });
+  });
+  return out;
+}
+
+/** Where a crop stands today, and when its next reliable period opens. */
+export function cropStatus(stationId: string, cropId: string) {
+  const decades = suitability(stationId, cropId);
+  const today = currentDecade();
+  const here = decades.find((d) => d.decade === today) ?? null;
+  const reliable = decades
+    .filter((d) => d.water === "reliable")
+    .map((d) => ({ d, wait: decadesUntil(d.decade, today) }))
+    .sort((a, b) => a.wait - b.wait);
+  const next = reliable[0] ?? null;
+  return {
+    here,
+    next: next?.d ?? null,
+    /** Days until the next reliable period, 0 when one is open now. */
+    waitDays: next ? next.wait * 10 : null,
+    openNow: here?.water === "reliable",
+  };
+}
+
 /* ── Station condition summary ───────────────────────────────────────── */
 
 export interface Conditions {

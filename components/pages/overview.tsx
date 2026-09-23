@@ -9,7 +9,14 @@ import { useConsole } from "@/components/app-context";
 import { Panel, ButtonLink, Kicker, RiskBadge } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { CROPS, SOIL_MODEL, stationForSite } from "@/lib/climate";
-import { conditionsFor, decadeLabel, indexBand, suitability } from "@/lib/metrics";
+import {
+  conditionsFor,
+  decadeLabel,
+  decadesUntil,
+  indexBand,
+  suitability,
+  type DecadeSuitability,
+} from "@/lib/metrics";
 import { useForecast } from "@/lib/use-forecast";
 
 const CARD_IN = {
@@ -289,18 +296,11 @@ function speiLevel(v: number) {
 
 /** The soonest rain-reliable ten-day period across all crops, from today. */
 function upcomingWindow(stationId: string) {
-  const now = new Date();
-  const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-  const doy = Math.floor((now.getTime() - startOfYear.getTime()) / 86_400_000);
-  const currentDecade = Math.floor(doy / 10);
-
-  let best: { crop: (typeof CROPS)[number]; decade: ReturnType<typeof suitability>[number]; wait: number } | null =
-    null;
-
+  let best: { crop: (typeof CROPS)[number]; decade: DecadeSuitability; wait: number } | null = null;
   for (const crop of CROPS) {
     for (const d of suitability(stationId, crop.id)) {
       if (d.water !== "reliable") continue;
-      const wait = (d.decade - currentDecade + 36) % 36;
+      const wait = decadesUntil(d.decade);
       if (!best || wait < best.wait || (wait === best.wait && d.establishmentProb > best.decade.establishmentProb)) {
         best = { crop, decade: d, wait };
       }
