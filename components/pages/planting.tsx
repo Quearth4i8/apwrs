@@ -192,8 +192,12 @@ export function PagePlanting() {
               today &middot; {decadeLabel(today)}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full border border-accent" />
-              sowing month from the crop table
+              <span className="flex h-[6px] w-5 items-end">
+                <span className="h-[6px] w-px bg-accent" />
+                <span className="h-px flex-1 bg-accent" />
+                <span className="h-[6px] w-px bg-accent" />
+              </span>
+              sowing month recorded in the crop table
             </span>
             <span className="ml-auto">
               {DECADES_PER_YEAR} ten-day periods &middot; {rows[0]?.decades[0]?.years ?? 0} years each
@@ -242,8 +246,19 @@ function CropRow({
   const runs = React.useMemo(() => bands(decades), [decades]);
   const order = React.useMemo(() => seasonOrder(), []);
 
-  // The month the crop table says to sow, marked on the row.
-  const statedIndex = order.findIndex((dec) => decadeDate(dec).getUTCMonth() === crop.plantingMonth - 1);
+  /**
+   * The crop table names a sowing MONTH, which covers three ten-day periods.
+   * Marking one of them with a dot implied a precision the source does not
+   * have, so it is drawn as a bracket under the row spanning the whole month.
+   */
+  const statedSpan = React.useMemo(() => {
+    const hits = order
+      .map((dec, i) => ({ i, month: decadeDate(dec).getUTCMonth() }))
+      .filter((x) => x.month === crop.plantingMonth - 1)
+      .map((x) => x.i);
+    if (!hits.length) return null;
+    return { start: Math.min(...hits), span: Math.max(...hits) - Math.min(...hits) + 1 };
+  }, [order, crop.plantingMonth]);
 
   return (
     <button
@@ -263,8 +278,12 @@ function CropRow({
           <span className="truncate text-[13.5px]" style={{ fontWeight: selected ? 600 : 400 }}>
             {crop.name}
           </span>
-          <span className="font-mono text-[10px] text-muted">
-            {openNow ? "open now" : waitDays == null ? "never rain-reliable" : `in ${waitDays} d`}
+          <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted">
+            <span style={{ color: openNow ? WATER_CLASS.reliable.color : undefined }}>
+              {openNow ? "open now" : waitDays == null ? "never rain-reliable" : `next in ${waitDays} d`}
+            </span>
+            <span className="text-faint">&middot;</span>
+            <span className="text-faint">sow {MONTH_ABBR[crop.plantingMonth - 1]}</span>
           </span>
         </span>
       </span>
@@ -311,12 +330,19 @@ function CropRow({
           );
         })}
 
-        {statedIndex >= 0 && (
+        {statedSpan && (
           <span
             title={`Crop table: sow in ${MONTH_ABBR[crop.plantingMonth - 1]}`}
-            className="pointer-events-none absolute top-1.5 size-2 -translate-x-1/2 rounded-full border border-accent bg-bg"
-            style={{ left: `${((statedIndex + 0.5) / DECADES_PER_YEAR) * 100}%` }}
-          />
+            className="pointer-events-none absolute bottom-[5px] flex h-[6px] items-end"
+            style={{
+              left: `${(statedSpan.start / DECADES_PER_YEAR) * 100}%`,
+              width: `${(statedSpan.span / DECADES_PER_YEAR) * 100}%`,
+            }}
+          >
+            <span className="h-[6px] w-px flex-none bg-accent" />
+            <span className="h-px flex-1 bg-accent" />
+            <span className="h-[6px] w-px flex-none bg-accent" />
+          </span>
         )}
       </span>
     </button>
