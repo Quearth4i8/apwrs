@@ -253,7 +253,7 @@ export function LoginView({ initialView }: { initialView: View }) {
         <div className="absolute inset-16 flex flex-col justify-center gap-6">
           <Blueprint className="bg-bg shadow-lift">
             <div className="flex h-9.5 items-center justify-between border-b border-divider px-3.5 font-mono text-[11px] text-muted">
-              <span>BIZERTE GOVERNORATE &middot; RISK 1 KM</span>
+              <span>BIZERTE GOVERNORATE &middot; DROUGHT RISK</span>
               <span>23 SEP 2026</span>
             </div>
             <div className="relative h-[420px]">

@@ -57,9 +57,14 @@ export function scoreGrid(cells: GridCell[]): RiskSurface {
   const { weights, entropy, composite } = entropyWeights(factors);
 
   return {
+    // A cell with no soil moisture is water, not dry land: it carries no
+    // drought score and paints as a hole in the surface.
     cells: cells.map((c, i) => ({
       ...c,
-      risk: composite[i] == null ? null : Math.round((1 - composite[i]!) * 100),
+      risk:
+        c.soilMoisture == null || composite[i] == null
+          ? null
+          : Math.round((1 - composite[i]!) * 100),
     })),
     weights,
     entropy,

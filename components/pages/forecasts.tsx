@@ -49,7 +49,7 @@ export function PageForecasts() {
           </>
         }
         title="Forecasts"
-        lede="ECMWF SEAS5 + ERA5-Land downscaled to 1 km, blended with station data. Issued 23 Sep 2026 06:00 UTC."
+        lede="Sample figures — this page is not yet wired to the live model."
         actions={
           <>
             <Button>

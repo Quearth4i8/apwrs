@@ -94,9 +94,9 @@ export function Landing() {
                 </ButtonLink>
               </div>
               <div className="flex flex-wrap gap-7 pt-2 font-mono text-[11.5px] text-muted">
-                <span>1 km grid</span>
-                <span>6 crops</span>
-                <span>Twice-daily model runs</span>
+                <span>~9 km model grid</span>
+                <span>9 crops</span>
+                <span>30-year station record</span>
                 <span>EN &middot; FR</span>
               </div>
             </div>

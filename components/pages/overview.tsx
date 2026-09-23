@@ -205,7 +205,7 @@ export function PageOverview() {
             <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3.5">
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className="font-heading text-lg font-semibold">Risk map</span>
-                <span className="font-mono text-[10.5px] text-muted">1 km grid &middot; model run 06:00 UTC</span>
+                <span className="font-mono text-[10.5px] text-muted">~9 km model grid &middot; Open-Meteo</span>
               </div>
               <Link
                 href="/app/map"

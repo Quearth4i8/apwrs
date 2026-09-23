@@ -3,19 +3,12 @@
 import * as React from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icon";
-import { MapView, type MapCell } from "@/components/map-view";
+import { MapView, type MapCell, type SurfaceInfo } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
 import { Blueprint, Button, RiskBadge, Toggle } from "@/components/ui/primitives";
 import { STATIONS } from "@/lib/climate";
 
 type Layer = "risk" | "none";
-
-interface SurfaceInfo {
-  generatedAt: string;
-  source: string;
-  weights: Record<string, number>;
-  factors: { key: string; label: string; note?: string }[];
-}
 
 const SURFACES: { id: Layer; label: string; ramp: string }[] = [
   { id: "risk", label: "Drought risk", ramp: "linear-gradient(90deg,#38A88A,#E7A83B,#EE8434,#D96565)" },
@@ -173,6 +166,8 @@ export function PageLiveMap() {
         <div className="absolute bottom-5 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-3 border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3.5 py-2 font-mono text-[10.5px] text-muted backdrop-blur-lg lg:flex">
           <span className="size-1.5 bg-accent" />
           <span>{surface.source}</span>
+          <span className="h-3 w-px bg-divider" />
+          <span>~{surface.resolutionKm} km model grid</span>
           <span className="h-3 w-px bg-divider" />
           <span>updated {new Date(surface.generatedAt).toUTCString().slice(5, 22)} UTC</span>
         </div>
