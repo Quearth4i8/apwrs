@@ -257,7 +257,7 @@ export function LoginView({ initialView }: { initialView: View }) {
               <span>23 SEP 2026</span>
             </div>
             <div className="relative h-[420px]">
-              <MapView layer="risk" sensors sensorIds={false} legend className="absolute inset-0" />
+              <MapView layer="risk" sensors legend interactive={false} className="absolute inset-0" />
             </div>
           </Blueprint>
 

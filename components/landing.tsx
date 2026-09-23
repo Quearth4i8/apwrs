@@ -115,7 +115,7 @@ export function Landing() {
                 </span>
               </div>
               <div className="relative h-[clamp(320px,42vw,440px)]">
-                <MapView layer="risk" sensors sensorIds={false} opacity={0.48} className="absolute inset-0" />
+                <MapView layer="risk" sensors interactive={false} opacity={0.48} className="absolute inset-0" />
 
                 <Blueprint className="absolute bottom-4.5 left-4.5 flex w-[250px] flex-col gap-2.5 bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] p-4 backdrop-blur-lg">
                   <div className="flex items-center justify-between">

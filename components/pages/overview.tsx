@@ -216,7 +216,7 @@ export function PageOverview() {
               </Link>
             </div>
             <div className="relative h-[360px]">
-              <MapView layer="risk" sensors legend sensorIds={false} className="absolute inset-0" />
+              <MapView layer="risk" sensors legend className="absolute inset-0" />
             </div>
           </Blueprint>
         </motion.div>

@@ -326,10 +326,8 @@ function SensorDrawer({
                     <div className="relative h-[200px] cursor-crosshair border border-divider">
                       <MapView
                         layer="risk"
-                        labels
                         sensors
-                        sensorIds={false}
-                        opacity={0}
+                        opacity={0.25}
                         onCell={pick}
                         selected={picked}
                         className="absolute inset-0"

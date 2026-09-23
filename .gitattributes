@@ -5,9 +5,13 @@
 *.jpg binary
 *.jpeg binary
 *.ico binary
+*.xlsx binary
+*.pdf binary
 *.woff binary
 *.woff2 binary
 
 # Reference material from Claude Design — keep out of diffs and language stats.
 design/** linguist-vendored
+"formlas and data/**" linguist-vendored
+lib/generated/** linguist-generated
 package-lock.json linguist-generated

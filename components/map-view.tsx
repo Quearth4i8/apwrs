@@ -1,378 +1,273 @@
 "use client";
 
 import * as React from "react";
-import { ndviColor, riskColor } from "@/lib/utils";
+import Map, { Layer, Marker, NavigationControl, Popup, ScaleControl, Source, type MapRef } from "react-map-gl/maplibre";
+import type {
+  DataDrivenPropertyValueSpecification,
+  FilterSpecification,
+  StyleSpecification,
+} from "maplibre-gl";
+import type { FeatureCollection } from "geojson";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { useTheme } from "@/components/theme-provider";
+import { STATIONS } from "@/lib/climate";
 
 /**
- * The Ichkeul / Bizerte basin, generated rather than traced: a sine coast,
- * two lake blobs, contour rings and a 1 km risk grid whose score is a smooth
- * function of position. Ported from design/MapView.dc.html so the geometry
- * matches the mockups pixel for pixel.
+ * The real map: MapLibre GL over CARTO's keyless vector basemap, tinted
+ * toward the APWRS palette so it sits inside the design rather than beside
+ * it. The drought layer is a live GeoJSON surface from /api/grid, scored by
+ * the entropy weight method.
  */
 
-const coastY = (x: number) => 78 + 22 * Math.sin(x / 95) + 12 * Math.cos(x / 41 + 1);
+const BASE_STYLE = {
+  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+} as const;
 
-function blob(cx: number, cy: number, rx: number, ry: number, seed: number) {
-  const n = 18;
-  const pts: [number, number][] = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    const w = 1 + 0.12 * Math.sin(a * 3 + seed) + 0.07 * Math.cos(a * 5 + seed * 2);
-    pts.push([cx + Math.cos(a) * rx * w, cy + Math.sin(a) * ry * w]);
-  }
-  let d = "";
-  for (let i = 0; i < n; i++) {
-    const p = pts[i];
-    const q = pts[(i + 1) % n];
-    const m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-    d +=
-      (i ? "" : `M${((pts[n - 1][0] + p[0]) / 2).toFixed(1)} ${((pts[n - 1][1] + p[1]) / 2).toFixed(1)}`) +
-      `Q${p[0].toFixed(1)} ${p[1].toFixed(1)} ${m[0].toFixed(1)} ${m[1].toFixed(1)}`;
-  }
-  return d + "Z";
-}
+export const DEFAULT_VIEW = { longitude: 9.55, latitude: 37.13, zoom: 8.6 };
 
-const inEllipse = (x: number, y: number, cx: number, cy: number, rx: number, ry: number) =>
-  ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1.05;
+/** west, south, east, north — react-map-gl takes the flat form. */
+const MAX_BOUNDS: [number, number, number, number] = [8.4, 36.3, 10.8, 37.9];
 
-const LAKES: [number, number, number, number][] = [
-  [300, 305, 122, 68],
-  [578, 225, 112, 62],
-];
-
-const COAST = (() => {
-  const pts: string[] = [];
-  for (let x = 0; x <= 800; x += 20) pts.push(`${x} ${coastY(x).toFixed(1)}`);
-  return "M" + pts.join("L");
-})();
-const LAND = COAST + "L800 500L0 500Z";
-
-const CONTOURS = [
-  blob(290, 400, 90, 40, 1),
-  blob(290, 400, 60, 26, 2),
-  blob(290, 400, 30, 12, 3),
-  blob(720, 390, 70, 50, 4),
-  blob(720, 390, 42, 30, 5),
-  blob(140, 200, 80, 50, 6),
-  blob(140, 200, 45, 26, 7),
-];
-
-const LAKE_I = blob(300, 305, 122, 68, 0.4);
-const LAKE_B = blob(578, 225, 112, 62, 2.2);
-
-/** Deterministic parcel rectangles for the satellite base. */
-const FIELDS = (() => {
-  let r = 7;
-  const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
-  const out: { x: string; y: string; w: string; h: string; c: string }[] = [];
-  for (let i = 0; i < 120; i++) {
-    const x = rnd() * 800;
-    const y = 90 + rnd() * 410;
-    out.push({
-      x: x.toFixed(0),
-      y: y.toFixed(0),
-      w: (20 + rnd() * 50).toFixed(0),
-      h: (14 + rnd() * 34).toFixed(0),
-      c: ["#1E2A1A", "#2A2A1C", "#18241A", "#252F1E", "#2E2B20"][Math.floor(rnd() * 5)],
-    });
-  }
-  return out;
-})();
-
-export const SENSORS = [
-  { id: "ICH-W01", x: 240, y: 392, st: "ok" },
-  { id: "ICH-S02", x: 372, y: 400, st: "ok" },
-  { id: "ICH-L03", x: 300, y: 232, st: "ok" },
-  { id: "ICH-S04", x: 168, y: 296, st: "warn" },
-  { id: "BIZ-W01", x: 660, y: 176, st: "ok" },
-  { id: "BIZ-L02", x: 520, y: 286, st: "ok" },
-  { id: "BIZ-S03", x: 706, y: 300, st: "off" },
-  { id: "MAT-S01", x: 430, y: 440, st: "ok" },
-] as const;
-
-function score(x: number, y: number) {
-  let s =
-    26 +
-    40 * (y / 500) +
-    16 * (1 - x / 800) +
-    12 * Math.sin(x / 70 + y / 55) +
-    8 * Math.cos(x / 33 - y / 41);
-  for (const [cx, cy, rx, ry] of LAKES) {
-    const d = Math.hypot((x - cx) / rx, (y - cy) / ry);
-    if (d < 1.8) s -= (1.8 - d) * 14;
-  }
-  return Math.max(4, Math.min(96, s));
-}
+/** Risk ramp, matching the badge and every chart. */
+const RISK_RAMP: DataDrivenPropertyValueSpecification<string> = [
+  "interpolate",
+  ["linear"],
+  ["get", "risk"],
+  0, "#38A88A",
+  25, "#38A88A",
+  40, "#E7A83B",
+  60, "#EE8434",
+  80, "#D96565",
+  100, "#D96565",
+] as unknown as DataDrivenPropertyValueSpecification<string>;
 
 export interface MapCell {
   id: string;
   score: number;
-  ndvi: number;
   lat: string;
   lon: string;
+  precip30: number | null;
+  et030: number | null;
+  tmax: number | null;
+  soilMoisture: number | null;
+}
+
+interface GridResponse {
+  generatedAt: string;
+  source: string;
+  weights: Record<string, number>;
+  factors: { key: string; label: string; note?: string }[];
+  geojson: FeatureCollection;
 }
 
 export interface MapViewProps {
-  layer?: "risk" | "ndvi" | "none";
-  base?: "topo" | "sat";
+  layer?: "risk" | "none";
+  base?: "map" | "satellite";
   sensors?: boolean;
   legend?: boolean;
-  drawn?: boolean;
-  water?: boolean;
-  labels?: boolean;
-  grid?: boolean;
-  sensorIds?: boolean;
   opacity?: number;
   selected?: string | null;
   onCell?: (cell: MapCell) => void;
+  interactive?: boolean;
   className?: string;
+  /** Lifts the loaded surface to the page (weights, provenance). */
+  onSurface?: (info: Omit<GridResponse, "geojson">) => void;
+}
+
+/** One fetch per page, shared by every map on it. */
+let gridPromise: Promise<GridResponse> | null = null;
+function loadGrid(): Promise<GridResponse> {
+  gridPromise ??= fetch("/api/grid")
+    .then((r) => {
+      if (!r.ok) throw new Error(`grid ${r.status}`);
+      return r.json();
+    })
+    .catch((e) => {
+      gridPromise = null;
+      throw e;
+    });
+  return gridPromise;
 }
 
 export function MapView({
   layer = "risk",
-  base = "topo",
+  base = "map",
   sensors = false,
   legend = false,
-  drawn = false,
-  water = true,
-  labels = true,
-  grid = true,
-  sensorIds = true,
-  opacity = 0.42,
+  opacity = 0.55,
   selected = null,
   onCell,
+  interactive = true,
   className,
+  onSurface,
 }: MapViewProps) {
-  const cells = React.useMemo(() => {
-    if (layer === "none") return [];
-    const out: {
-      id: string;
-      x: number;
-      y: number;
-      fill: string;
-      op: number;
-      stroke: string;
-      sw: number;
-      cell: MapCell;
-    }[] = [];
-    for (let r = 0; r < 25; r++) {
-      for (let q = 0; q < 40; q++) {
-        const x = q * 20;
-        const y = r * 20;
-        const cx = x + 10;
-        const cy = y + 10;
-        if (cy < coastY(cx) + 4) continue;
-        if (LAKES.some(([a, b, c, d]) => inEllipse(cx, cy, a, b, c * 0.8, d * 0.8))) continue;
-        const s = score(cx, cy);
-        const nd = Math.max(0.12, Math.min(0.62, 0.62 - s / 170 + 0.05 * Math.sin(cx / 50)));
-        const id = `${q}-${r}`;
-        out.push({
-          id,
-          x,
-          y,
-          fill: layer === "ndvi" ? ndviColor(nd) : riskColor(s),
-          op: selected === id ? 0.9 : opacity,
-          stroke: selected === id ? "#ffffff" : "none",
-          sw: selected === id ? 2 : 0,
-          cell: {
-            id,
-            score: Math.round(s),
-            ndvi: +nd.toFixed(2),
-            lat: (37.35 - cy / 1666).toFixed(3),
-            lon: (9.55 + cx / 2000).toFixed(3),
-          },
+  const { resolvedTheme } = useTheme();
+  const dark = resolvedTheme !== "light";
+  const mapRef = React.useRef<MapRef | null>(null);
+
+  const [grid, setGrid] = React.useState<FeatureCollection | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [hover, setHover] = React.useState<{ lng: number; lat: number; risk: number } | null>(null);
+
+  React.useEffect(() => {
+    if (layer === "none") return;
+    let live = true;
+    loadGrid()
+      .then((d) => {
+        if (!live) return;
+        setGrid(d.geojson);
+        onSurface?.({
+          generatedAt: d.generatedAt,
+          source: d.source,
+          weights: d.weights,
+          factors: d.factors,
         });
-      }
-    }
-    return out;
-  }, [layer, opacity, selected]);
+      })
+      .catch((e) => live && setError(String(e)));
+    return () => {
+      live = false;
+    };
+  }, [layer, onSurface]);
+
+  const style = React.useMemo<string | StyleSpecification>(
+    () => (base === "satellite" ? SATELLITE_STYLE : BASE_STYLE[dark ? "dark" : "light"]),
+    [base, dark],
+  );
+
+  const selectedFilter = React.useMemo<FilterSpecification>(
+    () =>
+      selected
+        ? ["==", ["concat", ["to-string", ["get", "lat"]], ",", ["to-string", ["get", "lon"]]], selected]
+        : ["==", ["get", "risk"], -1],
+    [selected],
+  );
 
   return (
-    <div
-      className={className}
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
-        minHeight: 120,
-        overflow: "hidden",
-        background: "var(--ap-map-sea)",
-      }}
-    >
-      <svg
-        viewBox="0 0 800 500"
-        preserveAspectRatio="xMidYMid slice"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
-        role="img"
-        aria-label="Drought risk map of the Ichkeul and Bizerte basin"
+    <div className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
+      <Map
+        ref={mapRef}
+        mapStyle={style}
+        initialViewState={DEFAULT_VIEW}
+        maxBounds={MAX_BOUNDS}
+        minZoom={6}
+        maxZoom={13}
+        interactive={interactive}
+        attributionControl={{ compact: true }}
+        interactiveLayerIds={onCell ? ["risk-fill"] : []}
+        cursor={onCell ? "pointer" : "grab"}
+        onMouseMove={(e) => {
+          const f = e.features?.[0];
+          setHover(
+            f && typeof f.properties?.risk === "number"
+              ? { lng: e.lngLat.lng, lat: e.lngLat.lat, risk: f.properties.risk }
+              : null,
+          );
+        }}
+        onMouseLeave={() => setHover(null)}
+        onClick={(e) => {
+          const f = e.features?.[0];
+          if (!f || !onCell) return;
+          const p = f.properties as Record<string, number>;
+          onCell({
+            id: `${p.lat},${p.lon}`,
+            score: p.risk,
+            lat: Number(p.lat).toFixed(3),
+            lon: Number(p.lon).toFixed(3),
+            precip30: p.precip30 ?? null,
+            et030: p.et030 ?? null,
+            tmax: p.tmax ?? null,
+            soilMoisture: p.soilMoisture ?? null,
+          });
+        }}
+        style={{ width: "100%", height: "100%" }}
       >
-        <path d={LAND} style={{ fill: "var(--ap-map-land)" }} />
-
-        {base === "sat" && (
-          <g>
-            {FIELDS.map((f, i) => (
-              <rect key={i} x={f.x} y={f.y} width={f.w} height={f.h} fill={f.c} />
-            ))}
-          </g>
-        )}
-
-        {base === "topo" && (
-          <g fill="none" style={{ stroke: "var(--ap-text)", strokeOpacity: 0.09 }}>
-            {CONTOURS.map((d, i) => (
-              <path key={i} d={d} strokeWidth={1} />
-            ))}
-          </g>
-        )}
-
-        <g>
-          {cells.map((c) => (
-            <rect
-              key={c.id}
-              x={c.x}
-              y={c.y}
-              width={19}
-              height={19}
-              fill={c.fill}
-              fillOpacity={c.op}
-              stroke={c.stroke}
-              strokeWidth={c.sw}
-              onClick={onCell ? () => onCell(c.cell) : undefined}
-              style={{ cursor: onCell ? "pointer" : "default", transition: "fill-opacity .3s" }}
+        {grid && layer !== "none" && (
+          <Source id="risk" type="geojson" data={grid}>
+            <Layer
+              id="risk-fill"
+              type="fill"
+              paint={{
+                "fill-color": RISK_RAMP,
+                "fill-opacity": opacity,
+                "fill-antialias": false,
+              }}
             />
+            <Layer
+              id="risk-outline"
+              type="line"
+              paint={{ "line-color": dark ? "#0B2633" : "#ffffff", "line-width": 0.4, "line-opacity": 0.35 }}
+            />
+            <Layer
+              id="risk-selected"
+              type="line"
+              filter={selectedFilter}
+              paint={{ "line-color": dark ? "#E6F1F5" : "#142B35", "line-width": 2 }}
+            />
+          </Source>
+        )}
+
+        {sensors &&
+          STATIONS.map((s) => (
+            <Marker key={s.id} longitude={s.lon} latitude={s.lat} anchor="center">
+              <span
+                title={`${s.id} · ${s.name}`}
+                className="grid place-items-center"
+                style={{ width: 22, height: 22 }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    width: 22,
+                    height: 22,
+                    border: "1px solid var(--ap-teal)",
+                    opacity: 0.45,
+                    borderRadius: "50%",
+                  }}
+                />
+                <span
+                  style={{
+                    width: 9,
+                    height: 9,
+                    background: "var(--ap-teal)",
+                    outline: "1.5px solid var(--ap-bg)",
+                  }}
+                />
+              </span>
+            </Marker>
           ))}
-        </g>
 
-        {water && (
-          <g>
-            <path
-              d={LAKE_I}
-              style={{ fill: "var(--ap-map-water)", stroke: "var(--ap-teal)", strokeOpacity: 0.55 }}
-              strokeWidth={1}
-            />
-            <path
-              d={LAKE_B}
-              style={{ fill: "var(--ap-map-water)", stroke: "var(--ap-teal)", strokeOpacity: 0.55 }}
-              strokeWidth={1}
-            />
-            <path
-              d="M418 292 C 432 280, 446 268, 468 258"
-              fill="none"
-              style={{ stroke: "var(--ap-teal)", strokeOpacity: 0.6 }}
-              strokeWidth={3}
-            />
-            <path
-              d="M612 170 C 614 150, 612 130, 610 112"
-              fill="none"
-              style={{ stroke: "var(--ap-teal)", strokeOpacity: 0.6 }}
-              strokeWidth={4}
-            />
-            <path
-              d="M120 470 C 170 430, 190 380, 215 335"
-              fill="none"
-              style={{ stroke: "var(--ap-teal)", strokeOpacity: 0.35 }}
-              strokeWidth={1.5}
-            />
-            <path
-              d="M330 500 C 335 450, 322 410, 318 372"
-              fill="none"
-              style={{ stroke: "var(--ap-teal)", strokeOpacity: 0.35 }}
-              strokeWidth={1.5}
-            />
-          </g>
+        {hover && (
+          <Popup
+            longitude={hover.lng}
+            latitude={hover.lat}
+            closeButton={false}
+            closeOnClick={false}
+            offset={12}
+            className="ap-popup"
+          >
+            <span className="font-mono text-[11px]">risk {hover.risk}</span>
+          </Popup>
         )}
 
-        <path d={COAST} fill="none" style={{ stroke: "var(--ap-teal)", strokeOpacity: 0.5 }} strokeWidth={1} />
+        {interactive && <NavigationControl position="top-right" showCompass={false} />}
+        {interactive && <ScaleControl position="bottom-left" maxWidth={90} unit="metric" />}
+      </Map>
 
-        {grid && (
-          <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.1 }} strokeDasharray="2 4" strokeWidth={1}>
-            <path d="M100 0V500M300 0V500M500 0V500M700 0V500M0 83H800M0 250H800M0 416H800" />
-          </g>
-        )}
+      {error && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
+          live risk surface unavailable &middot; basemap only
+        </div>
+      )}
 
-        {drawn && (
-          <g>
-            <polygon
-              points="470,340 565,322 615,392 545,452 458,420"
-              style={{ fill: "var(--ap-teal)", fillOpacity: 0.1, stroke: "var(--ap-teal)" }}
-              strokeWidth={1.5}
-              strokeDasharray="6 4"
-            />
-            <g style={{ fill: "var(--ap-bg)", stroke: "var(--ap-teal)" }} strokeWidth={1.5}>
-              <rect x={466} y={336} width={8} height={8} />
-              <rect x={561} y={318} width={8} height={8} />
-              <rect x={611} y={388} width={8} height={8} />
-              <rect x={541} y={448} width={8} height={8} />
-              <rect x={454} y={416} width={8} height={8} />
-            </g>
-          </g>
-        )}
-
-        {labels && (
-          <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-text)" }} fontSize={11}>
-            <text x={300} y={309} textAnchor="middle" fillOpacity={0.75} letterSpacing={1}>
-              LAC ICHKEUL
-            </text>
-            <text x={578} y={229} textAnchor="middle" fillOpacity={0.75} letterSpacing={1}>
-              LAC DE BIZERTE
-            </text>
-            <text x={80} y={40} fillOpacity={0.35} letterSpacing={3} fontSize={10}>
-              MEDITERRANEAN SEA
-            </text>
-            <text x={626} y={150} fillOpacity={0.85}>
-              Bizerte
-            </text>
-            <text x={440} y={326} fillOpacity={0.6} fontSize={10}>
-              Menzel Bourguiba
-            </text>
-            <text x={455} y={484} fillOpacity={0.6} fontSize={10}>
-              Mateur
-            </text>
-            <text x={104} y={494} fillOpacity={0.35} fontSize={9}>9.60°E</text>
-            <text x={304} y={494} fillOpacity={0.35} fontSize={9}>9.70°E</text>
-            <text x={504} y={494} fillOpacity={0.35} fontSize={9}>9.80°E</text>
-            <text x={704} y={494} fillOpacity={0.35} fontSize={9}>9.90°E</text>
-            <text x={6} y={79} fillOpacity={0.35} fontSize={9}>37.30°N</text>
-            <text x={6} y={246} fillOpacity={0.35} fontSize={9}>37.20°N</text>
-            <text x={6} y={412} fillOpacity={0.35} fontSize={9}>37.10°N</text>
-          </g>
-        )}
-
-        {sensors && (
-          <g>
-            {SENSORS.map((s) => {
-              const col = s.st === "ok" ? "#9EDFF1" : s.st === "warn" ? "#E7A83B" : "#D96565";
-              return (
-                <g key={s.id}>
-                  <circle cx={s.x} cy={s.y} r={11} fill="none" stroke={col} strokeOpacity={0.35} />
-                  <rect
-                    x={s.x - 4}
-                    y={s.y - 4}
-                    width={8}
-                    height={8}
-                    fill={col}
-                    style={{ stroke: "var(--ap-bg)" }}
-                    strokeWidth={1.5}
-                  />
-                  {sensorIds && (
-                    <text
-                      x={s.x + 14}
-                      y={s.y + 3}
-                      fontSize={9.5}
-                      style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-text)" }}
-                      fillOpacity={0.8}
-                    >
-                      {s.id}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </g>
-        )}
-      </svg>
+      {!grid && !error && layer !== "none" && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
+          loading risk surface&hellip;
+        </div>
+      )}
 
       {legend && (
-        <div className="absolute bottom-3 left-3 flex items-center gap-2.5 border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-2.5 py-[7px] font-mono text-[10px] uppercase tracking-[0.06em] text-muted backdrop-blur-md">
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-2.5 border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-2.5 py-[7px] font-mono text-[10px] uppercase tracking-[0.06em] text-muted backdrop-blur-md">
           {(
             [
               ["Safe", "#38A88A"],
@@ -391,3 +286,19 @@ export function MapView({
     </div>
   );
 }
+
+/** Keyless satellite raster (ESRI World Imagery), styled as a MapLibre source. */
+const SATELLITE_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    esri: {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      attribution: "Imagery &copy; Esri",
+    },
+  },
+  layers: [{ id: "esri", type: "raster", source: "esri" }],
+};

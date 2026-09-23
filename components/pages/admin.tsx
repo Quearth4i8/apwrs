@@ -222,7 +222,7 @@ function Regions() {
           ))}
         </div>
         <div className="relative min-h-[320px] flex-1">
-          <MapView layer="none" sensors drawn className="absolute inset-0" />
+          <MapView layer="none" sensors className="absolute inset-0" />
         </div>
       </div>
     </Blueprint>

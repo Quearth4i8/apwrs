@@ -1,0 +1,141 @@
+import pandas as pd
+import numpy as np
+from scipy.special import gamma as gamma_func
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+
+FILE_PATH = "spei_station1.xlsx"  #
+
+df_station = pd.read_excel(FILE_PATH)
+
+# Convert 'Date' column to datetime and set it as index
+df_station['Date'] = pd.to_datetime(df_station['Date'])
+df_station = df_station.set_index('Date')
+
+# Précipitation mensuelle = somme
+df_prec = df_station["Precipitation_mm"].resample("ME").sum()
+print(df_prec.head())
+
+# ET0 mensuelle = somme
+df_et0 = df_station["ET0 (mm/jour)"].resample("ME").sum()
+
+print(df_et0.head())
+# ------------------------------------------------------------
+# 5. CALCULER LE BILAN HYDRIQUE
+# ------------------------------------------------------------
+
+# D = P - ET0
+
+df_balance = df_prec - df_et0
+df_balance.name = "Water Balance"
+
+print(df_balance.head())
+
+# ------------------------------------------------------------
+# 6. CUMUL SUR DIFFERENTES ECHELLES
+# ------------------------------------------------------------
+
+# SPEI-1
+balance_1 = df_balance
+
+# SPEI-3
+balance_3 = df_balance.rolling(window=3, min_periods=3).sum()
+
+# SPEI-6
+balance_6 = df_balance.rolling(window=6, min_periods=6).sum()
+
+# SPEI-12
+balance_12 = df_balance.rolling(window=12, min_periods=12).sum()
+
+def fit_loglogistic(x):
+    """Ajuste une loi log-logistique 3 paramètres (alpha, beta, gamma)
+    par la méthode des moments pondérés par les probabilités (PWM)."""
+    x = np.sort(np.asarray(x, dtype=float))
+    n = len(x)
+    i = np.arange(1, n + 1)
+    F = (i - 0.35) / n
+    w0 = np.mean(x)
+    w1 = np.mean((1 - F) * x)
+    w2 = np.mean((1 - F) ** 2 * x)
+
+    beta = (2 * w1 - w0) / (6 * w1 - w0 - 6 * w2)
+    g1 = gamma_func(1 + 1 / beta)
+    g2 = gamma_func(1 - 1 / beta)
+    alpha = (w0 - 2 * w1) * beta / (g1 * g2)
+    gamma_param = w0 - alpha * g1 * g2
+    return alpha, beta, gamma_param
+
+
+def compute_spei(series, min_points=10):
+    """Calcule le SPEI pour une série de bilan hydrique cumulé
+    (index DatetimeIndex mensuel), avec ajustement séparé par mois
+    calendaire. min_points = nombre minimal d'années disponibles
+    pour ajuster une loi de façon fiable pour un mois donné."""
+    result = pd.Series(index=series.index, dtype=float)
+
+    for m in range(1, 13):
+        mask = series.index.month == m
+        data = series[mask].dropna()
+        if len(data) < min_points:
+            print(f"  [avertissement] mois {m}: seulement {len(data)} "
+                  f"valeurs disponibles (< {min_points}), ignoré.")
+            continue
+
+        alpha, beta, gamma_param = fit_loglogistic(data.values)
+        if alpha <= 0 or not np.isfinite(alpha):
+            print(f"  [avertissement] mois {m}: ajustement instable "
+                  f"(alpha={alpha:.2f}), valeurs mises à NaN.")
+            continue
+
+        x = series[mask]
+        diff = x - gamma_param
+        with np.errstate(divide="ignore", invalid="ignore"):
+            F = np.where(diff > 0, 1 / (1 + (alpha / diff) ** beta), np.nan)
+        F = pd.Series(F, index=x.index).clip(1e-6, 1 - 1e-6)
+        result[mask] = norm.ppf(F)
+
+    return result.sort_index()
+
+
+print("\nAjustement SPEI-1...")
+spei_1 = compute_spei(balance_1)
+print("Ajustement SPEI-3...")
+spei_3 = compute_spei(balance_3)
+print("Ajustement SPEI-6...")
+spei_6 = compute_spei(balance_6)
+print("Ajustement SPEI-12...")
+spei_12 = compute_spei(balance_12)
+
+print("\n--- SPEI-3 (dernières valeurs) ---")
+print(spei_3.dropna().tail(10))
+
+# ------------------------------------------------------------
+# 8. VISUALISATION (exemple pour le SPEI-3)
+# ------------------------------------------------------------
+
+fig, ax = plt.subplots(figsize=(14, 5))
+values = spei_3.dropna()
+colors = np.where(values >= 0, "#2b7fbe", "#c94c4c")
+ax.bar(values.index, values.values, width=25, color=colors)
+ax.axhline(0, color="black", linewidth=0.8)
+ax.set_title("SPEI-3 - Station 1")
+ax.set_ylabel("SPEI")
+ax.xaxis.set_minor_locator(AutoMinorLocator())
+plt.tight_layout()
+plt.savefig("spei_3_station1.png", dpi=150)
+print("\nGraphique enregistré : spei_3_station1.png")
+
+# ------------------------------------------------------------
+# 9. EXPORT DES RÉSULTATS
+# ------------------------------------------------------------
+
+df_spei = pd.DataFrame({
+    "Water_Balance": df_balance,
+    "SPEI_1": spei_1,
+    "SPEI_3": spei_3,
+    "SPEI_6": spei_6,
+    "SPEI_12": spei_12,
+})
+df_spei.to_csv("spei_station1_resultats.csv")
+print("Résultats exportés : spei_station1_resultats.csv")
