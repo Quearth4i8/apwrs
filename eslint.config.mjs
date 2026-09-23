@@ -3,7 +3,7 @@ import typescript from "eslint-config-next/typescript";
 
 /** Flat config: eslint-config-next 16 ships native flat presets. */
 const config = [
-  { ignores: [".next/**", "node_modules/**", "design/**", "next-env.d.ts"] },
+  { ignores: [".next/**", "node_modules/**", "design/**", "public/**", "next-env.d.ts"] },
   ...coreWebVitals,
   ...typescript,
 ];

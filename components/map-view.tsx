@@ -7,9 +7,20 @@ import type {
   FilterSpecification,
   StyleSpecification,
 } from "maplibre-gl";
+import { setWorkerUrl } from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useTheme } from "@/components/theme-provider";
+
+/**
+ * MapLibre v6 resolves its worker from `import.meta.url`, which bundlers
+ * cannot trace — under Turbopack that URL points nowhere and every tile
+ * fails to decode ("Worker failed to load"). scripts/sync-maplibre-worker.mjs
+ * copies the worker into public/, and this points the library at it. Must
+ * run before the first Map is constructed.
+ */
+if (typeof window !== "undefined") {
+  setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+}
 import { STATIONS } from "@/lib/climate";
 
 /**
@@ -90,6 +101,33 @@ function loadGrid(): Promise<GridResponse> {
   return gridPromise;
 }
 
+/**
+ * Resolves the theme the way the stylesheet does: from the nearest
+ * `[data-theme]` ancestor. The marketing pages pin dark with a wrapper while
+ * the global store may say light, and the basemap has to follow the wrapper
+ * or it lands light-on-dark.
+ */
+function useScopedTheme(ref: React.RefObject<HTMLDivElement | null>) {
+  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
+
+  React.useEffect(() => {
+    const read = () => {
+      const scope = ref.current?.closest("[data-theme]") as HTMLElement | null;
+      setTheme(scope?.dataset.theme === "light" ? "light" : "dark");
+    };
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const scope = ref.current?.closest("[data-theme]");
+    if (scope && scope !== document.documentElement) {
+      observer.observe(scope, { attributes: true, attributeFilter: ["data-theme"] });
+    }
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return theme;
+}
+
 export function MapView({
   layer = "risk",
   base = "map",
@@ -102,13 +140,14 @@ export function MapView({
   className,
   onSurface,
 }: MapViewProps) {
-  const { resolvedTheme } = useTheme();
-  const dark = resolvedTheme !== "light";
+  const hostRef = React.useRef<HTMLDivElement | null>(null);
+  const dark = useScopedTheme(hostRef) === "dark";
   const mapRef = React.useRef<MapRef | null>(null);
 
   const [grid, setGrid] = React.useState<FeatureCollection | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [hover, setHover] = React.useState<{ lng: number; lat: number; risk: number } | null>(null);
+  const [mapError, setMapError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (layer === "none") return;
@@ -144,7 +183,7 @@ export function MapView({
   );
 
   return (
-    <div className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div ref={hostRef} className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
       <Map
         ref={mapRef}
         mapStyle={style}
@@ -180,6 +219,7 @@ export function MapView({
             soilMoisture: p.soilMoisture ?? null,
           });
         }}
+        onError={(e) => setMapError(e.error?.message ?? "map failed to load")}
         style={{ width: "100%", height: "100%" }}
       >
         {grid && layer !== "none" && (
@@ -254,7 +294,13 @@ export function MapView({
         {interactive && <ScaleControl position="bottom-left" maxWidth={90} unit="metric" />}
       </Map>
 
-      {error && (
+      {mapError && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit max-w-[90%] border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 text-center font-mono text-[10.5px] text-extreme-ink backdrop-blur">
+          basemap error &middot; {mapError}
+        </div>
+      )}
+
+      {error && !mapError && (
         <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
           live risk surface unavailable &middot; basemap only
         </div>

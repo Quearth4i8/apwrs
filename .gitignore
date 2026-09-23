@@ -14,3 +14,6 @@ tsconfig.tsbuildinfo
 scripts/_*.json
 scripts/_*.npy
 scripts/_*.csv
+
+# Copied from node_modules by scripts/sync-maplibre-worker.mjs
+public/maplibre/

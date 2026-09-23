@@ -10,7 +10,10 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "data:build": "tsx scripts/build-data.ts",
-    "data:verify": "tsx scripts/verify-drought.ts"
+    "data:verify": "tsx scripts/verify-drought.ts",
+    "postinstall": "node scripts/sync-maplibre-worker.mjs",
+    "predev": "node scripts/sync-maplibre-worker.mjs",
+    "prebuild": "node scripts/sync-maplibre-worker.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",
