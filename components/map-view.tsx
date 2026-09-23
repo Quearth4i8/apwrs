@@ -3,7 +3,7 @@
 import * as React from "react";
 import Map, { Layer, Marker, NavigationControl, Popup, ScaleControl, Source, type MapRef } from "react-map-gl/maplibre";
 import { setWorkerUrl } from "maplibre-gl";
-import type { StyleSpecification } from "maplibre-gl";
+import type { Map as MapLibreMap, StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { STATIONS } from "@/lib/climate";
 import { nearestCell, renderRiskImage } from "@/lib/raster";
@@ -130,6 +130,21 @@ function useScopedTheme(ref: React.RefObject<HTMLDivElement | null>) {
   return theme;
 }
 
+/**
+ * The two rotation paths MapLibre leaves on after `dragRotate={false}`:
+ * pinch-twist on touch, and shift+arrow on the keyboard. Both are turned off
+ * without disabling their handlers wholesale, so pinch-zoom and keyboard
+ * panning still work. Bearing and pitch are reset in case a style or a saved
+ * view brought a tilted camera with it.
+ */
+function lockToPlan(e: { target: MapLibreMap }) {
+  const map = e.target;
+  map.touchZoomRotate?.disableRotation();
+  map.keyboard?.disableRotation();
+  if (map.getBearing() !== 0) map.setBearing(0);
+  if (map.getPitch() !== 0) map.setPitch(0);
+}
+
 export function MapView({
   layer = "risk",
   base = "map",
@@ -240,6 +255,16 @@ export function MapView({
         interactive={interactive}
         attributionControl={{ compact: true }}
         cursor={onCell ? "crosshair" : "grab"}
+        /* This is a flat data map. Tilting it distorts the risk surface and
+           rotating it breaks the north-up reading of the coastline, so every
+           path to a 3D view is closed: right-click and ctrl-drag (dragRotate),
+           two-finger drag (touchPitch), pinch-twist and shift+arrows are all
+           handled below or here, and maxPitch pins the camera flat. */
+        dragRotate={false}
+        pitchWithRotate={false}
+        touchPitch={false}
+        maxPitch={0}
+        onLoad={lockToPlan}
         onMouseMove={(e) => {
           if (!payload || layer === "none") return;
           const cell = readCell(e.lngLat.lat, e.lngLat.lng);
