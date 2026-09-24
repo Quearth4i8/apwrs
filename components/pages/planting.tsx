@@ -8,6 +8,7 @@ import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { CROPS, station as stationById, stationForSite, type Crop } from "@/lib/climate";
 import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
+import { Menu, MenuItem, MenuLabel, MenuTrigger } from "@/components/ui/dropdown";
 import {
   bands,
   cropStatus,
@@ -17,6 +18,7 @@ import {
   DECADES_PER_YEAR,
   MONTH_ABBR,
   periodScore,
+  cycleYears,
   etcCurve,
   reliableWindow,
   seasonMonths,
@@ -385,6 +387,8 @@ function CropDetail({
   const window = reliableWindow(stationId, crop.id);
   const best = window?.peak ?? bestPeriodOf(decades);
   const [curve, setCurve] = React.useState<"kc" | "etc">("kc");
+  /** null = the 30-year day-of-year mean; a number replays that season. */
+  const [year, setYear] = React.useState<number | null>(null);
 
   return (
     <motion.div
@@ -447,21 +451,32 @@ function CropDetail({
           <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">
             {curve === "kc" ? <>COEFFICIENTS &middot; FROM THE CROP TABLE</> : <>WATER DEMAND &middot; DAILY</>}
           </span>
-          <Segmented
-            size="sm"
-            value={curve}
-            onChange={setCurve}
-            options={[
-              { value: "kc", label: <>K<sub>c</sub></> },
-              { value: "etc", label: <>ET<sub>c</sub></> },
-            ]}
-          />
+          <div className="flex items-center gap-2">
+            {curve === "etc" && (
+              <YearPicker
+                stationId={stationId}
+                crop={crop}
+                sowDecade={best.decade}
+                value={year}
+                onChange={setYear}
+              />
+            )}
+            <Segmented
+              size="sm"
+              value={curve}
+              onChange={setCurve}
+              options={[
+                { value: "kc", label: <>K<sub>c</sub></> },
+                { value: "etc", label: <>ET<sub>c</sub></> },
+              ]}
+            />
+          </div>
         </div>
 
         {curve === "kc" ? (
           <KcCurve crop={crop} />
         ) : (
-          <EtcCurve crop={crop} stationId={stationId} sowDecade={best.decade} />
+          <EtcCurve crop={crop} stationId={stationId} sowDecade={best.decade} year={year} />
         )}
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-4">
@@ -490,15 +505,69 @@ function CropDetail({
               that actually fell.
             </>
           ) : (
-            <>
-              K<sub>c</sub> times the day-of-year mean ET<sub>0</sub> over {stationYears} years, for a cycle sown{" "}
-              {decadeLabel(best.decade)}. This is the expected demand for that sowing date, not one particular
-              season.
-            </>
+            year == null ? (
+              <>
+                K<sub>c</sub> times the day-of-year mean ET<sub>0</sub> over {stationYears} years, for a cycle sown{" "}
+                {decadeLabel(best.decade)}. This is the expected demand for that sowing date, not one particular
+                season.
+              </>
+            ) : (
+              <>
+                K<sub>c</sub> times the ET<sub>0</sub> measured in {year}&ndash;{year + 1}, for a cycle sown{" "}
+                {decadeLabel(best.decade)} {year}. Rainfall is what actually fell that season.
+              </>
+            )
           )}
         </p>
       </Panel>
     </motion.div>
+  );
+}
+
+/** Picks the 30-year mean or one measured season for the ETc curve. */
+function YearPicker({
+  stationId,
+  crop,
+  sowDecade,
+  value,
+  onChange,
+}: {
+  stationId: string;
+  crop: Crop;
+  sowDecade: number;
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  const years = React.useMemo(
+    () => cycleYears(stationById(stationId), crop, sowDecade),
+    [stationId, crop, sowDecade],
+  );
+
+  return (
+    <Menu
+      align="end"
+      className="max-h-[320px] w-[150px] overflow-y-auto"
+      trigger={
+        <MenuTrigger className="h-7 px-2 font-mono text-[11px]">
+          {value == null ? "30-yr mean" : `${value}–${String(value + 1).slice(2)}`}
+          <Icon name="down" size={12} />
+        </MenuTrigger>
+      }
+    >
+      <MenuLabel>SEASON</MenuLabel>
+      <MenuItem onSelect={() => onChange(null)} hint={value == null ? "✓" : undefined}>
+        30-yr mean
+      </MenuItem>
+      <MenuLabel>MEASURED &middot; {years.length} SEASONS</MenuLabel>
+      {years
+        .slice()
+        .reverse()
+        .map((y) => (
+          <MenuItem key={y} onSelect={() => onChange(y)} hint={value === y ? "✓" : undefined}>
+            {y}&ndash;{String(y + 1).slice(2)}
+          </MenuItem>
+        ))}
+    </Menu>
   );
 }
 
@@ -510,10 +579,20 @@ function CropDetail({
  * replayed planting figures to within 0.1%, because both start the cycle on
  * the first day of the ten-day period and use the same Kc curve.
  */
-function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: string; sowDecade: number }) {
+function EtcCurve({
+  crop,
+  stationId,
+  sowDecade,
+  year,
+}: {
+  crop: Crop;
+  stationId: string;
+  sowDecade: number;
+  year: number | null;
+}) {
   const days = React.useMemo(
-    () => etcCurve(stationById(stationId), crop, sowDecade),
-    [stationId, crop, sowDecade],
+    () => etcCurve(stationById(stationId), crop, sowDecade, year ?? undefined),
+    [stationId, crop, sowDecade, year],
   );
 
   const w = 520;
@@ -522,6 +601,10 @@ function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: strin
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
   const max = Math.max(...days.map((d) => Math.max(d.etc, d.et0))) * 1.1 || 1;
+  // Rain gets its own scale: daily totals dwarf ET rates, and the point is
+  // when it fell against demand, not a like-for-like magnitude comparison.
+  const rainMax = Math.max(...days.map((d) => d.precip), 1);
+  const barW = Math.max(0.8, innerW / days.length);
   const x = (day: number) => pad.l + (day / (days.length - 1)) * innerW;
   const y = (mm: number) => pad.t + innerH - (mm / max) * innerH;
 
@@ -532,6 +615,7 @@ function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: strin
     "M" + days.map((d) => `${x(d.day).toFixed(1)} ${y(f(d)).toFixed(1)}`).join("L");
 
   const total = days[days.length - 1].cumulative;
+  const rain = days[days.length - 1].cumulativeRain;
   const stages = [crop.lIni, crop.lIni + crop.lDev, crop.lIni + crop.lDev + crop.lMid];
 
   return (
@@ -546,7 +630,8 @@ function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: strin
               <span style={{ color: "var(--ap-accent)" }}>
                 ET<sub>c</sub> {at.etc.toFixed(2)} mm
               </span>{" "}
-              &middot; total {at.cumulative.toFixed(0)} mm
+              &middot; rain {at.precip.toFixed(1)} mm &middot; total ET<sub>c</sub>{" "}
+              {at.cumulative.toFixed(0)} mm
             </>
           )}
         </HoverReadout>
@@ -569,6 +654,20 @@ function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: strin
               strokeDasharray="2 3"
             />
           ))}
+
+          {days.map((d) =>
+            d.precip <= 0 ? null : (
+              <rect
+                key={d.day}
+                x={x(d.day) - barW / 2}
+                y={pad.t + innerH - (d.precip / rainMax) * innerH * 0.55}
+                width={barW}
+                height={(d.precip / rainMax) * innerH * 0.55}
+                fill="var(--ap-teal)"
+                fillOpacity={hover.index === d.day ? 0.85 : 0.4}
+              />
+            ),
+          )}
 
           {/* ET0 underneath, so the gap to ETc reads as the crop's own effect. */}
           <path d={line((d) => d.et0)} fill="none" style={{ stroke: "var(--ap-muted)" }} strokeWidth={1} strokeDasharray="3 3" />
@@ -601,9 +700,24 @@ function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: strin
             <span className="h-0.5 w-3.5" style={{ background: "var(--ap-muted)" }} />
             ET<sub>0</sub>
           </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2" style={{ background: "var(--ap-teal)", opacity: 0.5 }} />
+            rain
+          </span>
         </span>
-        <span>
-          CYCLE TOTAL <span className="text-ink">{total.toFixed(0)} mm</span>
+        <span className="flex gap-3">
+          <span>
+            ET<sub>c</sub> <span className="text-ink">{total.toFixed(0)} mm</span>
+          </span>
+          <span>
+            RAIN <span className="text-ink">{rain.toFixed(0)} mm</span>
+          </span>
+          <span>
+            DEFICIT{" "}
+            <span style={{ color: total - rain > 0 ? "#EE8434" : "var(--ap-teal)" }}>
+              {Math.max(0, total - rain).toFixed(0)} mm
+            </span>
+          </span>
         </span>
       </div>
     </div>

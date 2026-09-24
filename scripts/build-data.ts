@@ -519,6 +519,28 @@ async function main() {
       if (!counts[59]) et0ByDoy[59] = et0ByDoy[58];
     }
 
+    // Whole-record daily ET₀ and rainfall as flat arrays indexed from the
+    // first date. This is what lets the client replay any single season
+    // rather than only the 30-year mean. It costs ~190 KB across both
+    // stations, which is the price of being able to ask "what about 2024".
+    //
+    // Indexing by offset is only valid if the record has no gaps, so that is
+    // asserted rather than assumed.
+    for (let i = 1; i < daily.length; i++) {
+      const prev = new Date(`${daily[i - 1].date}T00:00:00Z`);
+      prev.setUTCDate(prev.getUTCDate() + 1);
+      if (prev.toISOString().slice(0, 10) !== daily[i].date) {
+        throw new Error(
+          `${s.id}: gap in the daily record between ${daily[i - 1].date} and ${daily[i].date}`,
+        );
+      }
+    }
+    const series = {
+      from: daily[0].date,
+      et0: daily.map((r) => +r.et0.toFixed(2)),
+      precip: daily.map((r) => +r.precip.toFixed(1)),
+    };
+
     const recentFrom = daily.length - 1095; // three years of daily detail
     const recent = daily.slice(Math.max(0, recentFrom)).map((r, i, arr) => {
       const w = swb[swb.length - arr.length + i];
@@ -549,6 +571,7 @@ async function main() {
       spi,
       normals,
       et0ByDoy,
+      series,
       annual,
       recent,
     });

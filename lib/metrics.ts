@@ -217,61 +217,127 @@ export function kcAt(crop: Crop, dayOfCycle: number): number {
   return kcMid + ((kcEnd - kcMid) * intoLate) / Math.max(1, lLate);
 }
 
-/**
- * Mean ET₀ for a calendar day, from the record's day-of-year climatology.
- *
- * The ETL averages every 1 January, every 2 January and so on across the
- * whole record, so this is daily resolution rather than a monthly step —
- * which is what keeps a cycle total here consistent with the replayed
- * planting figures instead of drifting a few percent from them.
- */
-export function normalDailyEt0(station: Station, date: Date): number {
-  const doy = Math.floor(
-    (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) -
-      Date.UTC(date.getUTCFullYear(), 0, 1)) /
-      86_400_000,
-  );
-  return station.et0ByDoy[Math.max(0, Math.min(365, doy))] ?? 0;
-}
-
 export interface EtcDay {
   /** 0-based day of the crop cycle. */
   day: number;
-  /** Calendar date this day falls on, given the sowing period. */
+  /** Calendar date this day falls on. */
   date: Date;
   kc: number;
-  /** Climatological ET₀ for that date, mm/day. */
+  /** ET₀ for that date, mm/day. */
   et0: number;
   /** Kc × ET₀, mm/day. */
   etc: number;
-  /** Running total since sowing, mm. */
+  /** Rainfall on that date, mm. */
+  precip: number;
+  /** Running ETc total since sowing, mm. */
   cumulative: number;
+  /** Running rainfall total since sowing, mm. */
+  cumulativeRain: number;
+}
+
+const DAY_MS = 86_400_000;
+
+/** Offset of a date into a station's flat daily series, or -1 if outside it. */
+function seriesIndex(station: Station, date: Date): number {
+  const from = Date.parse(`${station.series.from}T00:00:00Z`);
+  const i = Math.round((date.getTime() - from) / DAY_MS);
+  return i >= 0 && i < station.series.et0.length ? i : -1;
+}
+
+/** Day of year, 0-based. */
+function doy(date: Date): number {
+  return Math.floor(
+    (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) -
+      Date.UTC(date.getUTCFullYear(), 0, 1)) /
+      DAY_MS,
+  );
+}
+
+/** Mean rainfall by day of year, derived once per station from the record. */
+const precipByDoyCache = new Map<string, number[]>();
+function precipByDoy(station: Station): number[] {
+  const hit = precipByDoyCache.get(station.id);
+  if (hit) return hit;
+  const sums = new Array(366).fill(0);
+  const counts = new Array(366).fill(0);
+  const from = new Date(`${station.series.from}T00:00:00Z`);
+  station.series.precip.forEach((p, i) => {
+    const d = new Date(from.getTime() + i * DAY_MS);
+    const k = doy(d);
+    sums[k] += p;
+    counts[k] += 1;
+  });
+  const out = sums.map((v, i) => (counts[i] ? v / counts[i] : 0));
+  precipByDoyCache.set(station.id, out);
+  return out;
+}
+
+/**
+ * The years in which a cycle sown at this period finishes inside the record.
+ *
+ * Matches the ETL's rule, so the years offered here are exactly the ones the
+ * replayed statistics were computed from.
+ */
+export function cycleYears(station: Station, crop: Crop, sowDecade: number): number[] {
+  const last = Date.parse(`${station.coverage.to}T00:00:00Z`);
+  const first = Date.parse(`${station.coverage.from}T00:00:00Z`);
+  const out: number[] = [];
+  for (let y = Number(station.coverage.from.slice(0, 4)); y <= Number(station.coverage.to.slice(0, 4)); y++) {
+    const start = Date.UTC(y, 0, 1) + sowDecade * 10 * DAY_MS;
+    if (start < first) continue;
+    if (start + crop.totalDays * DAY_MS > last) continue;
+    out.push(y);
+  }
+  return out;
 }
 
 /**
  * Daily ETc across a crop cycle sown at a given ten-day period.
  *
- * ET₀ comes from the 30-year monthly normals rather than one particular
- * season, so the curve reads as the expected demand for that sowing date
- * rather than what one year happened to do.
+ * With no year, ET₀ and rainfall are day-of-year means over the whole record,
+ * so the curve reads as the expected demand for that sowing date. With a
+ * year, it replays that season's measured values instead.
+ *
+ * The cycle starts on the first day of the period, not its midpoint — the
+ * same anchor the ETL uses (startDoy = decade * 10) and the one decadeLabel
+ * prints, so totals here agree with the replayed planting figures.
  */
-export function etcCurve(station: Station, crop: Crop, sowDecade: number): EtcDay[] {
-  // The first day of the ten-day period, not its midpoint: this is where the
-  // ETL starts each replayed cycle (startDoy = decade * 10) and what
-  // decadeLabel() prints. Using decadeDate() here would shift the whole cycle
-  // five days later and inflate the total by a few percent.
-  const start = new Date(Date.UTC(2001, 0, 1));
-  start.setUTCDate(start.getUTCDate() + sowDecade * 10);
+export function etcCurve(
+  station: Station,
+  crop: Crop,
+  sowDecade: number,
+  year?: number,
+): EtcDay[] {
+  const start =
+    year == null
+      ? new Date(Date.UTC(2001, 0, 1) + sowDecade * 10 * DAY_MS)
+      : new Date(Date.UTC(year, 0, 1) + sowDecade * 10 * DAY_MS);
+
+  const rainMean = year == null ? precipByDoy(station) : null;
   const out: EtcDay[] = [];
   let cumulative = 0;
+  let cumulativeRain = 0;
+
   for (let day = 0; day < crop.totalDays; day++) {
-    const date = new Date(start);
-    date.setUTCDate(date.getUTCDate() + day);
+    const date = new Date(start.getTime() + day * DAY_MS);
     const kc = kcAt(crop, day);
-    const et0 = normalDailyEt0(station, date);
+
+    let et0: number;
+    let precip: number;
+    if (year == null) {
+      const k = Math.min(365, doy(date));
+      et0 = station.et0ByDoy[k] ?? 0;
+      precip = rainMean![k] ?? 0;
+    } else {
+      const i = seriesIndex(station, date);
+      et0 = i >= 0 ? station.series.et0[i] : 0;
+      precip = i >= 0 ? station.series.precip[i] : 0;
+    }
+
     const etc = kc * et0;
     cumulative += etc;
-    out.push({ day, date, kc, et0, etc, cumulative });
+    cumulativeRain += precip;
+    out.push({ day, date, kc, et0, etc, precip, cumulative, cumulativeRain });
   }
   return out;
 }

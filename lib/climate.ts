@@ -72,6 +72,8 @@ export interface Station {
   normals: NormalRow[];
   /** Mean ET₀ by day of year (0-based, 366 entries) across the record. */
   et0ByDoy: number[];
+  /** Whole-record daily ET₀ and rainfall, indexed from `from`, no gaps. */
+  series: { from: string; et0: number[]; precip: number[] };
   annual: AnnualRow[];
   recent: DailyRow[];
 }
