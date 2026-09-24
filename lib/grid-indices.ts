@@ -29,16 +29,33 @@ interface Climatology {
 
 const CLIM = climatology as unknown as Climatology;
 
+/** Cells carrying at least one fitted calendar month. */
+const FITTED_CELLS = Array.isArray(CLIM.spei)
+  ? CLIM.spei.filter((cell) => cell?.some((m) => m)).length
+  : 0;
+
 /**
- * Whether any distributions were actually fitted.
+ * Whether the climatology covers the whole grid.
  *
- * The repo ships a stub so the import always resolves; a clone that has not
- * run `npm run data:grid` therefore has no fits, and the indices are simply
- * absent rather than the route failing. Same graceful path as missing
- * Copernicus credentials.
+ * Deliberately all-or-nothing. The repo ships a stub so the import always
+ * resolves, and `npm run data:grid` checkpoints after every batch, so a
+ * rate-limited run leaves a genuinely partial file behind. Activating on a
+ * partial one would be worse than not activating at all: SPEI would appear
+ * over the cells that happen to be fitted, return null everywhere else, and
+ * still supersede rainfall and ET₀ across the entire surface — a patchy
+ * factor replacing two complete ones.
+ *
+ * So the indices switch on only when every cell is fitted. Until then the
+ * route stays on the weather factors and nothing upstream is called.
  */
 export const HAS_CLIMATOLOGY =
-  Array.isArray(CLIM.spei) && CLIM.spei.some((cell) => cell?.some((m) => m));
+  FITTED_CELLS > 0 && FITTED_CELLS === CLIM.rows * CLIM.cols;
+
+/** For diagnostics: how much of the grid is fitted so far. */
+export const CLIMATOLOGY_COVERAGE = {
+  fitted: FITTED_CELLS,
+  total: CLIM.rows * CLIM.cols,
+};
 
 export const CLIMATOLOGY_SOURCE = CLIM.source;
 

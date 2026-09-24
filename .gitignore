@@ -17,3 +17,9 @@ scripts/_*.csv
 
 # Copied from node_modules by scripts/sync-maplibre-worker.mjs
 public/maplibre/
+
+# Python bytecode from scripts/
+__pycache__/
+*.py[cod]
+# Excel lock files
+~$*.xls*
