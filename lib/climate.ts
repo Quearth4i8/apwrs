@@ -70,6 +70,8 @@ export interface Station {
   spei: Record<string, (number | null)[]>;
   spi: Record<string, (number | null)[]>;
   normals: NormalRow[];
+  /** Mean ET₀ by day of year (0-based, 366 entries) across the record. */
+  et0ByDoy: number[];
   annual: AnnualRow[];
   recent: DailyRow[];
 }

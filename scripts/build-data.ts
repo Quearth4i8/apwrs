@@ -498,6 +498,27 @@ async function main() {
     });
 
     const swb = soilWaterBalance(daily);
+    // Mean ET₀ by day of year across the whole record. 366 numbers per
+    // station, which lets the client draw crop water demand at daily
+    // resolution instead of stepping by month, and keeps its cycle totals
+    // consistent with the replayed planting figures.
+    const et0ByDoy: number[] = [];
+    {
+      const sums = new Array(366).fill(0);
+      const counts = new Array(366).fill(0);
+      for (const r of daily) {
+        const d = new Date(`${r.date}T00:00:00Z`);
+        const doy = Math.floor((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 1)) / 86_400_000);
+        sums[doy] += r.et0;
+        counts[doy] += 1;
+      }
+      for (let i = 0; i < 366; i++) {
+        et0ByDoy.push(counts[i] ? +(sums[i] / counts[i]).toFixed(3) : 0);
+      }
+      // 29 February appears only in leap years; if it never did, carry the 28th.
+      if (!counts[59]) et0ByDoy[59] = et0ByDoy[58];
+    }
+
     const recentFrom = daily.length - 1095; // three years of daily detail
     const recent = daily.slice(Math.max(0, recentFrom)).map((r, i, arr) => {
       const w = swb[swb.length - arr.length + i];
@@ -527,6 +548,7 @@ async function main() {
       spei,
       spi,
       normals,
+      et0ByDoy,
       annual,
       recent,
     });

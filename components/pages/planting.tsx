@@ -6,7 +6,8 @@ import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
 import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
-import { CROPS, stationForSite, type Crop } from "@/lib/climate";
+import { CROPS, station as stationById, stationForSite, type Crop } from "@/lib/climate";
+import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
 import {
   bands,
   cropStatus,
@@ -16,6 +17,7 @@ import {
   DECADES_PER_YEAR,
   MONTH_ABBR,
   periodScore,
+  etcCurve,
   reliableWindow,
   seasonMonths,
   seasonOrder,
@@ -382,6 +384,7 @@ function CropDetail({
 }) {
   const window = reliableWindow(stationId, crop.id);
   const best = window?.peak ?? bestPeriodOf(decades);
+  const [curve, setCurve] = React.useState<"kc" | "etc">("kc");
 
   return (
     <motion.div
@@ -440,16 +443,26 @@ function CropDetail({
       </Panel>
 
       <Panel className="flex flex-col gap-4 px-5 py-4.5">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">
-            COEFFICIENTS &middot; FROM THE CROP TABLE
+            {curve === "kc" ? <>COEFFICIENTS &middot; FROM THE CROP TABLE</> : <>WATER DEMAND &middot; DAILY</>}
           </span>
-          <span className="font-mono text-[10.5px] text-muted">
-            SOWN {MONTH_ABBR[crop.plantingMonth - 1]} &middot; {crop.totalDays} d CYCLE
-          </span>
+          <Segmented
+            size="sm"
+            value={curve}
+            onChange={setCurve}
+            options={[
+              { value: "kc", label: <>K<sub>c</sub></> },
+              { value: "etc", label: <>ET<sub>c</sub></> },
+            ]}
+          />
         </div>
 
-        <KcCurve crop={crop} />
+        {curve === "kc" ? (
+          <KcCurve crop={crop} />
+        ) : (
+          <EtcCurve crop={crop} stationId={stationId} sowDecade={best.decade} />
+        )}
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-4">
           {(
@@ -470,12 +483,130 @@ function CropDetail({
         </div>
 
         <p className="m-0 border-t border-divider pt-3 text-[12.5px] leading-[1.55] text-muted">
-          For every sowing period, {stationYears} years are replayed day by day: this K<sub>c</sub> curve times the
-          measured ET<sub>0</sub> gives the crop&rsquo;s water demand, and it is compared against the rain that
-          actually fell.
+          {curve === "kc" ? (
+            <>
+              For every sowing period, {stationYears} years are replayed day by day: this K<sub>c</sub> curve times
+              the measured ET<sub>0</sub> gives the crop&rsquo;s water demand, and it is compared against the rain
+              that actually fell.
+            </>
+          ) : (
+            <>
+              K<sub>c</sub> times the day-of-year mean ET<sub>0</sub> over {stationYears} years, for a cycle sown{" "}
+              {decadeLabel(best.decade)}. This is the expected demand for that sowing date, not one particular
+              season.
+            </>
+          )}
         </p>
       </Panel>
     </motion.div>
+  );
+}
+
+/**
+ * Daily crop water demand across the cycle: ETc = Kc x ET0.
+ *
+ * ET0 is the day-of-year mean over the whole record, so the curve reads as
+ * the expected demand for this sowing date. Its cycle total agrees with the
+ * replayed planting figures to within 0.1%, because both start the cycle on
+ * the first day of the ten-day period and use the same Kc curve.
+ */
+function EtcCurve({ crop, stationId, sowDecade }: { crop: Crop; stationId: string; sowDecade: number }) {
+  const days = React.useMemo(
+    () => etcCurve(stationById(stationId), crop, sowDecade),
+    [stationId, crop, sowDecade],
+  );
+
+  const w = 520;
+  const h = 150;
+  const pad = { l: 30, r: 10, t: 10, b: 20 };
+  const innerW = w - pad.l - pad.r;
+  const innerH = h - pad.t - pad.b;
+  const max = Math.max(...days.map((d) => Math.max(d.etc, d.et0))) * 1.1 || 1;
+  const x = (day: number) => pad.l + (day / (days.length - 1)) * innerW;
+  const y = (mm: number) => pad.t + innerH - (mm / max) * innerH;
+
+  const hover = useBarHover(days.length, pad.l, pad.r, w);
+  const at = hover.index == null ? null : days[hover.index];
+
+  const line = (f: (d: (typeof days)[number]) => number) =>
+    "M" + days.map((d) => `${x(d.day).toFixed(1)} ${y(f(d)).toFixed(1)}`).join("L");
+
+  const total = days[days.length - 1].cumulative;
+  const stages = [crop.lIni, crop.lIni + crop.lDev, crop.lIni + crop.lDev + crop.lMid];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+        <HoverReadout hover={hover} left={pad.l} right={pad.r} width={w}>
+          {at && (
+            <>
+              day {at.day} &middot;{" "}
+              {at.date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })} &middot; K
+              <sub>c</sub> {at.kc.toFixed(2)} &middot; ET<sub>0</sub> {at.et0.toFixed(2)} &middot;{" "}
+              <span style={{ color: "var(--ap-accent)" }}>
+                ET<sub>c</sub> {at.etc.toFixed(2)} mm
+              </span>{" "}
+              &middot; total {at.cumulative.toFixed(0)} mm
+            </>
+          )}
+        </HoverReadout>
+
+        <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
+          <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
+            {[0, 0.5, 1].map((f) => (
+              <line key={f} x1={pad.l} x2={w - pad.r} y1={pad.t + innerH * f} y2={pad.t + innerH * f} />
+            ))}
+          </g>
+
+          {stages.map((day) => (
+            <line
+              key={day}
+              x1={x(day)}
+              x2={x(day)}
+              y1={pad.t}
+              y2={y(0)}
+              style={{ stroke: "var(--ap-text)", strokeOpacity: 0.12 }}
+              strokeDasharray="2 3"
+            />
+          ))}
+
+          {/* ET0 underneath, so the gap to ETc reads as the crop's own effect. */}
+          <path d={line((d) => d.et0)} fill="none" style={{ stroke: "var(--ap-muted)" }} strokeWidth={1} strokeDasharray="3 3" />
+
+          <path
+            d={`${line((d) => d.etc)}L${x(days.length - 1).toFixed(1)} ${y(0).toFixed(1)}L${x(0).toFixed(1)} ${y(0).toFixed(1)}Z`}
+            fill="var(--ap-accent)"
+            fillOpacity={0.12}
+          />
+          <path d={line((d) => d.etc)} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={1.75} />
+
+          <HoverGuide hover={hover} left={pad.l} right={pad.r} width={w} top={pad.t} bottom={y(0)} />
+
+          <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9}>
+            <text x={pad.l - 5} y={y(max / 1.1) + 3} textAnchor="end">{(max / 1.1).toFixed(1)}</text>
+            <text x={pad.l - 5} y={y(0) + 3} textAnchor="end">0</text>
+            <text x={pad.l} y={h - 5}>{decadeLabel(sowDecade)}</text>
+            <text x={w - pad.r} y={h - 5} textAnchor="end">day {crop.totalDays}</text>
+          </g>
+        </svg>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 font-mono text-[10.5px] text-muted">
+        <span className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-3.5" style={{ background: "var(--ap-accent)" }} />
+            ET<sub>c</sub> mm/day
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-3.5" style={{ background: "var(--ap-muted)" }} />
+            ET<sub>0</sub>
+          </span>
+        </span>
+        <span>
+          CYCLE TOTAL <span className="text-ink">{total.toFixed(0)} mm</span>
+        </span>
+      </div>
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@
  * record in lib/generated/climate.json. Anything that cannot be computed from
  * that record, or from the live grid, is absent rather than estimated.
  */
-import { STATIONS, type Station, type DailyRow, latestSpei, priorSpei, latestSpi } from "@/lib/climate";
+import { STATIONS, type Station, type Crop, type DailyRow, latestSpei, priorSpei, latestSpi } from "@/lib/climate";
 import raw from "@/lib/generated/climate.json";
 
 export interface DecadeSuitability {
@@ -195,6 +195,85 @@ export function cropStatus(stationId: string, cropId: string) {
     waitDays: next ? next.wait * 10 : null,
     openNow: here?.water === "reliable",
   };
+}
+
+/* ── Daily crop water demand (FAO-56) ────────────────────── */
+
+/**
+ * FAO-56 single crop coefficient curve, the same one the ETL scores against
+ * (scripts/build-data.ts). Flat at Kc_ini through the initial stage, linear to
+ * Kc_mid across development, flat through mid-season, then linear to Kc_end.
+ *
+ * Note this is deliberately not the curve in the workbook's own ETc sheet,
+ * which holds Kc at Kc_mid from development right through to harvest and never
+ * uses Kc_end at all. That is not FAO-56.
+ */
+export function kcAt(crop: Crop, dayOfCycle: number): number {
+  const { kcIni, kcMid, kcEnd, lIni, lDev, lMid, lLate } = crop;
+  if (dayOfCycle < lIni) return kcIni;
+  if (dayOfCycle < lIni + lDev) return kcIni + ((kcMid - kcIni) * (dayOfCycle - lIni)) / lDev;
+  if (dayOfCycle < lIni + lDev + lMid) return kcMid;
+  const intoLate = dayOfCycle - (lIni + lDev + lMid);
+  return kcMid + ((kcEnd - kcMid) * intoLate) / Math.max(1, lLate);
+}
+
+/**
+ * Mean ET₀ for a calendar day, from the record's day-of-year climatology.
+ *
+ * The ETL averages every 1 January, every 2 January and so on across the
+ * whole record, so this is daily resolution rather than a monthly step —
+ * which is what keeps a cycle total here consistent with the replayed
+ * planting figures instead of drifting a few percent from them.
+ */
+export function normalDailyEt0(station: Station, date: Date): number {
+  const doy = Math.floor(
+    (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) -
+      Date.UTC(date.getUTCFullYear(), 0, 1)) /
+      86_400_000,
+  );
+  return station.et0ByDoy[Math.max(0, Math.min(365, doy))] ?? 0;
+}
+
+export interface EtcDay {
+  /** 0-based day of the crop cycle. */
+  day: number;
+  /** Calendar date this day falls on, given the sowing period. */
+  date: Date;
+  kc: number;
+  /** Climatological ET₀ for that date, mm/day. */
+  et0: number;
+  /** Kc × ET₀, mm/day. */
+  etc: number;
+  /** Running total since sowing, mm. */
+  cumulative: number;
+}
+
+/**
+ * Daily ETc across a crop cycle sown at a given ten-day period.
+ *
+ * ET₀ comes from the 30-year monthly normals rather than one particular
+ * season, so the curve reads as the expected demand for that sowing date
+ * rather than what one year happened to do.
+ */
+export function etcCurve(station: Station, crop: Crop, sowDecade: number): EtcDay[] {
+  // The first day of the ten-day period, not its midpoint: this is where the
+  // ETL starts each replayed cycle (startDoy = decade * 10) and what
+  // decadeLabel() prints. Using decadeDate() here would shift the whole cycle
+  // five days later and inflate the total by a few percent.
+  const start = new Date(Date.UTC(2001, 0, 1));
+  start.setUTCDate(start.getUTCDate() + sowDecade * 10);
+  const out: EtcDay[] = [];
+  let cumulative = 0;
+  for (let day = 0; day < crop.totalDays; day++) {
+    const date = new Date(start);
+    date.setUTCDate(date.getUTCDate() + day);
+    const kc = kcAt(crop, day);
+    const et0 = normalDailyEt0(station, date);
+    const etc = kc * et0;
+    cumulative += etc;
+    out.push({ day, date, kc, et0, etc, cumulative });
+  }
+  return out;
 }
 
 /* ── Station condition summary ───────────────────────────────────────── */
