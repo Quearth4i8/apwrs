@@ -254,7 +254,7 @@ export function LoginView({ initialView }: { initialView: View }) {
           <Panel className="bg-bg shadow-lift">
             <div className="flex h-9.5 items-center justify-between border-b border-divider px-3.5 font-mono text-[11px] text-muted">
               <span>BIZERTE GOVERNORATE &middot; DROUGHT RISK</span>
-              <span>23 SEP 2026</span>
+              <span>LIVE SURFACE</span>
             </div>
             <div className="relative h-[420px]">
               <MapView layer="risk" sensors legend interactive={false} className="absolute inset-0" />

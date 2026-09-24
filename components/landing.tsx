@@ -535,7 +535,7 @@ export function Landing() {
           </div>
           <div className="col-span-full flex flex-wrap justify-between gap-3 border-t border-divider pt-6 font-mono text-[11px] text-faint">
             <span>&copy; 2026 APWRS</span>
-            <span>v2.4.1 &middot; status: all systems normal</span>
+            <span>Two stations &middot; 30-year record &middot; no account required to read</span>
           </div>
         </footer>
       </div>

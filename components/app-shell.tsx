@@ -11,6 +11,7 @@ import { useConsole } from "@/components/app-context";
 import { useMounted, useTheme } from "@/components/theme-provider";
 import { Menu, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Popover, PopoverRow } from "@/components/ui/dropdown";
 import { COUNTRIES, FARM_NAV, IDENTITY, NAV, SEASONS } from "@/lib/data";
+import { COVERAGE, climateFile } from "@/lib/climate";
 import { cn } from "@/lib/utils";
 
 /**
@@ -141,9 +142,9 @@ export function AppShell({
             <div className="flex flex-col gap-1 border border-divider px-2.5 py-2 font-mono text-[10.5px] text-muted">
               <div className="flex items-center gap-1.5 text-ink">
                 <span className="size-1.5 bg-accent" />
-                MODEL v2.4.1 &middot; ONLINE
+                RECORD {COVERAGE.from.slice(0, 4)}&ndash;{COVERAGE.to.slice(0, 4)}
               </div>
-              <div>Last run 23 Sep 06:00 UTC</div>
+              <div>Derived {climateFile.generatedAt.slice(0, 10)}</div>
             </div>
           )}
           <button
