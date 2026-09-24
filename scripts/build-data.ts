@@ -11,6 +11,7 @@
 import ExcelJS from "exceljs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { accumulate, computeSpei, computeSpi, type MonthlyPoint } from "../lib/drought";
+import { computeEto, dayOfYear } from "../lib/eto";
 
 const SRC = "formlas and data";
 const OUT = "lib/generated";
@@ -80,7 +81,10 @@ interface DailyRow {
   rh: number;
   rs: number;
   wind: number;
+  /** ET₀ computed here from the raw observations, per Chapter 3. */
   et0: number;
+  /** The workbook's own ET₀ column, retained only to verify the above. */
+  et0Workbook: number;
 }
 
 async function readDaily(s: StationSource): Promise<DailyRow[]> {
@@ -114,18 +118,35 @@ async function readDaily(s: StationSource): Promise<DailyRow[]> {
       const f = typeof v === "number" ? v : Number((v as { result?: number })?.result ?? v);
       return Number.isFinite(f) ? f : NaN;
     };
+    const date = d.toISOString().slice(0, 10);
+    const tmin = num(col.tmin);
+    const tmax = num(col.tmax);
+    const rh = num(col.rh);
+    const rs = num(col.rs);
+    const wind = num(col.wind);
+
+    // ET₀ is computed from the raw observations by the Chapter 3 chain, not
+    // taken from the workbook's column — that column is stored to one decimal
+    // and would bake ±0.05 mm/d into every derived figure. The column is kept
+    // alongside so `npm run data:build` can report the agreement.
+    const { eto } = computeEto(
+      { dayOfYear: dayOfYear(date), tminC: tmin, tmaxC: tmax, rhMean: rh, solarRadiation: rs, wind },
+      { latitudeDeg: s.lat, elevationM: s.alt },
+    );
+
     rows.push({
-      date: d.toISOString().slice(0, 10),
+      date,
       year: d.getUTCFullYear(),
       month: d.getUTCMonth() + 1,
       precip: num(col.precip),
       tmean: num(col.tmean),
-      tmin: num(col.tmin),
-      tmax: num(col.tmax),
-      rh: num(col.rh),
-      rs: num(col.rs),
-      wind: num(col.wind),
-      et0: num(col.et0),
+      tmin,
+      tmax,
+      rh,
+      rs,
+      wind,
+      et0: eto,
+      et0Workbook: num(col.et0),
     });
   });
 
@@ -512,10 +533,29 @@ async function main() {
 
     stationDaily.set(s.id, daily);
 
+    // Cross-check the Chapter 3 chain against the workbook's own ET₀ column.
+    // The column is stored to one decimal, so pure rounding alone accounts for
+    // an RMSE of sqrt(0.1²/12) = 0.0289 mm/d; anything materially above that
+    // would mean the two disagree on method, not just on precision.
+    const diffs = daily.map((r) => r.et0 - r.et0Workbook);
+    const bias = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+    const rmse = Math.sqrt(diffs.reduce((a, b) => a + b * b, 0) / diffs.length);
+    const maxAbs = Math.max(...diffs.map(Math.abs));
+    if (rmse > 0.05) {
+      throw new Error(
+        `${s.id}: computed ET₀ disagrees with the workbook column (RMSE ${rmse.toFixed(4)} mm/d). ` +
+          `Expected ~0.029 from 1-decimal rounding alone.`,
+      );
+    }
+
     const last = spei[3].filter((v): v is number => v != null).at(-1);
     console.log(
       `  ${s.id} ${s.name.padEnd(8)} ${daily.length} days, ${years.length}y  ` +
         `SPEI-3 latest ${last?.toFixed(2)}  driest year ${annual.reduce((a, b) => (a.balance < b.balance ? a : b)).year}`,
+    );
+    console.log(
+      `       ET₀ ch.3 vs workbook column: bias ${bias >= 0 ? "+" : ""}${bias.toFixed(4)}  ` +
+        `RMSE ${rmse.toFixed(4)}  max ${maxAbs.toFixed(3)} mm/d`,
     );
   }
 
@@ -536,7 +576,9 @@ async function main() {
   const soil = { fieldCapacityMm: FIELD_CAPACITY_MM, wiltingPointMm: WILTING_POINT_MM, tawMm: TAW };
   const payload = {
     generatedAt: new Date().toISOString(),
-    source: "formlas and data/ — 30-year daily station records, ET0 by FAO-56 Penman-Monteith",
+    source:
+      "formlas and data/ — 30-year daily station records; ET₀ computed from the raw " +
+      "observations by FAO Penman-Monteith (ETo Calculator Reference Manual V3.2, ch. 3)",
     soilModel: soil,
     stations,
     crops,
