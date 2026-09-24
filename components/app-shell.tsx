@@ -107,11 +107,6 @@ export function AppShell({
                     {fr ? it.fr : it.en}
                   </span>
                 )}
-                {it.id === "alerts" && expanded && (
-                  <span className="bg-[#D96565] px-1.5 py-px font-mono text-[10px] text-white">
-                    {isFarmer ? 2 : 7}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -352,7 +347,6 @@ export function AppShell({
             className="relative grid size-8 flex-none place-items-center border border-divider transition-colors hover:border-divider-strong"
           >
             <Icon name="bell" size={15} />
-            <span className="absolute right-1.5 top-1.5 size-1.5 bg-[#D96565]" />
           </button>
 
           <Menu
