@@ -86,7 +86,7 @@ export function PageOverview() {
 
       {/* ── Measured standing ─────────────────────────────────────────── */}
       <Panel
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6"
         style={{ background: "color-mix(in srgb, var(--ap-surface) 70%, transparent)" }}
       >
         <Kpi
@@ -95,6 +95,13 @@ export function PageOverview() {
           value={cond.spei3 ? cond.spei3.value.toFixed(2) : "—"}
           unit={cond.spei3 ? indexBand(cond.spei3.value) : "not fitted"}
           foot={cond.spei3 ? `${cond.spei3.label} · ${station.coverage.years}-year fit` : "—"}
+        />
+        <Kpi
+          label={<>SPEI-6</>}
+          badge={cond.spei6 ? <RiskBadge level={speiLevel(cond.spei6.value)} showScore={false} /> : null}
+          value={cond.spei6 ? cond.spei6.value.toFixed(2) : "—"}
+          unit={cond.spei6 ? indexBand(cond.spei6.value) : "not fitted"}
+          foot={cond.spei6 ? cond.spei6.window : "—"}
         />
         <Kpi
           label={<>RAIN &middot; LAST 30 D</>}

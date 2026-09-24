@@ -212,11 +212,29 @@ export interface Conditions {
   soilFraction: number;
   tmax7: number;
   spei3: { value: number; label: string } | null;
+  /** Six-month SPEI, with the accumulation window it covers. */
+  spei6: { value: number; label: string; window: string } | null;
   spi3: { value: number; label: string } | null;
   dryDays: number;
 }
 
 const monthName = (m: number) => MONTH_ABBR[m - 1];
+
+/**
+ * The months a standardized index actually accumulates over, e.g. SPEI-6
+ * reported for December 2025 covers "JUL–DEC 2025". Worth stating: the same
+ * headline month means a different span at each timescale, which is the whole
+ * reason for showing more than one.
+ */
+function spanLabel(end: { y: number; m: number }, scale: number): string {
+  const d = new Date(Date.UTC(end.y, end.m - 1, 1));
+  d.setUTCMonth(d.getUTCMonth() - (scale - 1));
+  const sy = d.getUTCFullYear();
+  const sm = d.getUTCMonth() + 1;
+  return sy === end.y
+    ? `${monthName(sm)}–${monthName(end.m)} ${end.y}`
+    : `${monthName(sm)} ${sy}–${monthName(end.m)} ${end.y}`;
+}
 
 /** Descriptive band for a standardized index, per the usual SPEI/SPI scale. */
 export function indexBand(v: number) {
@@ -265,6 +283,7 @@ export function conditionsFor(station: Station): Conditions {
   }
 
   const spei = latestSpei(station, 3);
+  const spei6 = latestSpei(station, 6);
   const spi = latestSpi(station, 3);
 
   return {
@@ -279,6 +298,13 @@ export function conditionsFor(station: Station): Conditions {
     soilFraction: last.soilFraction,
     tmax7: +(recent.slice(-7).reduce((x, r) => x + r.tmax, 0) / 7).toFixed(1),
     spei3: spei ? { value: spei.value, label: `${monthName(spei.month.m)} ${spei.month.y}` } : null,
+    spei6: spei6
+      ? {
+          value: spei6.value,
+          label: `${monthName(spei6.month.m)} ${spei6.month.y}`,
+          window: spanLabel(spei6.month, 6),
+        }
+      : null,
     spi3: spi ? { value: spi.value, label: `${monthName(spi.month.m)} ${spi.month.y}` } : null,
     dryDays,
   };
