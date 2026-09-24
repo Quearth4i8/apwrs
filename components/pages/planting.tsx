@@ -20,6 +20,7 @@ import {
   periodScore,
   cycleYears,
   etcCurve,
+  statedSowDecade,
   reliableWindow,
   seasonMonths,
   seasonOrder,
@@ -389,6 +390,14 @@ function CropDetail({
   const [curve, setCurve] = React.useState<"kc" | "etc">("kc");
   /** null = the 30-year day-of-year mean; a number replays that season. */
   const [year, setYear] = React.useState<number | null>(null);
+  // Defaults to the crop table's stated month rather than the highest-scoring
+  // period: periodScore is dominated by establishmentProb, which has no crop
+  // term and peaks at 28 October for everything.
+  const [sow, setSow] = React.useState(() => statedSowDecade(crop));
+  React.useEffect(() => {
+    setSow(statedSowDecade(crop));
+    setYear(null);
+  }, [crop]);
 
   return (
     <motion.div
@@ -453,13 +462,16 @@ function CropDetail({
           </span>
           <div className="flex items-center gap-2">
             {curve === "etc" && (
-              <YearPicker
-                stationId={stationId}
-                crop={crop}
-                sowDecade={best.decade}
-                value={year}
-                onChange={setYear}
-              />
+              <>
+                <SowPicker crop={crop} value={sow} onChange={setSow} />
+                <YearPicker
+                  stationId={stationId}
+                  crop={crop}
+                  sowDecade={sow}
+                  value={year}
+                  onChange={setYear}
+                />
+              </>
             )}
             <Segmented
               size="sm"
@@ -476,7 +488,7 @@ function CropDetail({
         {curve === "kc" ? (
           <KcCurve crop={crop} />
         ) : (
-          <EtcCurve crop={crop} stationId={stationId} sowDecade={best.decade} year={year} />
+          <EtcCurve crop={crop} stationId={stationId} sowDecade={sow} year={year} />
         )}
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-4">
@@ -508,19 +520,56 @@ function CropDetail({
             year == null ? (
               <>
                 K<sub>c</sub> times the day-of-year mean ET<sub>0</sub> over {stationYears} years, for a cycle sown{" "}
-                {decadeLabel(best.decade)}. This is the expected demand for that sowing date, not one particular
-                season.
+                {decadeLabel(sow)}
+                {sow === statedSowDecade(crop) && <> &mdash; the crop table&rsquo;s stated month</>}. Expected demand
+                for that sowing date, not one particular season.
               </>
             ) : (
               <>
-                K<sub>c</sub> times the ET<sub>0</sub> measured in {year}&ndash;{year + 1}, for a cycle sown{" "}
-                {decadeLabel(best.decade)} {year}. Rainfall is what actually fell that season.
+                K<sub>c</sub> times the ET<sub>0</sub> measured from {decadeLabel(sow)} {year}. Rainfall is what
+                actually fell that season.
               </>
             )
           )}
         </p>
       </Panel>
     </motion.div>
+  );
+}
+
+/** Picks the sowing period the ETc curve is drawn for. */
+function SowPicker({
+  crop,
+  value,
+  onChange,
+}: {
+  crop: Crop;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const stated = statedSowDecade(crop);
+  return (
+    <Menu
+      align="end"
+      className="max-h-[320px] w-[168px] overflow-y-auto"
+      trigger={
+        <MenuTrigger className="h-7 px-2 font-mono text-[11px]">
+          sow {decadeLabel(value)}
+          <Icon name="down" size={12} />
+        </MenuTrigger>
+      }
+    >
+      <MenuLabel>SOWING PERIOD</MenuLabel>
+      {seasonOrder().map((dec) => (
+        <MenuItem
+          key={dec}
+          onSelect={() => onChange(dec)}
+          hint={value === dec ? "✓" : dec === stated ? "table" : undefined}
+        >
+          {decadeLabel(dec)}
+        </MenuItem>
+      ))}
+    </Menu>
   );
 }
 

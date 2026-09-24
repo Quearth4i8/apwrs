@@ -217,6 +217,34 @@ export function kcAt(crop: Crop, dayOfCycle: number): number {
   return kcMid + ((kcEnd - kcMid) * intoLate) / Math.max(1, lLate);
 }
 
+/**
+ * The first ten-day period inside the crop table's stated sowing month.
+ *
+ * This is the default the ETc curve is drawn for, deliberately in preference
+ * to the highest-scoring period. `periodScore` is dominated by
+ * `establishmentProb`, which counts rain in the 21 days after sowing and has
+ * no crop term at all — it is a property of the date. It peaks at 28 October
+ * for every crop, because that is simply when the autumn rains arrive here,
+ * so anchoring to it would claim a crop-specific answer the model does not
+ * have. Worse, for a warm-season crop like tomato it would show a cycle run
+ * through winter, which the rainfall-only model cannot rule out but an
+ * agronomist would.
+ *
+ * The crop table's month is a stated agronomic fact, so the curve starts
+ * there and the operator can move it.
+ */
+export function statedSowDecade(crop: Crop): number {
+  // Judged on the period's first day, which is where the cycle actually
+  // starts and what decadeLabel prints. Using decadeDate's midpoint instead
+  // would put a November sowing on the period beginning 28 October.
+  for (let dec = 0; dec < DECADES_PER_YEAR; dec++) {
+    const start = new Date(Date.UTC(2001, 0, 1));
+    start.setUTCDate(start.getUTCDate() + dec * 10);
+    if (start.getUTCMonth() + 1 === crop.plantingMonth) return dec;
+  }
+  return 0;
+}
+
 export interface EtcDay {
   /** 0-based day of the crop cycle. */
   day: number;
