@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { scoreGrid, type GridCell } from "@/lib/risk";
 import { fetchNdviGrid } from "@/lib/copernicus";
+import { fetchGridIndices, CLIMATOLOGY_SOURCE } from "@/lib/grid-indices";
 
 /**
  * The live risk surface: one Open-Meteo call for the whole grid plus, when
@@ -97,11 +98,19 @@ export async function GET() {
     // failing the whole request.
     let ndvi: Awaited<ReturnType<typeof fetchNdviGrid>> = null;
     let ndviError: string | null = null;
-    try {
-      ndvi = await fetchNdviGrid(REGION, ROWS, COLS);
-    } catch (e) {
-      ndviError = e instanceof Error ? e.message : String(e);
-    }
+    let indices: Awaited<ReturnType<typeof fetchGridIndices>> | null = null;
+    let indicesError: string | null = null;
+
+    // Both are optional and independent, so they run together and neither can
+    // fail the request on its own.
+    const [ndviSettled, indicesSettled] = await Promise.allSettled([
+      fetchNdviGrid(REGION, ROWS, COLS),
+      fetchGridIndices(lats, lons, revalidate),
+    ]);
+    if (ndviSettled.status === "fulfilled") ndvi = ndviSettled.value;
+    else ndviError = String(ndviSettled.reason?.message ?? ndviSettled.reason);
+    if (indicesSettled.status === "fulfilled") indices = indicesSettled.value;
+    else indicesError = String(indicesSettled.reason?.message ?? indicesSettled.reason);
 
     const cells: GridCell[] = points.map((p, i) => ({
       lat: p.latitude,
@@ -111,6 +120,8 @@ export async function GET() {
       tmax: mean(p.daily?.temperature_2m_max),
       soilMoisture: soilOrNull(mean(p.daily?.soil_moisture_0_to_100cm_mean?.slice(-7))),
       ndvi: ndvi?.values[i] ?? null,
+      spei3: indices?.spei3[i] ?? null,
+      spi3: indices?.spi3[i] ?? null,
     }));
 
     const surface = scoreGrid(cells);
@@ -123,6 +134,13 @@ export async function GET() {
       ndvi: ndvi
         ? { coverage: ndvi.coverage, source: ndvi.source }
         : { coverage: 0, source: null, error: ndviError },
+      indices: indices
+        ? {
+            coverage: indices.coverage,
+            window: indices.window,
+            source: CLIMATOLOGY_SOURCE,
+          }
+        : { coverage: 0, window: null, source: null, error: indicesError },
       resolutionKm: MODEL_RESOLUTION_KM,
       samplingKm: {
         lat: +(CELL.lat * 111).toFixed(1),
@@ -138,6 +156,8 @@ export async function GET() {
         tmax: surface.cells.map((c) => round(c.tmax, 1)),
         soilMoisture: surface.cells.map((c) => round(c.soilMoisture, 3)),
         ndvi: surface.cells.map((c) => round(c.ndvi ?? null, 3)),
+        spei3: surface.cells.map((c) => round(c.spei3 ?? null, 2)),
+        spi3: surface.cells.map((c) => round(c.spi3 ?? null, 2)),
       },
       weights: surface.weights,
       entropy: surface.entropy,

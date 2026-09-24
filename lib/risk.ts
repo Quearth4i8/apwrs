@@ -6,7 +6,11 @@
  * by direction, scored by information entropy, and weighted by how much it
  * disperses. Nobody picks the weights by hand.
  *
- * The source paper uses NDVI, soil moisture, LST and PET.
+ * The source paper uses NDVI, soil moisture, LST and PET. Rainfall and ET₀
+ * are no longer scored directly: they enter through SPEI-3 and SPI-3, which
+ * say how this three-month period compares with thirty years at the same
+ * place rather than how many millimetres fell. They are still carried in the
+ * payload for the map readout.
  *
  * NDVI is now the real thing: Sentinel-2 L2A, cloud- and water-masked, from
  * the Copernicus Data Space Ecosystem (lib/copernicus.ts). It appears only
@@ -29,6 +33,10 @@ export interface GridCell {
   tmax: number | null;
   /** Volumetric soil water content, 3–9 cm, m³/m³. */
   soilMoisture: number | null;
+  /** Gridded SPEI-3 over the last three complete calendar months. */
+  spei3?: number | null;
+  /** Gridded SPI-3 over the same window. */
+  spi3?: number | null;
   /** Sentinel-2 NDVI, cell mean over usable land pixels. Null without CDSE. */
   ndvi?: number | null;
 }
@@ -47,18 +55,24 @@ export interface RiskSurface {
 
 export const FACTOR_META = [
   { key: "ndvi", label: "Vegetation (NDVI)", direction: "positive" as const, note: "Sentinel-2 L2A" },
-  { key: "precip30", label: "Rainfall (30 d)", direction: "positive" as const },
+  { key: "spei3", label: "SPEI-3", direction: "positive" as const, note: "30-yr fit per cell" },
+  { key: "spi3", label: "SPI-3", direction: "positive" as const, note: "30-yr fit per cell" },
   { key: "soilMoisture", label: "Soil moisture", direction: "positive" as const },
   { key: "tmax", label: "Max temperature", direction: "negative" as const, note: "stands in for LST" },
-  { key: "et030", label: "Evapotranspiration", direction: "negative" as const },
 ];
 
 export function scoreGrid(cells: GridCell[]): RiskSurface {
   // NDVI is only present when a Copernicus feed is configured. Including a
   // factor that is null everywhere would hand it a weight it has not earned,
   // so it is dropped unless some cell actually carries a value.
+  // A factor that is null everywhere would take a weight it has not earned,
+  // so it is dropped rather than carried at zero. NDVI needs Copernicus
+  // credentials; the standardised indices need the fitted climatology.
+  const OPTIONAL = new Set(["ndvi", "spei3", "spi3"]);
   const present = FACTOR_META.filter(
-    (f) => f.key !== "ndvi" || cells.some((c) => c.ndvi != null),
+    (f) =>
+      !OPTIONAL.has(f.key) ||
+      cells.some((c) => (c[f.key as keyof GridCell] as number | null) != null),
   );
 
   const factors: Factor[] = present.map((f) => ({

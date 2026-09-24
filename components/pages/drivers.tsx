@@ -126,6 +126,11 @@ export function PageDrivers() {
                   temperature still has no thermal feed, so maximum air temperature stands in for it and is
                   labelled as such above.
                 </p>
+                <p className="m-0">
+                  Rainfall and ET<sub>0</sub> are no longer scored on their own. They enter through SPEI-3 and
+                  SPI-3, fitted per grid cell against thirty years of archive, which say how this three-month
+                  period compares with the same months historically rather than how many millimetres fell.
+                </p>
                 <p className="m-0 text-muted">
                   Adding a factor does not change the arithmetic &mdash; the weighting adapts to whatever
                   factor maps it is given, and a factor with no values at all is dropped rather than carried
@@ -153,9 +158,13 @@ export function PageDrivers() {
   );
 }
 
-const ICONS: Record<string, "rain" | "droplet" | "thermo" | "sun"> = {
-  precip30: "rain",
+const ICONS: Record<string, "rain" | "droplet" | "thermo" | "sun" | "gauge" | "leaf"> = {
+  ndvi: "leaf",
+  spei3: "gauge",
+  spi3: "rain",
   soilMoisture: "droplet",
   tmax: "thermo",
+  // Kept so a surface scored before the factor swap still renders.
+  precip30: "rain",
   et030: "sun",
 };

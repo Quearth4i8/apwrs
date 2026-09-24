@@ -260,6 +260,69 @@ export function computeSpi(accumulated: readonly MonthlyPoint[], minPoints = 10)
   return out;
 }
 
+/* ── Reusable fits ────────────────────────────────────── */
+
+/**
+ * computeSpei/computeSpi fit and apply in one pass, which is right when the
+ * whole series is in hand. Gridded indices need the two split apart: the
+ * distributions are fitted once from 30 years of archive at build time, then
+ * applied to a live accumulation at request time. Same arithmetic, held in
+ * two pieces.
+ */
+
+/** Per-calendar-month log-logistic fits, index 0 = January. */
+export type SpeiFits = (LogLogisticParams | null)[];
+/** Per-calendar-month gamma fits with the atom at zero, index 0 = January. */
+export type SpiFits = ({ shape: number; scale: number; q: number } | null)[];
+
+export function fitSpeiByMonth(accumulated: readonly MonthlyPoint[], minPoints = 10): SpeiFits {
+  const out: SpeiFits = Array.from({ length: 12 }, () => null);
+  for (let m = 1; m <= 12; m++) {
+    const data = accumulated
+      .filter((p) => p.month === m)
+      .map((p) => p.value)
+      .filter((v): v is number => v != null && Number.isFinite(v));
+    if (data.length < minPoints) continue;
+    const fit = fitLogLogistic(data);
+    if (!(fit.alpha > 0) || !Number.isFinite(fit.alpha) || !Number.isFinite(fit.beta)) continue;
+    out[m - 1] = fit;
+  }
+  return out;
+}
+
+/** Maps one accumulated water balance through a fitted month. */
+export function speiFromFit(value: number, fit: LogLogisticParams | null): number | null {
+  if (!fit || !Number.isFinite(value)) return null;
+  const diff = value - fit.gamma;
+  if (!(diff > 0)) return null;
+  const F = Math.min(Math.max(1 / (1 + Math.pow(fit.alpha / diff, fit.beta)), 1e-6), 1 - 1e-6);
+  return normPpf(F);
+}
+
+export function fitSpiByMonth(accumulated: readonly MonthlyPoint[], minPoints = 10): SpiFits {
+  const out: SpiFits = Array.from({ length: 12 }, () => null);
+  for (let m = 1; m <= 12; m++) {
+    const data = accumulated
+      .filter((p) => p.month === m)
+      .map((p) => p.value)
+      .filter((v): v is number => v != null && Number.isFinite(v));
+    if (data.length < minPoints) continue;
+    const zeros = data.filter((v) => v <= 0).length;
+    if (data.length - zeros < 3) continue;
+    const { shape, scale } = fitGamma(data);
+    if (!Number.isFinite(shape) || shape <= 0 || !Number.isFinite(scale)) continue;
+    out[m - 1] = { shape, scale, q: zeros / data.length };
+  }
+  return out;
+}
+
+export function spiFromFit(value: number, fit: SpiFits[number]): number | null {
+  if (!fit || !Number.isFinite(value)) return null;
+  const G = value > 0 ? gammaP(fit.shape, value / fit.scale) : 0;
+  const F = Math.min(Math.max(fit.q + (1 - fit.q) * G, 1e-6), 1 - 1e-6);
+  return normPpf(F);
+}
+
 /* ── Entropy weight method ───────────────────────────────────────────── */
 
 export type FactorDirection = "positive" | "negative";

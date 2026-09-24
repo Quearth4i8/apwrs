@@ -68,11 +68,19 @@ interface GridPayload {
     tmax: (number | null)[];
     soilMoisture: (number | null)[];
     ndvi?: (number | null)[];
+    spei3?: (number | null)[];
+    spi3?: (number | null)[];
   };
   weights: Record<string, number>;
   entropy: Record<string, number>;
   factors: { key: string; label: string; direction: "positive" | "negative"; note?: string }[];
   ndvi?: { coverage: number; source: string | null; error?: string | null };
+  indices?: {
+    coverage: number;
+    window: { from: string; to: string; month: number; year: number } | null;
+    source: string | null;
+    error?: string | null;
+  };
 }
 
 export type SurfaceInfo = Omit<GridPayload, "grid" | "region">;
