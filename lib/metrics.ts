@@ -3,7 +3,7 @@
  * record in lib/generated/climate.json. Anything that cannot be computed from
  * that record, or from the live grid, is absent rather than estimated.
  */
-import { STATIONS, type Station, type DailyRow, latestSpei, latestSpi } from "@/lib/climate";
+import { STATIONS, type Station, type DailyRow, latestSpei, priorSpei, latestSpi } from "@/lib/climate";
 import raw from "@/lib/generated/climate.json";
 
 export interface DecadeSuitability {
@@ -214,6 +214,8 @@ export interface Conditions {
   spei3: { value: number; label: string } | null;
   /** Six-month SPEI, with the accumulation window it covers. */
   spei6: { value: number; label: string; window: string } | null;
+  /** The preceding non-overlapping half-year, for comparison. */
+  spei6Prior: { value: number; window: string } | null;
   spi3: { value: number; label: string } | null;
   dryDays: number;
 }
@@ -284,6 +286,7 @@ export function conditionsFor(station: Station): Conditions {
 
   const spei = latestSpei(station, 3);
   const spei6 = latestSpei(station, 6);
+  const spei6Prior = priorSpei(station, 6);
   const spi = latestSpi(station, 3);
 
   return {
@@ -304,6 +307,9 @@ export function conditionsFor(station: Station): Conditions {
           label: `${monthName(spei6.month.m)} ${spei6.month.y}`,
           window: spanLabel(spei6.month, 6),
         }
+      : null,
+    spei6Prior: spei6Prior
+      ? { value: spei6Prior.value, window: spanLabel(spei6Prior.month, 6) }
       : null,
     spi3: spi ? { value: spi.value, label: `${monthName(spi.month.m)} ${spi.month.y}` } : null,
     dryDays,

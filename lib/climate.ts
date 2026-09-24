@@ -126,6 +126,25 @@ export function latestSpei(s: Station, scale: 1 | 3 | 6 | 12) {
   return null;
 }
 
+/**
+ * The fitted value one whole window before the latest, at the same scale.
+ *
+ * For SPEI-6 that is the preceding non-overlapping half-year: if the record
+ * ends in December (JUL–DEC), this returns June (JAN–JUN). The two together
+ * split the year without double-counting a month, which is what makes them
+ * comparable.
+ */
+export function priorSpei(s: Station, scale: 1 | 3 | 6 | 12) {
+  const series = s.spei[String(scale)];
+  for (let i = series.length - 1; i >= 0; i--) {
+    if (series[i] == null) continue;
+    const j = i - scale;
+    if (j < 0 || series[j] == null) return null;
+    return { value: series[j] as number, month: s.months[j] };
+  }
+  return null;
+}
+
 export function latestSpi(s: Station, scale: 1 | 3 | 12) {
   const series = s.spi[String(scale)];
   for (let i = series.length - 1; i >= 0; i--) {

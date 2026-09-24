@@ -101,7 +101,27 @@ export function PageOverview() {
           badge={cond.spei6 ? <RiskBadge level={speiLevel(cond.spei6.value)} showScore={false} /> : null}
           value={cond.spei6 ? cond.spei6.value.toFixed(2) : "—"}
           unit={cond.spei6 ? indexBand(cond.spei6.value) : "not fitted"}
-          foot={cond.spei6 ? cond.spei6.window : "—"}
+          foot={
+            cond.spei6 ? (
+              <>
+                {cond.spei6.window}
+                {cond.spei6Prior && (
+                  <>
+                    {" · "}
+                    {cond.spei6Prior.window.replace(/ \d{4}$/, "")}{" "}
+                    <span
+                      style={{ color: cond.spei6Prior.value < 0 ? "#EE8434" : "var(--ap-teal)" }}
+                    >
+                      {cond.spei6Prior.value > 0 ? "+" : ""}
+                      {cond.spei6Prior.value.toFixed(2)}
+                    </span>
+                  </>
+                )}
+              </>
+            ) : (
+              "—"
+            )
+          }
         />
         <Kpi
           label={<>RAIN &middot; LAST 30 D</>}
