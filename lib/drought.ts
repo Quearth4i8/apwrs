@@ -316,6 +316,13 @@ export function entropyWeights(factors: readonly Factor[]): EntropyResult {
 
   factors.forEach((f, k) => {
     const col = normalised[k];
+    // Eq. (5) prints p(i,j,k) = r(i,j,k) / Σ_{k=1..4} r(i,j,k), i.e. normalised
+    // across the four factors at each pixel. Taken literally that cannot be
+    // right: p would then sum to 1 per pixel rather than per factor, H_k comes
+    // out around 17 on a 320-cell grid instead of inside [0, 1], and eq. (6)'s
+    // denominator K − ΣH goes negative. Normalising over positions is what
+    // makes H a proper normalised entropy and the standard form of the method,
+    // so the subscript is read as a typo for Σ over (i, j).
     const total = col.reduce((a: number, v) => a + (v ?? 0), 0);
     let H = 0;
     if (total > 0) {

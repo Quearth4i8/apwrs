@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
-import { MapView } from "@/components/map-view";
+import { MapView, type SurfaceInfo } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
 import { Panel, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
@@ -26,6 +26,8 @@ export function PageRisk() {
   const { site } = useConsole();
   const station = stationForSite(site.name);
   const [tab, setTab] = React.useState<"trend" | "spatial">("trend");
+  const [surface, setSurface] = React.useState<SurfaceInfo | null>(null);
+  const onSurface = React.useCallback((info: SurfaceInfo) => setSurface(info), []);
   const cond = React.useMemo(() => conditionsFor(station), [station]);
 
   const spei3 = cond.spei3;
@@ -206,11 +208,107 @@ export function PageRisk() {
           <Provenance>Bars below &minus;1 are the months the index classes as in drought</Provenance>
         </Panel>
       ) : (
-        <Panel className="relative h-[520px]">
-          <MapView layer="risk" sensors legend className="absolute inset-0" />
-        </Panel>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+          <Panel className="relative h-[520px]">
+            <MapView layer="risk" sensors legend onSurface={onSurface} className="absolute inset-0" />
+          </Panel>
+          <FactorComparison surface={surface} />
+        </div>
       )}
     </div>
+  );
+}
+
+/**
+ * What the composite surface is actually made of.
+ *
+ * The entropy weight method (`formlas and data/entroy_weight_method.png`,
+ * §3.4) normalises each factor by direction (eq. 4), scores it by information
+ * entropy (eq. 5) and weights it by how much it disperses (eq. 6):
+ * ωₖ = (1 − Hₖ) / (K − ΣH). A factor whose values spread out across the
+ * region carries more information and so earns more weight. Nothing is set
+ * by hand, which is the point of the method.
+ */
+function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
+  if (!surface) {
+    return (
+      <Panel className="flex items-center justify-center px-5 py-10">
+        <span className="font-mono text-[11px] text-muted">Computing weights…</span>
+      </Panel>
+    );
+  }
+
+  const rows = surface.factors
+    .map((f) => ({
+      ...f,
+      weight: surface.weights[f.key] ?? 0,
+      entropy: surface.entropy[f.key] ?? 0,
+    }))
+    .sort((a, b) => b.weight - a.weight);
+
+  const top = rows[0];
+  const maxWeight = Math.max(...rows.map((r) => r.weight), 1e-9);
+  const sumH = rows.reduce((a, r) => a + r.entropy, 0);
+
+  return (
+    <Panel className="flex flex-col">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-divider px-5 py-3.5">
+        <span className="font-heading text-lg font-semibold">Factor comparison</span>
+        <span className="font-mono text-[10.5px] text-muted">ENTROPY WEIGHT METHOD</span>
+      </div>
+
+      {/* The headline the page exists to answer. */}
+      <div className="flex flex-col gap-1.5 border-b border-divider px-5 py-4">
+        <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">MOST IMPACTING FACTOR</span>
+        <div className="flex items-baseline gap-2.5">
+          <span className="font-heading text-[26px] font-semibold leading-none">{top.label}</span>
+          <span className="font-mono text-sm text-accent">{(top.weight * 100).toFixed(1)}%</span>
+        </div>
+        <span className="text-[12.5px] leading-[1.5] text-muted">
+          Lowest entropy of the {rows.length} factors at H = {top.entropy.toFixed(4)}, so its values are the most
+          dispersed across the region and it carries the most information.
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-3 px-5 py-4">
+        {rows.map((f) => (
+          <div key={f.key} className="flex flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-3 text-[13px]">
+              <span className="flex items-baseline gap-2">
+                {f.label}
+                <span className="font-mono text-[10px] text-faint">
+                  {f.direction === "positive" ? "↑ wetter" : "↓ drier"}
+                </span>
+                {f.note && <span className="font-mono text-[10px] text-faint">{f.note}</span>}
+              </span>
+              <span className="font-mono text-[11.5px] tabular-nums">{(f.weight * 100).toFixed(1)}%</span>
+            </div>
+            <div className="h-1.5 bg-s3">
+              <div
+                className="h-full transition-[width] duration-500"
+                style={{
+                  width: `${(f.weight / maxWeight) * 100}%`,
+                  background: f.key === top.key ? "var(--ap-accent)" : "var(--ap-teal)",
+                  opacity: f.key === top.key ? 1 : 0.55,
+                }}
+              />
+            </div>
+            <span className="font-mono text-[10px] text-muted">H = {f.entropy.toFixed(4)}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-auto flex flex-col gap-2 border-t border-divider px-5 py-3.5 font-mono text-[10.5px] text-muted">
+        <div className="flex justify-between">
+          <span>Σ WEIGHTS</span>
+          <span className="text-ink">{(rows.reduce((a, r) => a + r.weight, 0) * 100).toFixed(1)}%</span>
+        </div>
+        <div className="flex justify-between">
+          <span>K − ΣH</span>
+          <span className="text-ink">{(rows.length - sumH).toFixed(4)}</span>
+        </div>
+      </div>
+    </Panel>
   );
 }
 
