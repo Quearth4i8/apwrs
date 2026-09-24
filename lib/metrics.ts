@@ -401,7 +401,8 @@ const monthName = (m: number) => MONTH_ABBR[m - 1];
  * headline month means a different span at each timescale, which is the whole
  * reason for showing more than one.
  */
-function spanLabel(end: { y: number; m: number }, scale: number): string {
+export function spanLabel(end: { y: number; m: number }, scale: number): string {
+  if (scale <= 1) return `${monthName(end.m)} ${end.y}`;
   const d = new Date(Date.UTC(end.y, end.m - 1, 1));
   d.setUTCMonth(d.getUTCMonth() - (scale - 1));
   const sy = d.getUTCFullYear();

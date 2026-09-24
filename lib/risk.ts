@@ -59,7 +59,21 @@ export const FACTOR_META = [
   { key: "spi3", label: "SPI-3", direction: "positive" as const, note: "30-yr fit per cell" },
   { key: "soilMoisture", label: "Soil moisture", direction: "positive" as const },
   { key: "tmax", label: "Max temperature", direction: "negative" as const, note: "stands in for LST" },
+  { key: "precip30", label: "Rainfall (30 d)", direction: "positive" as const },
+  { key: "et030", label: "Evapotranspiration", direction: "negative" as const },
 ];
+
+/**
+ * Rainfall and ET₀ stand in for the standardised indices until the gridded
+ * climatology exists.
+ *
+ * SPEI-3 and SPI-3 say more than raw totals — they compare this period with
+ * thirty years at the same place — but they need a fitted distribution per
+ * cell, which is a build step. Rather than score a thinner model while that
+ * is missing, the raw quantities the indices are built from are used instead,
+ * and drop out automatically once the indices arrive.
+ */
+const SUPERSEDED: Record<string, string> = { precip30: "spei3", et030: "spi3" };
 
 export function scoreGrid(cells: GridCell[]): RiskSurface {
   // NDVI is only present when a Copernicus feed is configured. Including a
@@ -69,11 +83,15 @@ export function scoreGrid(cells: GridCell[]): RiskSurface {
   // so it is dropped rather than carried at zero. NDVI needs Copernicus
   // credentials; the standardised indices need the fitted climatology.
   const OPTIONAL = new Set(["ndvi", "spei3", "spi3"]);
-  const present = FACTOR_META.filter(
-    (f) =>
-      !OPTIONAL.has(f.key) ||
-      cells.some((c) => (c[f.key as keyof GridCell] as number | null) != null),
-  );
+  const has = (key: string) =>
+    cells.some((c) => (c[key as keyof GridCell] as number | null) != null);
+
+  const present = FACTOR_META.filter((f) => {
+    // A superseded factor yields to its replacement once that has values.
+    const replacement = SUPERSEDED[f.key];
+    if (replacement && has(replacement)) return false;
+    return !OPTIONAL.has(f.key) || has(f.key);
+  });
 
   const factors: Factor[] = present.map((f) => ({
     key: f.key,

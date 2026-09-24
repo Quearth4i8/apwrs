@@ -9,8 +9,8 @@ import { useConsole } from "@/components/app-context";
 import { Panel, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
-import { stationForSite, type Station } from "@/lib/climate";
-import { conditionsFor, indexBand, MONTH_ABBR } from "@/lib/metrics";
+import { stationForSite, latestSpei, latestSpi, type Station } from "@/lib/climate";
+import { conditionsFor, indexBand, spanLabel, MONTH_ABBR } from "@/lib/metrics";
 import { riskLevel } from "@/lib/utils";
 
 /**
@@ -184,6 +184,8 @@ export function PageRisk() {
         </Panel>
       </div>
 
+      <IndexScales station={station} />
+
       <TabStrip
         value={tab}
         onChange={setTab}
@@ -308,6 +310,100 @@ function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
           <span className="text-ink">{(rows.length - sumH).toFixed(4)}</span>
         </div>
       </div>
+    </Panel>
+  );
+}
+
+/**
+ * Every standardised index the record supports, at every fitted timescale.
+ *
+ * Both are computed the same way and differ only in what goes in: SPEI
+ * accumulates P − ET₀, so it feels evaporative demand, while SPI accumulates
+ * rainfall alone. Reading them together separates a dry spell caused by heat
+ * from one caused by absent rain. The timescales matter as much: a short one
+ * reacts to the last few weeks, a long one carries the whole year.
+ */
+function IndexScales({ station }: { station: Station }) {
+  const SPEI = [1, 3, 6, 12] as const;
+  const SPI = [1, 3, 12] as const;
+
+  const cell = (v: number | null, window: string | null) => {
+    if (v == null) return <span className="font-mono text-[11px] text-faint">not fitted</span>;
+    return (
+      <>
+        <span className="font-heading text-[22px] font-semibold leading-none tabular-nums">
+          {v > 0 ? "+" : ""}
+          {v.toFixed(2)}
+        </span>
+        <span className="text-[11.5px] leading-tight text-muted">{indexBand(v)}</span>
+        <span className="font-mono text-[10px] text-faint">{window}</span>
+      </>
+    );
+  };
+
+  const swatch = (v: number | null) =>
+    v == null
+      ? "transparent"
+      : v <= -2
+        ? "#D96565"
+        : v <= -1.5
+          ? "#EE8434"
+          : v <= -1
+            ? "#E7A83B"
+            : v < 1
+              ? "#38A88A"
+              : "#2BA6B8";
+
+  return (
+    <Panel className="flex flex-col">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-divider px-5 py-3.5">
+        <span className="font-heading text-lg font-semibold">Standardised indices</span>
+        <span className="font-mono text-[10.5px] text-muted">
+          {station.coverage.years}-YEAR FIT PER CALENDAR MONTH
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4">
+        {SPEI.map((k, i) => {
+          const l = latestSpei(station, k);
+          return (
+            <div
+              key={`spei${k}`}
+              className={`flex flex-col gap-1.5 border-b border-divider px-4 py-3.5 ${i < 3 ? "sm:border-r" : ""}`}
+            >
+              <span className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted">
+                <span className="size-1.5" style={{ background: swatch(l?.value ?? null) }} />
+                SPEI-{k}
+              </span>
+              {cell(l?.value ?? null, l ? spanLabel(l.month, k) : null)}
+            </div>
+          );
+        })}
+
+        {SPI.map((k, i) => {
+          const l = latestSpi(station, k);
+          return (
+            <div
+              key={`spi${k}`}
+              className={`flex flex-col gap-1.5 px-4 py-3.5 ${i < 2 ? "sm:border-r" : ""} border-b border-divider sm:border-b-0`}
+            >
+              <span className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted">
+                <span className="size-1.5" style={{ background: swatch(l?.value ?? null) }} />
+                SPI-{k}
+              </span>
+              {cell(l?.value ?? null, l ? spanLabel(l.month, k) : null)}
+            </div>
+          );
+        })}
+
+        {/* SPI has no six-month fit in the record, so the slot is left empty. */}
+        <div className="hidden px-4 py-3.5 sm:block" />
+      </div>
+
+      <Provenance>
+        SPEI accumulates P &minus; ET&#8320;; SPI accumulates rainfall alone. A gap between them at the same
+        timescale is evaporative demand rather than missing rain.
+      </Provenance>
     </Panel>
   );
 }
