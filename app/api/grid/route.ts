@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { scoreGrid, type GridCell } from "@/lib/risk";
+import { fetchNdviGrid } from "@/lib/copernicus";
 
 /**
- * The live risk surface: one Open-Meteo call for the whole grid, scored by
- * the entropy weight method, returned as flat row-major arrays that the
+ * The live risk surface: one Open-Meteo call for the whole grid plus, when
+ * Copernicus credentials are configured, one Sentinel-2 NDVI raster. Scored
+ * by the entropy weight method and returned as flat row-major arrays that the
  * client resamples into a continuous image.
  *
- * Runs on the server so the upstream call is cached once for every viewer
- * rather than once per browser, and so the API surface stays swappable.
+ * Runs on the server so the upstream calls are cached once for every viewer
+ * rather than once per browser, so the credentials never reach the client,
+ * and so the API surface stays swappable.
  */
 
 export const revalidate = 1800; // the upstream model runs a few times a day
@@ -89,20 +92,37 @@ export async function GET() {
     const body = (await res.json()) as OpenMeteoPoint[] | OpenMeteoPoint;
     const points = Array.isArray(body) ? body : [body];
 
-    const cells: GridCell[] = points.map((p) => ({
+    // Sentinel-2 is optional: without credentials, or if CDSE is having a bad
+    // day, the surface still scores on the weather factors alone rather than
+    // failing the whole request.
+    let ndvi: Awaited<ReturnType<typeof fetchNdviGrid>> = null;
+    let ndviError: string | null = null;
+    try {
+      ndvi = await fetchNdviGrid(REGION, ROWS, COLS);
+    } catch (e) {
+      ndviError = e instanceof Error ? e.message : String(e);
+    }
+
+    const cells: GridCell[] = points.map((p, i) => ({
       lat: p.latitude,
       lon: p.longitude,
       precip30: sum(p.daily?.precipitation_sum),
       et030: sum(p.daily?.et0_fao_evapotranspiration),
       tmax: mean(p.daily?.temperature_2m_max),
       soilMoisture: soilOrNull(mean(p.daily?.soil_moisture_0_to_100cm_mean?.slice(-7))),
+      ndvi: ndvi?.values[i] ?? null,
     }));
 
     const surface = scoreGrid(cells);
 
     return NextResponse.json({
       generatedAt: new Date().toISOString(),
-      source: "Open-Meteo · ECMWF-derived, FAO-56 ET₀",
+      source: ndvi
+        ? `Open-Meteo · ECMWF-derived, FAO-56 ET₀ — with ${ndvi.source}`
+        : "Open-Meteo · ECMWF-derived, FAO-56 ET₀",
+      ndvi: ndvi
+        ? { coverage: ndvi.coverage, source: ndvi.source }
+        : { coverage: 0, source: null, error: ndviError },
       resolutionKm: MODEL_RESOLUTION_KM,
       samplingKm: {
         lat: +(CELL.lat * 111).toFixed(1),
@@ -117,6 +137,7 @@ export async function GET() {
         et030: surface.cells.map((c) => round(c.et030, 1)),
         tmax: surface.cells.map((c) => round(c.tmax, 1)),
         soilMoisture: surface.cells.map((c) => round(c.soilMoisture, 3)),
+        ndvi: surface.cells.map((c) => round(c.ndvi ?? null, 3)),
       },
       weights: surface.weights,
       entropy: surface.entropy,

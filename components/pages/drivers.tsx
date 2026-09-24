@@ -121,18 +121,21 @@ export function PageDrivers() {
               <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">WHAT IS NOT IN HERE</span>
               <div className="flex flex-col gap-3 text-[13.5px] leading-[1.55]">
                 <p className="m-0">
-                  The source method uses NDVI and land surface temperature. Neither has a feed connected, so two
-                  proxies stand in and are labelled as such above.
+                  The source method uses NDVI and land surface temperature. NDVI is now measured &mdash;
+                  Sentinel-2 L2A from the Copernicus Data Space, cloud- and water-masked. Land surface
+                  temperature still has no thermal feed, so maximum air temperature stands in for it and is
+                  labelled as such above.
                 </p>
                 <p className="m-0 text-muted">
-                  Connecting a satellite source would not change the arithmetic &mdash; the weighting adapts to
-                  whatever factor maps it is given.
+                  Adding a factor does not change the arithmetic &mdash; the weighting adapts to whatever
+                  factor maps it is given, and a factor with no values at all is dropped rather than carried
+                  at zero.
                 </p>
               </div>
               <div className="mt-auto grid grid-cols-2 border-l border-t border-divider">
                 {(
                   [
-                    ["NDVI", "no optical feed"],
+                    ["NDVI", "Sentinel-2 L2A"],
                     ["LAND SURFACE TEMP", "no thermal feed"],
                   ] as const
                 ).map(([k, v]) => (
