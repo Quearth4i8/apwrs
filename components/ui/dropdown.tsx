@@ -33,7 +33,7 @@ export const MenuTrigger = React.forwardRef<
     <button
       ref={ref}
       className={cn(
-        "flex h-8 items-center gap-2 rounded-control border border-divider px-2.5 text-[13px] text-ink",
+        "flex h-9 items-center gap-2 rounded-full bg-neutral-100 px-3.5 text-[13px] text-ink",
         "transition-colors duration-150 hover:border-divider-strong hover:bg-neutral-100",
         "data-[state=open]:border-accent data-[state=open]:bg-accent-100",
         className,
@@ -74,7 +74,7 @@ export function Menu({
 
 export function MenuLabel({ children }: { children: React.ReactNode }) {
   return (
-    <DropdownMenu.Label className="px-2.5 py-1.5 font-mono text-[10px] tracking-[0.1em] text-faint">
+    <DropdownMenu.Label className="px-2.5 py-1.5 text-[12px] font-medium text-faint">
       {children}
     </DropdownMenu.Label>
   );

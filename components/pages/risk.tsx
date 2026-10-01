@@ -8,7 +8,8 @@ import { MapView, type SurfaceInfo } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
 import { Panel, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
-import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
+import { CardTitle, StatTile } from "@/components/ui/simple";
+import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
 import { stationForSite, latestSpei, latestSpi, type Station } from "@/lib/climate";
 import { conditionsFor, indexBand, spanLabel, MONTH_ABBR } from "@/lib/metrics";
 import { riskLevel } from "@/lib/utils";
@@ -34,139 +35,102 @@ export function PageRisk() {
   const level = spei3 ? speiToLevel(spei3.value) : null;
 
   return (
-    <div className="relative flex flex-col gap-5.5 px-4 pb-12 pt-7 sm:px-8">
-      <div
-        className="pointer-events-none absolute left-0 top-10 h-[420px] w-[640px]"
-        style={{ background: "radial-gradient(ellipse at 30% 50%, var(--ap-glow), transparent 65%)" }}
-      />
-
+    <div className="relative flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        kicker={
-          <>
-            ANALYSIS &middot; DROUGHT INDICES &middot; {station.name.toUpperCase()} &middot;{" "}
-            {station.coverage.from.slice(0, 4)}&ndash;{station.coverage.to.slice(0, 4)}
-          </>
-        }
-        title="Drought standing"
+        title="Drought risk"
         lede={
           spei3 ? (
             <>
-              SPEI-3 for {spei3.label} is{" "}
-              <strong className="font-medium text-ink">{spei3.value.toFixed(2)}</strong> &mdash;{" "}
-              {indexBand(spei3.value)} against the {station.coverage.years}-year distribution for that month.
+              Over the three months to {monthWord(spei3.label)} {spei3.label.split(" ")[1]}, {station.name} is{" "}
+              <strong className="font-semibold text-ink">{indexBand(spei3.value)}</strong> compared with the same
+              months in the last {station.coverage.years} years.
             </>
           ) : (
-            "No fitted index for the latest month."
+            "No drought index for the latest month."
           )
         }
       />
 
-      {/* ── Index standing ────────────────────────────────────────────── */}
-      <Panel className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        <IndexCell
-          label="SPEI-3"
-          sub="water balance"
-          value={spei3?.value ?? null}
-          month={spei3?.label ?? null}
-        />
-        <IndexCell
-          label="SPI-3"
-          sub="rainfall only"
-          value={cond.spi3?.value ?? null}
-          month={cond.spi3?.label ?? null}
-        />
-        <div className="flex flex-col gap-2 border-b border-divider px-5 py-4.5 xl:border-b-0 xl:border-r">
-          <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">RAIN &middot; LAST 30 D</span>
-          <span className="flex items-baseline gap-1.5">
-            <span className="font-heading text-[40px] font-semibold leading-none tabular-nums">{cond.rain30}</span>
-            <span className="font-mono text-xs text-muted">mm</span>
-          </span>
-          <span className="font-mono text-[11px] text-muted">
-            {cond.rain30Normal == null ? (
-              "no comparable window"
+      {/* ── Standing ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <IndexTile label="Water balance · SPEI-3" icon="gauge" value={spei3?.value ?? null} month={spei3?.label ?? null} />
+        <IndexTile label="Rainfall only · SPI-3" icon="rain" value={cond.spi3?.value ?? null} month={cond.spi3?.label ?? null} />
+        <StatTile
+          icon="droplet"
+          label="Rain in 30 days"
+          value={cond.rain30}
+          unit="mm"
+          note={
+            cond.rain30Normal == null ? (
+              "No normal to compare"
             ) : (
               <>
-                normal {cond.rain30Normal} mm
+                Normal is {cond.rain30Normal} mm
                 {cond.rain30Anomaly != null && (
-                  <span style={{ color: cond.rain30Anomaly < 0 ? "#EE8434" : "var(--ap-teal)" }}>
+                  <span style={{ color: cond.rain30Anomaly < 0 ? "#EE8434" : "var(--ap-accent)" }}>
                     {" "}
-                    {cond.rain30Anomaly > 0 ? "+" : ""}
-                    {cond.rain30Anomaly}%
+                    ({cond.rain30Anomaly > 0 ? "+" : ""}
+                    {cond.rain30Anomaly}%)
                   </span>
                 )}
               </>
-            )}
-          </span>
-        </div>
-        <div className="flex flex-col gap-2 px-5 py-4.5">
-          <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">DAYS SINCE 1 mm</span>
-          <span className="flex items-baseline gap-1.5">
-            <span className="font-heading text-[40px] font-semibold leading-none tabular-nums">{cond.dryDays}</span>
-            <span className="font-mono text-xs text-muted">days</span>
-          </span>
-          <span className="font-mono text-[11px] text-muted">to {cond.asOf}</span>
-        </div>
-      </Panel>
+            )
+          }
+        />
+        <StatTile
+          icon="sun"
+          tint="#E7A83B"
+          label="Days since rain"
+          value={cond.dryDays}
+          unit={cond.dryDays === 1 ? "day" : "days"}
+          note={`At least 1 mm · to ${fmtDate(cond.asOf)}`}
+        />
+      </div>
 
       {/* ── Standing + explanation ────────────────────────────────────── */}
-      <div className="relative grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <Panel className="flex flex-col items-center gap-3 px-6 py-5">
-          <div className="flex w-full justify-between font-mono text-[10.5px] tracking-[0.1em] text-muted">
-            <span>SPEI-3 &middot; {spei3?.label ?? "—"}</span>
-            <span>{station.name}</span>
-          </div>
+          <CardTitle className="w-full" title="Where this month sits" sub={`SPEI-3 · ${spei3 ? mon(spei3.label) : "—"}`} />
           {spei3 ? (
             <>
               <SpeiDial value={spei3.value} />
-              <div className="-mt-6 flex items-baseline gap-2">
-                <span className="font-heading text-[56px] font-semibold leading-none tracking-[-0.03em] tabular-nums">
-                  {spei3.value.toFixed(2)}
-                </span>
-              </div>
+              <span className="-mt-3 text-[52px] font-semibold leading-none tracking-[-0.02em] tabular-nums">
+                {spei3.value.toFixed(2)}
+              </span>
               {level && <RiskBadge level={level} showScore={false} />}
-              <span className="text-center text-[13px] text-muted">{indexBand(spei3.value)}</span>
+              <span className="text-center text-[13.5px] text-muted">{indexBand(spei3.value)}</span>
             </>
           ) : (
-            <div className="py-10 text-[13px] text-muted">Not fitted for this month.</div>
+            <div className="py-10 text-[13.5px] text-muted">Not fitted for this month.</div>
           )}
-          <Provenance>
-            log-logistic fitted per calendar month over {station.coverage.years} years
-          </Provenance>
         </Panel>
 
-        <Panel
-          className="flex flex-col gap-4 px-6 py-5.5"
-          style={{ background: "linear-gradient(180deg, var(--ap-accent-100), transparent 60%)" }}
-        >
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] tracking-[0.1em] text-accent">
-            <Icon name="gauge" size={14} />
-            WHAT THE INDEX MEANS
-          </div>
-          <div className="font-heading text-[clamp(18px,2.2vw,24px)] font-semibold leading-[1.2] tracking-[-0.01em] text-pretty">
-            SPEI compares this month&rsquo;s water balance against every other {spei3 ? monthWord(spei3.label) : "month"}{" "}
-            in the record.
-          </div>
-          <div className="text-sm leading-[1.65] text-muted text-pretty">
-            The balance is rainfall minus reference evapotranspiration, accumulated over three months and fitted to
-            a log-logistic distribution separately for each calendar month. That removes the seasonal cycle, so a
-            value of &minus;1.5 in August means the same thing as &minus;1.5 in January: drier than roughly 93% of
-            years.
-          </div>
+        <Panel className="flex flex-col gap-4 px-6 py-5">
+          <CardTitle
+            title="What the number means"
+            sub={`Compared with every other ${spei3 ? monthWord(spei3.label) : "month"} since ${station.coverage.from.slice(0, 4)}`}
+          />
+          <p className="m-0 text-[14px] leading-[1.6] text-muted text-pretty">
+            The index takes the rain that fell minus the water the air could evaporate, over three months, and
+            ranks it against the same months in past years. Zero is a normal year; below &minus;1 is drier than
+            about 84% of years, which counts as drought.
+          </p>
 
-          <div className="flex flex-col gap-2 border-t border-divider pt-3.5">
+          <div className="flex flex-col gap-2.5">
             {BANDS.map((b) => {
               const active = spei3 != null && spei3.value > b.from && spei3.value <= b.to;
               return (
-                <div key={b.label} className="grid grid-cols-[110px_minmax(0,1fr)_84px] items-center gap-3 text-[13px]">
-                  <span className="font-mono text-[11px]" style={{ color: active ? b.color : "var(--ap-muted)" }}>
-                    {b.range}
-                  </span>
-                  <div className="h-2 bg-neutral-100">
-                    <div className="h-full" style={{ width: active ? "100%" : "0%", background: b.color, transition: "width .4s" }} />
-                  </div>
-                  <span style={{ color: active ? "var(--ap-text)" : "var(--ap-muted)", fontWeight: active ? 600 : 400 }}>
+                <div
+                  key={b.label}
+                  className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-3 rounded-[10px] px-3 py-2 text-[13.5px]"
+                  style={{ background: active ? `color-mix(in srgb, ${b.color} 14%, transparent)` : undefined }}
+                >
+                  <span className="size-2.5 rounded-full" style={{ background: b.color, opacity: active ? 1 : 0.5 }} />
+                  <span className={active ? "font-semibold text-ink" : "text-muted"}>
                     {b.label}
+                    {active && <span className="ml-2 font-normal text-muted">&larr; now</span>}
                   </span>
+                  <span className="text-[12.5px] text-faint tabular-nums">{b.range}</span>
                 </div>
               );
             })}
@@ -178,7 +142,7 @@ export function PageRisk() {
               <Icon name="arrow" size={14} />
             </ButtonLink>
             <Link href="/app/history" className="flex items-center px-1 text-[13px] text-accent no-underline hover:underline">
-              Compare against the full record
+              Compare with past years
             </Link>
           </div>
         </Panel>
@@ -190,24 +154,25 @@ export function PageRisk() {
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: "trend", label: "SPEI history" },
-          { value: "spatial", label: "Live risk surface" },
+          { value: "trend", label: "Past 30 years" },
+          { value: "spatial", label: "Risk map today" },
         ]}
       />
 
       {tab === "trend" ? (
-        <Panel className="flex flex-col gap-3 px-5 py-4.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="font-heading text-lg font-semibold">
-              SPEI-3 &middot; every fitted month, {station.coverage.from.slice(0, 4)}&ndash;
-              {station.coverage.to.slice(0, 4)}
-            </span>
-            <span className="font-mono text-[10.5px] text-muted">
-              {station.spei["3"].filter((v) => v != null).length} fitted of {station.months.length} months
-            </span>
-          </div>
+        <Panel className="flex flex-col gap-3 px-5 py-5">
+          <CardTitle
+            title={`Every month since ${station.coverage.from.slice(0, 4)}`}
+            sub="SPEI-3: bars below −1 are drought months"
+            right={
+              <span className="flex gap-3.5 text-[12.5px] text-muted">
+                <Swatch color="var(--ap-accent)" label="Wetter" />
+                <Swatch color="#E7A83B" label="Slightly dry" />
+                <Swatch color="#D96565" label="Drought" />
+              </span>
+            }
+          />
           <SpeiSeries station={station} />
-          <Provenance>Bars below &minus;1 are the months the index classes as in drought</Provenance>
         </Panel>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -218,6 +183,15 @@ export function PageRisk() {
         </div>
       )}
     </div>
+  );
+}
+
+function Swatch({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="size-2.5 rounded-[3px]" style={{ background: color }} />
+      {label}
+    </span>
   );
 }
 
@@ -235,7 +209,7 @@ function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
   if (!surface) {
     return (
       <Panel className="flex items-center justify-center px-5 py-10">
-        <span className="font-mono text-[11px] text-muted">Computing weights…</span>
+        <span className="text-[13px] text-muted">Computing weights…</span>
       </Panel>
     );
   }
@@ -250,66 +224,48 @@ function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
 
   const top = rows[0];
   const maxWeight = Math.max(...rows.map((r) => r.weight), 1e-9);
-  const sumH = rows.reduce((a, r) => a + r.entropy, 0);
 
   return (
-    <Panel className="flex flex-col">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-divider px-5 py-3.5">
-        <span className="font-heading text-lg font-semibold">Factor comparison</span>
-        <span className="font-mono text-[10.5px] text-muted">ENTROPY WEIGHT METHOD</span>
-      </div>
+    <Panel className="flex flex-col gap-5 px-5 py-5">
+      <CardTitle title="What shapes the map" sub="Weights set by the data, not by hand" />
 
-      {/* The headline the page exists to answer. */}
-      <div className="flex flex-col gap-1.5 border-b border-divider px-5 py-4">
-        <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">MOST IMPACTING FACTOR</span>
-        <div className="flex items-baseline gap-2.5">
-          <span className="font-heading text-[26px] font-semibold leading-none">{top.label}</span>
-          <span className="font-mono text-sm text-accent">{(top.weight * 100).toFixed(1)}%</span>
-        </div>
-        <span className="text-[12.5px] leading-[1.5] text-muted">
-          Lowest entropy of the {rows.length} factors at H = {top.entropy.toFixed(4)}, so its values are the most
-          dispersed across the region and it carries the most information.
+      {/* The headline the panel exists to answer. */}
+      <div className="flex flex-col gap-1 rounded-[12px] bg-accent-100 px-4 py-3.5">
+        <span className="text-[13px] text-muted">Biggest influence today</span>
+        <span className="flex items-baseline gap-2.5">
+          <span className="text-[22px] font-semibold leading-tight">{top.label}</span>
+          <span className="text-[15px] font-semibold text-accent">{(top.weight * 100).toFixed(0)}%</span>
+        </span>
+        <span className="text-[12.5px] leading-snug text-muted">
+          It varies the most across the region, so it tells the most apart.
         </span>
       </div>
 
-      <div className="flex flex-col gap-3 px-5 py-4">
+      <div className="flex flex-col gap-3.5">
         {rows.map((f) => (
-          <div key={f.key} className="flex flex-col gap-1">
-            <div className="flex items-baseline justify-between gap-3 text-[13px]">
+          <div key={f.key} className="flex flex-col gap-1.5">
+            <div className="flex items-baseline justify-between gap-3 text-[13.5px]">
               <span className="flex items-baseline gap-2">
                 {f.label}
-                <span className="font-mono text-[10px] text-faint">
-                  {f.direction === "positive" ? "↑ wetter" : "↓ drier"}
-                </span>
-                {f.note && <span className="font-mono text-[10px] text-faint">{f.note}</span>}
+                <span className="text-[12px] text-faint">{f.direction === "positive" ? "higher is wetter" : "higher is drier"}</span>
               </span>
-              <span className="font-mono text-[11.5px] tabular-nums">{(f.weight * 100).toFixed(1)}%</span>
+              <span className="font-semibold tabular-nums">{(f.weight * 100).toFixed(1)}%</span>
             </div>
-            <div className="h-1.5 bg-s3">
+            <div className="h-2 rounded-full bg-neutral-100">
               <div
-                className="h-full transition-[width] duration-500"
+                className="h-full rounded-full transition-[width] duration-500"
                 style={{
                   width: `${(f.weight / maxWeight) * 100}%`,
-                  background: f.key === top.key ? "var(--ap-accent)" : "var(--ap-teal)",
+                  background: "var(--ap-accent)",
                   opacity: f.key === top.key ? 1 : 0.55,
                 }}
               />
             </div>
-            <span className="font-mono text-[10px] text-muted">H = {f.entropy.toFixed(4)}</span>
           </div>
         ))}
       </div>
 
-      <div className="mt-auto flex flex-col gap-2 border-t border-divider px-5 py-3.5 font-mono text-[10.5px] text-muted">
-        <div className="flex justify-between">
-          <span>Σ WEIGHTS</span>
-          <span className="text-ink">{(rows.reduce((a, r) => a + r.weight, 0) * 100).toFixed(1)}%</span>
-        </div>
-        <div className="flex justify-between">
-          <span>K − ΣH</span>
-          <span className="text-ink">{(rows.length - sumH).toFixed(4)}</span>
-        </div>
-      </div>
+      <Provenance>Entropy weight method · weights sum to 100%</Provenance>
     </Panel>
   );
 }
@@ -324,86 +280,58 @@ function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
  * reacts to the last few weeks, a long one carries the whole year.
  */
 function IndexScales({ station }: { station: Station }) {
-  const SPEI = [1, 3, 6, 12] as const;
-  const SPI = [1, 3, 12] as const;
-
-  const cell = (v: number | null, window: string | null) => {
-    if (v == null) return <span className="font-mono text-[11px] text-faint">not fitted</span>;
-    return (
-      <>
-        <span className="font-heading text-[22px] font-semibold leading-none tabular-nums">
-          {v > 0 ? "+" : ""}
-          {v.toFixed(2)}
-        </span>
-        <span className="text-[11.5px] leading-tight text-muted">{indexBand(v)}</span>
-        <span className="font-mono text-[10px] text-faint">{window}</span>
-      </>
-    );
-  };
-
-  const swatch = (v: number | null) =>
-    v == null
-      ? "transparent"
-      : v <= -2
-        ? "#D96565"
-        : v <= -1.5
-          ? "#EE8434"
-          : v <= -1
-            ? "#E7A83B"
-            : v < 1
-              ? "#38A88A"
-              : "#2BA6B8";
+  const rows = [
+    { name: "Water balance", code: "SPEI", scales: [1, 3, 6, 12], latest: (k: number) => latestSpei(station, k as 1 | 3 | 6 | 12) },
+    // SPI has no six-month fit in the record.
+    { name: "Rainfall only", code: "SPI", scales: [1, 3, 12], latest: (k: number) => latestSpi(station, k as 1 | 3 | 12) },
+  ];
+  const scaleName: Record<number, string> = { 1: "1 month", 3: "3 months", 6: "6 months", 12: "12 months" };
 
   return (
-    <Panel className="flex flex-col">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-divider px-5 py-3.5">
-        <span className="font-heading text-lg font-semibold">Standardised indices</span>
-        <span className="font-mono text-[10.5px] text-muted">
-          {station.coverage.years}-YEAR FIT PER CALENDAR MONTH
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4">
-        {SPEI.map((k, i) => {
-          const l = latestSpei(station, k);
-          return (
-            <div
-              key={`spei${k}`}
-              className={`flex flex-col gap-1.5 border-b border-divider px-4 py-3.5 ${i < 3 ? "sm:border-r" : ""}`}
-            >
-              <span className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted">
-                <span className="size-1.5" style={{ background: swatch(l?.value ?? null) }} />
-                SPEI-{k}
-              </span>
-              {cell(l?.value ?? null, l ? spanLabel(l.month, k) : null)}
-            </div>
-          );
-        })}
-
-        {SPI.map((k, i) => {
-          const l = latestSpi(station, k);
-          return (
-            <div
-              key={`spi${k}`}
-              className={`flex flex-col gap-1.5 px-4 py-3.5 ${i < 2 ? "sm:border-r" : ""} border-b border-divider sm:border-b-0`}
-            >
-              <span className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted">
-                <span className="size-1.5" style={{ background: swatch(l?.value ?? null) }} />
-                SPI-{k}
-              </span>
-              {cell(l?.value ?? null, l ? spanLabel(l.month, k) : null)}
-            </div>
-          );
-        })}
-
-        {/* SPI has no six-month fit in the record, so the slot is left empty. */}
-        <div className="hidden px-4 py-3.5 sm:block" />
-      </div>
-
-      <Provenance>
-        SPEI accumulates P &minus; ET&#8320;; SPI accumulates rainfall alone. A gap between them at the same
-        timescale is evaporative demand rather than missing rain.
-      </Provenance>
+    <Panel className="flex flex-col gap-4 px-5 py-5">
+      <CardTitle
+        title="Short and long term"
+        sub="The same index over different spans: short spans react to recent weeks, long ones carry the whole year"
+      />
+      {rows.map((r) => (
+        <div key={r.code} className="flex flex-col gap-2">
+          <span className="text-[13px] font-semibold">
+            {r.name} <span className="font-normal text-faint">({r.code})</span>
+          </span>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {r.scales.map((k) => {
+              const l = r.latest(k);
+              const v = l?.value ?? null;
+              const c = bandColor(v);
+              return (
+                <div
+                  key={k}
+                  className="flex flex-col gap-1 rounded-[12px] border border-divider px-3.5 py-3"
+                  style={{ background: v == null ? undefined : `color-mix(in srgb, ${c} 8%, transparent)` }}
+                >
+                  <span className="flex items-center justify-between gap-2 text-[12.5px] text-muted">
+                    {scaleName[k]}
+                    <span className="size-2 rounded-full" style={{ background: v == null ? "transparent" : c }} />
+                  </span>
+                  {v == null ? (
+                    <span className="text-[13px] text-faint">Not fitted</span>
+                  ) : (
+                    <>
+                      <span className="text-[22px] font-semibold leading-none tabular-nums">
+                        {v > 0 ? "+" : ""}
+                        {v.toFixed(2)}
+                      </span>
+                      <span className="text-[12px] text-muted">
+                        {indexBand(v)} · {l ? mon(spanLabel(l.month, k)) : ""}
+                      </span>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </Panel>
   );
 }
@@ -412,11 +340,16 @@ function IndexScales({ station }: { station: Station }) {
 
 const BANDS = [
   { label: "Extremely dry", range: "≤ −2.0", from: -99, to: -2, color: "#D96565" },
-  { label: "Severely dry", range: "−2.0 … −1.5", from: -2, to: -1.5, color: "#EE8434" },
-  { label: "Moderately dry", range: "−1.5 … −1.0", from: -1.5, to: -1, color: "#E7A83B" },
-  { label: "Near normal", range: "−1.0 … 1.0", from: -1, to: 1, color: "#38A88A" },
+  { label: "Severely dry", range: "−2.0 to −1.5", from: -2, to: -1.5, color: "#EE8434" },
+  { label: "Moderately dry", range: "−1.5 to −1.0", from: -1.5, to: -1, color: "#E7A83B" },
+  { label: "Near normal", range: "−1.0 to 1.0", from: -1, to: 1, color: "#38A88A" },
   { label: "Wet", range: "≥ 1.0", from: 1, to: 99, color: "#2BA6B8" },
 ];
+
+function bandColor(v: number | null) {
+  if (v == null) return "var(--ap-muted)";
+  return BANDS.find((b) => v > b.from && v <= b.to)?.color ?? "#2BA6B8";
+}
 
 function speiToLevel(v: number) {
   if (v <= -2) return "extreme" as const;
@@ -424,6 +357,12 @@ function speiToLevel(v: number) {
   if (v <= -1) return "watch" as const;
   return "safe" as const;
 }
+
+/** "OCT–DEC 2025" → "Oct–Dec 2025": month labels are stored in capitals. */
+const mon = (label: string) => label.replace(/\b([A-Z])([A-Z]{2})\b/g, (_, a: string, b: string) => a + b.toLowerCase());
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 function monthWord(label: string) {
   const m = label.split(" ")[0];
@@ -433,30 +372,26 @@ function monthWord(label: string) {
     : "month";
 }
 
-function IndexCell({
+function IndexTile({
   label,
-  sub,
+  icon,
   value,
   month,
 }: {
   label: string;
-  sub: string;
+  icon: "gauge" | "rain";
   value: number | null;
   month: string | null;
 }) {
   return (
-    <div className="flex flex-col gap-2 border-b border-divider px-5 py-4.5 xl:border-b-0 xl:border-r">
-      <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
-        {label} &middot; {sub.toUpperCase()}
-      </span>
-      <span className="flex items-baseline gap-2.5">
-        <span className="font-heading text-[40px] font-semibold leading-none tabular-nums">
-          {value == null ? "—" : value.toFixed(2)}
-        </span>
-        {value != null && <RiskBadge level={speiToLevel(value)} showScore={false} />}
-      </span>
-      <span className="font-mono text-[11px] text-muted">{month ?? "not fitted"}</span>
-    </div>
+    <StatTile
+      icon={icon}
+      tint={bandColor(value)}
+      label={label}
+      value={value == null ? "—" : value.toFixed(2)}
+      badge={value != null ? <RiskBadge level={speiToLevel(value)} showScore={false} /> : undefined}
+      note={value == null ? "Not fitted" : `${indexBand(value)} · three months to ${month ? mon(month) : "—"}`}
+    />
   );
 }
 
@@ -465,46 +400,41 @@ function SpeiDial({ value }: { value: number }) {
   const clamped = Math.max(-3, Math.min(3, value));
   const pct = ((clamped + 3) / 6) * 100;
   return (
-    <svg viewBox="0 0 300 96" className="block w-full max-w-[380px]">
-      <defs>
-        <linearGradient id="speiRamp" x1="0" x2="1">
-          <stop offset="0%" stopColor="#D96565" />
-          <stop offset="16%" stopColor="#EE8434" />
-          <stop offset="25%" stopColor="#E7A83B" />
-          <stop offset="50%" stopColor="#38A88A" />
-          <stop offset="75%" stopColor="#2BA6B8" />
-          <stop offset="100%" stopColor="#9EDFF1" />
-        </linearGradient>
-      </defs>
-      <rect x={10} y={40} width={280} height={14} fill="url(#speiRamp)" opacity={0.85} />
-      {[-3, -2, -1, 0, 1, 2, 3].map((t) => (
-        <g key={t}>
-          <line x1={10 + ((t + 3) / 6) * 280} x2={10 + ((t + 3) / 6) * 280} y1={36} y2={58} style={{ stroke: "var(--ap-bg)" }} strokeWidth={1} />
-          <text
-            x={10 + ((t + 3) / 6) * 280}
-            y={72}
-            textAnchor="middle"
-            style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }}
-            fontSize={9}
-          >
-            {t}
-          </text>
-        </g>
-      ))}
-      <motion.g animate={{ x: 10 + (pct / 100) * 280 }} initial={false} transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}>
-        <rect x={-5} y={28} width={10} height={10} style={{ fill: "var(--ap-bg)", stroke: "var(--ap-text)" }} strokeWidth={1.5} />
-        <line x1={0} x2={0} y1={38} y2={58} style={{ stroke: "var(--ap-text)" }} strokeWidth={2} />
-      </motion.g>
-    </svg>
+    <div className="flex w-full max-w-[380px] flex-col gap-2 pt-4">
+      <div className="relative h-3 rounded-full">
+        <div
+          className="absolute inset-0 rounded-full opacity-85"
+          style={{
+            background:
+              "linear-gradient(to right, #D96565 0%, #EE8434 16%, #E7A83B 25%, #38A88A 50%, #2BA6B8 75%, #9EDFF1 100%)",
+          }}
+        />
+        <motion.span
+          className="absolute top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-[var(--ap-bg)] bg-[var(--ap-text)] shadow"
+          animate={{ left: `${pct}%` }}
+          initial={false}
+          transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+        />
+      </div>
+      <div className="flex justify-between text-[12px] text-faint tabular-nums">
+        {[-3, -2, -1, 0, 1, 2, 3].map((t) => (
+          <span key={t}>{t > 0 ? `+${t}` : t}</span>
+        ))}
+      </div>
+      <div className="flex justify-between text-[12px] text-muted">
+        <span>Drier</span>
+        <span>Wetter</span>
+      </div>
+    </div>
   );
 }
 
 function SpeiSeries({ station }: { station: Station }) {
   const series = station.spei["3"];
-  const w = 880;
-  const h = 210;
+  const [ref, w] = useElementWidth<HTMLDivElement>(880);
+  const h = 220;
   const padL = 34;
-  const padB = 24;
+  const padB = 26;
   const padR = 10;
   const innerW = w - padL - padR;
   const innerH = h - 12 - padB;
@@ -517,56 +447,61 @@ function SpeiSeries({ station }: { station: Station }) {
   const atMonth = hover.index == null ? null : station.months[hover.index];
   const atValue = hover.index == null ? null : series[hover.index];
 
+  // A label every five years, starting from the first January.
+  const yearTicks = station.months
+    .map((m, i) => ({ ...m, i }))
+    .filter((m) => m.m === 1 && m.y % 5 === 0);
+
   return (
-    <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+    <div ref={ref} className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
       <HoverReadout hover={hover} left={padL} right={padR} width={w}>
         {atMonth && (
           <>
             {MONTH_ABBR[atMonth.m - 1]} {atMonth.y} &middot;{" "}
-            {atValue == null
-              ? "no value"
-              : `SPEI-3 ${atValue > 0 ? "+" : ""}${atValue.toFixed(2)} · ${indexBand(atValue)}`}
+            {atValue == null ? "no value" : `${atValue > 0 ? "+" : ""}${atValue.toFixed(2)} · ${indexBand(atValue)}`}
           </>
         )}
       </HoverReadout>
-      <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
-      <rect x={padL} y={y(-1)} width={innerW} height={y(-3) - y(-1)} fill="#D96565" fillOpacity={0.06} />
-      <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.1 }}>
-        {[-2, -1, 0, 1, 2].map((t) => (
-          <line key={t} x1={padL} x2={w - 10} y1={y(t)} y2={y(t)} />
-        ))}
-      </g>
+      <svg width={w} height={h} className="block">
+        <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
+          {[-2, -1, 1, 2].map((t) => (
+            <line key={t} x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} strokeDasharray={t === -1 ? "3 3" : undefined} />
+          ))}
+        </g>
 
-      {series.map((v, i) => {
-        if (v == null) return null;
-        const top = Math.min(y(v), zero);
-        const hh = Math.abs(y(v) - zero);
-        return (
-          <rect
-            key={i}
-            x={padL + i * bw}
-            y={top}
-            width={Math.max(0.7, bw - 0.4)}
-            height={Math.max(0.6, hh)}
-            fill={v <= -1 ? "#D96565" : v < 0 ? "#E7A83B" : "var(--ap-accent)"}
-            fillOpacity={hover.index === i ? 1 : v <= -1 ? 0.95 : 0.7}
-          />
-        );
-      })}
+        {series.map((v, i) => {
+          if (v == null) return null;
+          const top = Math.min(y(v), zero);
+          const hh = Math.abs(y(v) - zero);
+          return (
+            <rect
+              key={i}
+              x={padL + i * bw}
+              y={top}
+              width={Math.max(0.8, bw - 0.6)}
+              height={Math.max(0.6, hh)}
+              rx={Math.min(1.5, bw / 3)}
+              fill={v <= -1 ? "#D96565" : v < 0 ? "#E7A83B" : "var(--ap-accent)"}
+              fillOpacity={hover.index === i ? 1 : 0.8}
+            />
+          );
+        })}
 
-      <HoverGuide hover={hover} left={padL} right={padR} width={w} top={12} bottom={h - padB} />
+        <HoverGuide hover={hover} left={padL} right={padR} width={w} top={12} bottom={h - padB} />
+        <line x1={padL} x2={w - padR} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }} />
 
-      <line x1={padL} x2={w - 10} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.4 }} />
-
-      <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
-        {[2, 0, -2].map((t) => (
-          <text key={t} x={padL - 6} y={y(t) + 3} textAnchor="end">
-            {t > 0 ? `+${t}` : t}
-          </text>
-        ))}
-        <text x={padL} y={h - 6}>{station.months[0].y}</text>
-        <text x={w - 10} y={h - 6} textAnchor="end">{station.months[station.months.length - 1].y}</text>
-      </g>
+        <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
+          {[2, 0, -2].map((t) => (
+            <text key={t} x={padL - 8} y={y(t) + 4} textAnchor="end">
+              {t > 0 ? `+${t}` : t}
+            </text>
+          ))}
+          {yearTicks.map((m) => (
+            <text key={m.i} x={padL + m.i * bw} y={h - 6} textAnchor="middle">
+              {m.y}
+            </text>
+          ))}
+        </g>
       </svg>
     </div>
   );

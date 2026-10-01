@@ -20,22 +20,11 @@ if (typeof window !== "undefined") {
 }
 
 /**
- * The real map: MapLibre GL over CARTO's keyless vector basemap. The drought
- * layer is a continuous field resampled from /api/grid and slotted *beneath*
- * the basemap's water fill, so the sea and the lakes mask it and the place
- * labels stay legible on top.
+ * The real map: MapLibre GL over ESRI satellite imagery, on every map in the
+ * app. The drought layer is a continuous field resampled from /api/grid and
+ * slotted *beneath* a water fill, so the sea and the lakes mask it, and
+ * beneath the place labels so they stay legible on top.
  */
-
-const BASE_STYLE = {
-  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-} as const;
-
-/**
- * Both CARTO styles put the water fill at this id, with every label above it.
- * Inserting the surface before it keeps the overlay on land.
- */
-const BENEATH = "water";
 
 export const DEFAULT_VIEW = { longitude: 9.55, latitude: 37.13, zoom: 8.6 };
 
@@ -87,7 +76,6 @@ export type SurfaceInfo = Omit<GridPayload, "grid" | "region">;
 
 export interface MapViewProps {
   layer?: "risk" | "none";
-  base?: "map" | "satellite";
   sensors?: boolean;
   legend?: boolean;
   opacity?: number;
@@ -114,33 +102,6 @@ function loadGrid(): Promise<GridPayload> {
 }
 
 /**
- * Resolves the theme the way the stylesheet does: from the nearest
- * `[data-theme]` ancestor. The marketing pages pin dark with a wrapper while
- * the global store may say light, and the basemap has to follow the wrapper
- * or it lands light-on-dark.
- */
-function useScopedTheme(ref: React.RefObject<HTMLDivElement | null>) {
-  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
-
-  React.useEffect(() => {
-    const read = () => {
-      const scope = ref.current?.closest("[data-theme]") as HTMLElement | null;
-      setTheme(scope?.dataset.theme === "light" ? "light" : "dark");
-    };
-    read();
-    const observer = new MutationObserver(read);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const scope = ref.current?.closest("[data-theme]");
-    if (scope && scope !== document.documentElement) {
-      observer.observe(scope, { attributes: true, attributeFilter: ["data-theme"] });
-    }
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return theme;
-}
-
-/**
  * The two rotation paths MapLibre leaves on after `dragRotate={false}`:
  * pinch-twist on touch, and shift+arrow on the keyboard. Both are turned off
  * without disabling their handlers wholesale, so pinch-zoom and keyboard
@@ -157,7 +118,6 @@ function lockToPlan(e: { target: MapLibreMap }) {
 
 export function MapView({
   layer = "risk",
-  base = "map",
   sensors = false,
   legend = false,
   opacity = 0.65,
@@ -168,7 +128,6 @@ export function MapView({
   onSurface,
 }: MapViewProps) {
   const hostRef = React.useRef<HTMLDivElement | null>(null);
-  const dark = useScopedTheme(hostRef) === "dark";
   const mapRef = React.useRef<MapRef | null>(null);
 
   const [payload, setPayload] = React.useState<GridPayload | null>(null);
@@ -191,6 +150,7 @@ export function MapView({
           weights: d.weights,
           entropy: d.entropy,
           factors: d.factors,
+          ndvi: d.ndvi,
         });
       })
       .catch((e) => live && setError(String(e)));
@@ -208,11 +168,6 @@ export function MapView({
     if (!payload || typeof window === "undefined") return null;
     return renderRiskImage(payload.grid).toDataURL("image/png");
   }, [payload]);
-
-  const style = React.useMemo<string | StyleSpecification>(
-    () => (base === "satellite" ? SATELLITE_STYLE : BASE_STYLE[dark ? "dark" : "light"]),
-    [base, dark],
-  );
 
   /** The raster is draped on the region's bounding box, north-west first. */
   const imageCoordinates = React.useMemo(() => {
@@ -257,7 +212,7 @@ export function MapView({
     <div ref={hostRef} className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
       <Map
         ref={mapRef}
-        mapStyle={style}
+        mapStyle={SATELLITE_STYLE}
         initialViewState={DEFAULT_VIEW}
         maxBounds={MAX_BOUNDS}
         minZoom={6}
@@ -294,7 +249,7 @@ export function MapView({
             <Layer
               id="risk-raster"
               type="raster"
-              beforeId={base === "satellite" ? undefined : BENEATH}
+              beforeId={SATELLITE_WATER}
               paint={{
                 "raster-opacity": opacity,
                 "raster-resampling": "linear",
@@ -326,6 +281,7 @@ export function MapView({
                     width: 9,
                     height: 9,
                     background: "var(--ap-teal)",
+                    borderRadius: "50%",
                     outline: "1.5px solid var(--ap-bg)",
                   }}
                 />
@@ -337,7 +293,7 @@ export function MapView({
 
         {hover && (
           <Popup longitude={hover.lng} latitude={hover.lat} closeButton={false} closeOnClick={false} offset={14}>
-            <span className="font-mono text-[11px]">risk {hover.risk}</span>
+            <span className="text-[12.5px]">Risk <strong>{hover.risk}</strong></span>
           </Popup>
         )}
 
@@ -346,25 +302,25 @@ export function MapView({
       </Map>
 
       {mapError && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit max-w-[90%] rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 text-center font-mono text-[10.5px] text-extreme-ink backdrop-blur">
-          basemap error &middot; {mapError}
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-1.5 text-[12.5px] shadow-pop backdrop-blur max-w-[90%] text-center text-extreme-ink">
+          Map could not load: {mapError}
         </div>
       )}
 
       {error && !mapError && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
-          live risk surface unavailable &middot; basemap only
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-1.5 text-[12.5px] shadow-pop backdrop-blur text-muted">
+          Risk layer unavailable right now
         </div>
       )}
 
       {!payload && !error && layer !== "none" && (
-        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_92%,transparent)] px-3 py-1.5 font-mono text-[10.5px] text-muted backdrop-blur">
-          loading risk surface&hellip;
+        <div className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-1.5 text-[12.5px] shadow-pop backdrop-blur text-muted">
+          Loading the risk layer&hellip;
         </div>
       )}
 
       {legend && (
-        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-2.5 rounded-control border border-divider bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-2.5 py-[7px] font-mono text-[10px] uppercase tracking-[0.06em] text-muted backdrop-blur-md">
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-3 rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-1.5 text-[12px] text-muted shadow-pop backdrop-blur-md">
           {(
             [
               ["Safe", "#38A88A"],
@@ -374,7 +330,7 @@ export function MapView({
             ] as const
           ).map(([l, c]) => (
             <span key={l} className="flex items-center gap-1.5">
-              <span className="size-2" style={{ background: c }} />
+              <span className="size-2.5 rounded-full" style={{ background: c }} />
               {l}
             </span>
           ))}
@@ -405,7 +361,17 @@ function SelectedMarker({ payload, index }: { payload: GridPayload; index: numbe
   );
 }
 
-/** Keyless satellite raster (ESRI World Imagery), styled as a MapLibre source. */
+/**
+ * Keyless satellite raster (ESRI World Imagery) with ESRI's transparent
+ * boundaries-and-places layer on top, so towns and borders stay named.
+ *
+ * Imagery has no water layer to slot the risk surface beneath, and the ~9 km
+ * model cells overhang the coast in blocks. So a water fill from OpenFreeMap
+ * (keyless OpenMapTiles vectors) is drawn over the surface in the sea's own
+ * colour, so the surface stops at the coastline and the lakes.
+ */
+const SATELLITE_WATER = "sat-water";
+const SATELLITE_LABELS = "esri-labels";
 const SATELLITE_STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -413,8 +379,30 @@ const SATELLITE_STYLE: StyleSpecification = {
       type: "raster",
       tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
       tileSize: 256,
-      attribution: "Imagery &copy; Esri",
+      attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics",
+    },
+    ofm: {
+      type: "vector",
+      url: "https://tiles.openfreemap.org/planet",
+      attribution: "&copy; OpenMapTiles &copy; OpenStreetMap contributors",
+    },
+    "esri-labels": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
     },
   },
-  layers: [{ id: "esri", type: "raster", source: "esri" }],
+  layers: [
+    { id: "esri", type: "raster", source: "esri" },
+    {
+      id: SATELLITE_WATER,
+      type: "fill",
+      source: "ofm",
+      "source-layer": "water",
+      paint: { "fill-color": "#0e2330", "fill-antialias": true },
+    },
+    { id: SATELLITE_LABELS, type: "raster", source: "esri-labels" },
+  ],
 };

@@ -41,6 +41,12 @@ export function AppShell({
   const [browse, setBrowse] = React.useState(site.cc);
 
   const isFarmer = role === "farmer";
+  // The palette opens on ⌘K on a Mac and Ctrl+K elsewhere; the hint says which.
+  const isMac = React.useSyncExternalStore(
+    noopSubscribe,
+    () => /Mac|iPhone|iPad/.test(navigator.platform),
+    () => false,
+  );
   const groups = isFarmer ? [FARM_NAV] : NAV;
   const base = isFarmer ? "/farm" : "/app";
   const user = IDENTITY[role];
@@ -78,8 +84,8 @@ export function AppShell({
       {groups.map((g) => (
         <div key={g.key} className="flex flex-col gap-px">
           {expanded ? (
-            <div className="px-2 py-1.5 font-mono text-[10px] tracking-[0.12em] text-faint">
-              {fr ? g.fr : g.key}
+            <div className="px-2.5 pb-1 pt-2 text-[12px] font-medium text-faint">
+              {sentence(fr ? g.fr : g.key)}
             </div>
           ) : (
             <div className="mx-1.5 mb-2 mt-1.5 h-px bg-divider" />
@@ -93,18 +99,15 @@ export function AppShell({
                 title={fr ? it.fr : it.en}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-8 items-center gap-2.5 border px-2.5 transition-colors duration-150",
-                  active
-                    ? "border-[color-mix(in_srgb,var(--ap-accent)_30%,transparent)] bg-accent-100 text-ink"
-                    : "border-transparent text-muted hover:border-divider hover:text-ink",
+                  "relative flex h-9 items-center gap-2.5 rounded-[10px] px-2.5 transition-colors duration-150",
+                  active ? "bg-accent-100 font-semibold text-ink" : "text-muted hover:bg-neutral-100 hover:text-ink",
                 )}
               >
-                {active && <span className="absolute -inset-y-px -left-px w-0.5 bg-accent" />}
                 <span className={active ? "text-accent" : undefined}>
-                  <Icon name={it.icon} size={16} />
+                  <Icon name={it.icon} size={17} strokeWidth={active ? 2 : 1.6} />
                 </span>
                 {expanded && (
-                  <span className="flex-1 whitespace-nowrap text-[13.5px] font-medium">
+                  <span className="flex-1 whitespace-nowrap text-[14px]">
                     {fr ? it.fr : it.en}
                   </span>
                 )}
@@ -128,8 +131,8 @@ export function AppShell({
           {expanded && (
             <div className="flex flex-col leading-none">
               <span className="font-heading text-xl font-semibold tracking-[0.02em]">APWRS</span>
-              <span className="mt-[3px] font-mono text-[9px] tracking-[0.1em] text-muted">
-                {isFarmer ? "MY FARM" : "PLANTING · DROUGHT"}
+              <span className="mt-[3px] text-[11.5px] text-muted">
+                {isFarmer ? "My farm" : "Planting & drought"}
               </span>
             </div>
           )}
@@ -139,17 +142,19 @@ export function AppShell({
 
         <div className="flex flex-col gap-2 border-t border-divider p-2.5">
           {expanded && (
-            <div className="flex flex-col gap-1 border border-divider px-2.5 py-2 font-mono text-[10.5px] text-muted">
-              <div className="flex items-center gap-1.5 text-ink">
-                <span className="size-1.5 bg-accent" />
-                RECORD {COVERAGE.from.slice(0, 4)}&ndash;{COVERAGE.to.slice(0, 4)}
+            <div className="flex items-center gap-2.5 rounded-[12px] bg-neutral-100 px-3 py-2.5 text-[12px] text-muted">
+              <Icon name="database" size={15} />
+              <div className="flex flex-col leading-snug">
+                <span className="text-ink">
+                  Weather {COVERAGE.from.slice(0, 4)}&ndash;{COVERAGE.to.slice(0, 4)}
+                </span>
+                <span>Updated {climateFile.generatedAt.slice(0, 10)}</span>
               </div>
-              <div>Derived {climateFile.generatedAt.slice(0, 10)}</div>
             </div>
           )}
           <button
             onClick={toggleSidebar}
-            className="flex h-8 items-center gap-2.5 px-2.5 text-muted transition-colors hover:text-ink"
+            className="flex h-9 items-center gap-2.5 rounded-[10px] px-2.5 text-muted transition-colors hover:bg-neutral-100 hover:text-ink"
           >
             <Icon name="panel" size={16} />
             {expanded && <span className="text-[13px]">{fr ? "Réduire le menu" : "Collapse sidebar"}</span>}
@@ -206,10 +211,10 @@ export function AppShell({
             <Icon name="menu" size={18} />
           </button>
 
-          <div className="hidden min-w-0 items-center gap-2 whitespace-nowrap font-mono text-[11.5px] tracking-[0.04em] text-muted xl:flex">
-            <span>{crumbGroup}</span>
+          <div className="hidden min-w-0 items-center gap-2 whitespace-nowrap text-[13.5px] text-muted xl:flex">
+            <span>{sentence(crumbGroup)}</span>
             <span className="text-faint">/</span>
-            <span className="text-ink">{crumbPage}</span>
+            <span className="font-semibold text-ink">{crumbPage}</span>
           </div>
           <div className="mx-2 hidden h-[22px] w-px bg-divider xl:block" />
 
@@ -220,7 +225,7 @@ export function AppShell({
             trigger={
               <MenuTrigger onClick={() => setBrowse(site.cc)}>
                 <Icon name="pin" size={14} />
-                <span className="font-mono text-[11px] text-muted">{site.cc}</span>
+                <span className="text-[12px] text-muted">{site.cc}</span>
                 <span className="text-faint">/</span>
                 <span className="font-medium">{site.name}</span>
                 <Icon name="down" size={14} />
@@ -229,11 +234,11 @@ export function AppShell({
           >
             <div className="grid grid-cols-1 sm:grid-cols-[170px_1fr]">
               <div className="border-b border-divider p-2 sm:border-b-0 sm:border-r">
-                <div className="px-2 py-1.5 font-mono text-[10px] tracking-[0.1em] text-faint">COUNTRY</div>
+                <div className="px-2 py-1.5 text-[12px] font-medium text-faint">Country</div>
                 {COUNTRIES.map((c) => (
                   <PopoverRow key={c.cc} selected={c.cc === browse} onClick={() => setBrowse(c.cc)} className="h-8">
                     <span className="flex items-center gap-2">
-                      <span className="w-[18px] font-mono text-[10.5px] text-muted">{c.cc}</span>
+                      <span className="w-[20px] text-[12px] text-muted">{c.cc}</span>
                       {c.name}
                     </span>
                     <span className="ml-auto">
@@ -243,9 +248,7 @@ export function AppShell({
                 ))}
               </div>
               <div className="p-2">
-                <div className="px-2 py-1.5 font-mono text-[10px] tracking-[0.1em] text-faint">
-                  SITE &middot; {browseCountry.name.toUpperCase()}
-                </div>
+                <div className="px-2 py-1.5 text-[12px] font-medium text-faint">Sites in {browseCountry.name}</div>
                 {browseCountry.sites.map((s) => {
                   const on = site.cc === browseCountry.cc && site.name === s.name;
                   return (
@@ -256,7 +259,7 @@ export function AppShell({
                     >
                       <span className="flex flex-col">
                         <span className="font-medium">{s.name}</span>
-                        <span className="font-mono text-[10px] text-muted">{s.coord}</span>
+                        <span className="text-[11.5px] text-muted">{s.coord}</span>
                       </span>
                       {on && (
                         <span className="ml-auto text-accent">
@@ -277,15 +280,15 @@ export function AppShell({
             trigger={
               <MenuTrigger className="hidden md:flex">
                 <Icon name="calendar" size={14} />
-                <span className="font-mono text-xs">{season}</span>
+                <span className="text-[13px]">{season}</span>
                 <Icon name="down" size={14} />
               </MenuTrigger>
             }
           >
-            <MenuLabel>SEASON</MenuLabel>
+            <MenuLabel>Season</MenuLabel>
             {SEASONS.map((y) => (
               <MenuItem key={y.label} hint={y.note} onSelect={() => setSeason(y.label)}>
-                <span className="font-mono text-xs">{y.label}</span>
+                <span className="text-[13px]">{y.label}</span>
               </MenuItem>
             ))}
             <MenuSeparator />
@@ -301,32 +304,33 @@ export function AppShell({
             <>
               <button
                 onClick={() => setCmdOpen(true)}
-                className="hidden h-8 w-[260px] items-center gap-2.5 border border-divider px-2.5 text-[13px] text-muted transition-colors hover:border-divider-strong hover:text-ink xl:flex"
+                className="hidden h-9 w-[260px] items-center gap-2.5 rounded-full bg-neutral-100 px-3.5 text-[13px] text-muted transition-colors hover:text-ink xl:flex"
               >
                 <Icon name="search" size={14} />
                 <span className="flex-1 text-left">{fr ? "Rechercher…" : "Search…"}</span>
-                <span className="border border-divider px-1.5 font-mono text-[10.5px]">&#8984;K</span>
+                <kbd className="rounded-[6px] bg-s2 px-1.5 py-px font-sans text-[11px] font-semibold text-muted">
+                  {isMac ? "⌘K" : "Ctrl K"}
+                </kbd>
               </button>
               <button
                 onClick={() => setCmdOpen(true)}
                 aria-label="Search"
-                className="grid size-8 place-items-center border border-divider text-muted hover:text-ink xl:hidden"
+                className="grid size-9 place-items-center rounded-full bg-neutral-100 text-muted hover:text-ink xl:hidden"
               >
                 <Icon name="search" size={15} />
               </button>
             </>
           )}
 
-          <div className="hidden h-8 border border-divider sm:flex">
-            {(["en", "fr"] as const).map((l, i) => (
+          <div className="hidden h-9 gap-0.5 rounded-full bg-neutral-100 p-[3px] sm:flex">
+            {(["en", "fr"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
                 aria-pressed={lang === l}
                 className={cn(
-                  "flex items-center px-2.5 font-mono text-[11px] transition-colors",
-                  i > 0 && "border-l border-divider",
-                  lang === l ? "bg-s3 text-ink" : "text-muted hover:text-ink",
+                  "flex items-center rounded-full px-2.5 text-[12px] font-semibold transition-colors",
+                  lang === l ? "bg-s2 text-ink shadow-[0_1px_3px_rgb(0_0_0/0.18)]" : "text-muted hover:text-ink",
                 )}
               >
                 {l.toUpperCase()}
@@ -337,7 +341,7 @@ export function AppShell({
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
-            className="grid size-8 flex-none place-items-center border border-divider transition-colors hover:border-divider-strong"
+            className="grid size-9 flex-none place-items-center rounded-full bg-neutral-100 text-muted transition-colors hover:text-ink"
           >
             <Icon name={mounted && theme === "dark" ? "sun" : "moon"} size={15} />
           </button>
@@ -345,7 +349,7 @@ export function AppShell({
           <button
             onClick={() => router.push(`${base}/alerts`)}
             aria-label="Notifications"
-            className="relative grid size-8 flex-none place-items-center border border-divider transition-colors hover:border-divider-strong"
+            className="relative grid size-9 flex-none place-items-center rounded-full bg-neutral-100 text-muted transition-colors hover:text-ink"
           >
             <Icon name="bell" size={15} />
           </button>
@@ -355,19 +359,19 @@ export function AppShell({
             className="w-[220px]"
             trigger={
               <button className="flex h-8 items-center gap-2 px-1 transition-opacity hover:opacity-85">
-                <span className="grid size-7 place-items-center border border-divider bg-s3 font-mono text-[11px]">
+                <span className="grid size-8 place-items-center rounded-full bg-accent-100 text-[12px] font-semibold text-accent">
                   {user.initials}
                 </span>
                 <span className="hidden flex-col text-left leading-[1.15] sm:flex">
                   <span className="text-[12.5px] font-medium">{user.view}</span>
-                  <span className="font-mono text-[10px] text-muted">{user.note}</span>
+                  <span className="text-[11.5px] text-muted">{user.note}</span>
                 </span>
               </button>
             }
           >
             <div className="mb-1 border-b border-divider px-2.5 py-2">
               <div className="text-[13px]">{user.note}</div>
-              <div className="font-mono text-[10px] text-muted">
+              <div className="text-[11.5px] text-muted">
                 {isFarmer ? "farmer view" : "expert view"}
               </div>
             </div>
@@ -382,7 +386,7 @@ export function AppShell({
           </Menu>
         </header>
 
-        <main className={cn("dot-grid relative min-h-0 flex-1", !isFarmer && current === "map" ? "overflow-hidden" : "overflow-auto")}>
+        <main className={cn("relative min-h-0 flex-1", !isFarmer && current === "map" ? "overflow-hidden" : "overflow-auto")}>
           {children}
         </main>
       </div>
@@ -391,3 +395,10 @@ export function AppShell({
     </div>
   );
 }
+
+/** "MONITOR" → "Monitor": the nav group keys are stored in capitals. */
+function sentence(s: string) {
+  return s ? s.charAt(0) + s.slice(1).toLocaleLowerCase() : s;
+}
+
+const noopSubscribe = () => () => {};

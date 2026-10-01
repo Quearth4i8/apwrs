@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
+import { Bean, LeafyGreen, TreeDeciduous, Wheat, type LucideIcon } from "lucide-react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
 import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { CROPS, station as stationById, stationForSite, type Crop } from "@/lib/climate";
-import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
+import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
 import { Menu, MenuItem, MenuLabel, MenuTrigger } from "@/components/ui/dropdown";
 import {
   bands,
@@ -16,7 +17,6 @@ import {
   decadeDate,
   decadeLabel,
   DECADES_PER_YEAR,
-  MONTH_ABBR,
   periodScore,
   cycleYears,
   etcCurve,
@@ -72,20 +72,14 @@ export function PagePlanting() {
   const current = selected ? rows.find((r) => r.crop.id === selected) : null;
 
   return (
-    <div className="flex flex-col gap-5.5 px-4 pb-12 pt-7 sm:px-8">
+    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        kicker={
-          <>
-            ANALYSIS &middot; SOWING WATER ADEQUACY &middot; {station.name.toUpperCase()} &middot;{" "}
-            {station.coverage.years} YEARS
-          </>
-        }
         title="Planting calendar"
         lede={
           <>
-            Where rain alone can carry each crop, by sowing date. Bands score{" "}
-            <strong className="font-medium text-ink">rainfall adequacy only</strong> &mdash; temperature and day
-            length are not in the record, so this cannot say when a warm-season crop belongs in the ground.
+            When rain alone is enough for each crop, by sowing date, from {station.coverage.years} years of weather
+            at {station.name}. It looks at <strong className="font-semibold text-ink">rain only</strong>, not
+            temperature or day length.
           </>
         }
         actions={
@@ -93,9 +87,9 @@ export function PagePlanting() {
             value={shade}
             onChange={setShade}
             options={[
-              { value: "class", label: "Bands" },
-              { value: "establishment", label: "Establishment" },
-              { value: "coverage", label: "Coverage" },
+              { value: "class", label: "Rain level" },
+              { value: "establishment", label: "Chance to take" },
+              { value: "coverage", label: "Rain covers need" },
             ]}
           />
         }
@@ -103,10 +97,16 @@ export function PagePlanting() {
 
       {/* ── What is open right now ────────────────────────────────────── */}
       <Panel className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <span className="size-2 flex-none rounded-full" style={{ background: WATER_CLASS.reliable.color }} />
-          <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
-            OPEN NOW &middot; {decadeLabel(today)}
+        <div className="flex items-center gap-3">
+          <span
+            className="grid size-10 flex-none place-items-center rounded-[10px]"
+            style={{ color: WATER_CLASS.reliable.color, background: "rgb(56 168 138 / 0.14)" }}
+          >
+            <Icon name="sprout" size={20} strokeWidth={1.8} />
+          </span>
+          <span className="flex flex-col">
+            <span className="text-[15px] font-semibold">Good to sow now</span>
+            <span className="text-[12.5px] text-muted">Period starting {decadeLabel(today)}</span>
           </span>
         </div>
         {openNow.length ? (
@@ -115,12 +115,11 @@ export function PagePlanting() {
               <button
                 key={crop.id}
                 onClick={() => setSelected(crop.id)}
-                className="flex items-center gap-2 rounded-inset border px-2.5 py-1 text-[13px] transition-colors hover:bg-neutral-100"
-                style={{ borderColor: "rgb(56 168 138 / 0.45)", background: "rgb(56 168 138 / 0.10)" }}
+                className="flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13.5px] transition-colors hover:brightness-110"
+                style={{ background: "rgb(56 168 138 / 0.14)" }}
               >
-                <Icon name="sprout" size={13} />
                 {crop.name}
-                <span className="font-mono text-[10.5px] text-muted">
+                <span className="text-[12px] text-muted">
                   {((status.here?.establishmentProb ?? 0) * 100).toFixed(0)}%
                 </span>
               </button>
@@ -136,78 +135,91 @@ export function PagePlanting() {
 
       {/* ── Season calendar ───────────────────────────────────────────── */}
       <Panel className="flex flex-col overflow-x-auto">
-        <div className="min-w-[860px]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-5 py-3.5">
-            <span className="font-heading text-lg font-semibold">Season calendar &middot; Sep &rarr; Aug</span>
-            <span className="flex flex-wrap gap-4 font-mono text-[10.5px] text-muted">
+        <div className="min-w-[900px]">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 pb-4 pt-5">
+            <span className="flex flex-col gap-0.5">
+              <span className="text-[16px] font-semibold">Season calendar</span>
+              <span className="text-[13px] text-muted">September to August &middot; click a crop for details</span>
+            </span>
+            <span className="flex flex-wrap gap-2">
               {(Object.keys(WATER_CLASS) as (keyof typeof WATER_CLASS)[]).map((k) => (
-                <span key={k} className="flex items-center gap-1.5">
-                  <span
-                    className="h-2.5 w-4 rounded-[2px]"
-                    style={{ background: WATER_CLASS[k].fill, border: `1px solid ${WATER_CLASS[k].color}` }}
-                  />
+                <span
+                  key={k}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px]"
+                  style={{ background: `color-mix(in srgb, ${WATER_CLASS[k].color} 12%, transparent)` }}
+                >
+                  <span className="size-2.5 rounded-full" style={{ background: WATER_CLASS[k].color }} />
                   {WATER_CLASS[k].label}
                 </span>
               ))}
-            </span>
-          </div>
-
-          {/* Month ruler */}
-          <div
-            className="grid border-b border-divider"
-            style={{ gridTemplateColumns: `168px repeat(${DECADES_PER_YEAR}, 1fr)` }}
-          >
-            <div />
-            {months.map((m, i) => (
-              <div
-                key={`${m.label}-${i}`}
-                className="border-l border-divider px-2 py-2 font-mono text-[10.5px] tracking-[0.08em] text-muted"
-                style={{ gridColumn: `span ${m.span}` }}
-              >
-                {m.label}
-              </div>
-            ))}
-          </div>
-
-          {/* One row per crop */}
-          <div className="relative">
-            {rows.map(({ crop, decades, status }) => (
-              <CropRow
-                key={crop.id}
-                crop={crop}
-                decades={decades}
-                shade={shade}
-                selected={selected === crop.id}
-                onSelect={() => setSelected(selected === crop.id ? null : crop.id)}
-                waitDays={status.waitDays}
-                openNow={status.openNow}
-              />
-            ))}
-
-            {/* Today, drawn across every row */}
-            <div
-              className="pointer-events-none absolute inset-y-0 w-px bg-ink opacity-55"
-              style={{
-                left: `calc(168px + (100% - 168px) * ${(todayIndex + 0.5) / DECADES_PER_YEAR})`,
-              }}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 font-mono text-[10.5px] text-muted">
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-px bg-ink opacity-55" />
-              today &middot; {decadeLabel(today)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="flex h-[6px] w-5 items-end">
-                <span className="h-[6px] w-px bg-accent" />
-                <span className="h-px flex-1 bg-accent" />
-                <span className="h-[6px] w-px bg-accent" />
+              <span className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 text-[12.5px]">
+                <span className="h-2.5 w-4 rounded-full border-2 border-ink/70" />
+                Usual sowing month
               </span>
-              sowing month recorded in the crop table
             </span>
-            <span className="ml-auto">
-              {DECADES_PER_YEAR} ten-day periods &middot; {rows[0]?.decades[0]?.years ?? 0} years each
+          </div>
+
+          <div className="relative">
+            {/* Alternate months are shaded, all the way down the rows. */}
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 grid"
+              style={{ left: LABEL_W, gridTemplateColumns: `repeat(${DECADES_PER_YEAR}, 1fr)` }}
+            >
+              {months.map((m, i) => (
+                <span
+                  key={`${m.label}-${i}`}
+                  className={i % 2 ? "" : "bg-neutral-100"}
+                  style={{ gridColumn: `span ${m.span}`, opacity: 0.6 }}
+                />
+              ))}
+            </div>
+
+            {/* Month ruler, with today pinned on it */}
+            <div className="relative grid" style={{ gridTemplateColumns: `${LABEL_W}px repeat(${DECADES_PER_YEAR}, 1fr)` }}>
+              <div />
+              {months.map((m, i) => (
+                <div
+                  key={`${m.label}-${i}`}
+                  className="px-2.5 pb-2.5 pt-1 text-[12.5px] font-medium text-muted"
+                  style={{ gridColumn: `span ${m.span}` }}
+                >
+                  {m.label.charAt(0) + m.label.slice(1).toLowerCase()}
+                </div>
+              ))}
+            </div>
+
+            {/* One row per crop */}
+            <div className="relative flex flex-col gap-1 px-2 pb-2">
+              {rows.map(({ crop, decades, status }) => (
+                <CropRow
+                  key={crop.id}
+                  crop={crop}
+                  decades={decades}
+                  shade={shade}
+                  selected={selected === crop.id}
+                  onSelect={() => setSelected(selected === crop.id ? null : crop.id)}
+                  waitDays={status.waitDays}
+                  openNow={status.openNow}
+                />
+              ))}
+            </div>
+
+            {/* Today, drawn across every row, labelled at the top */}
+            <div
+              className="pointer-events-none absolute bottom-2 top-7 flex w-0 flex-col items-center"
+              style={{ left: `calc(${LABEL_W}px + (100% - ${LABEL_W}px) * ${(todayIndex + 0.5) / DECADES_PER_YEAR})` }}
+            >
+              <span className="-mt-1 whitespace-nowrap rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold text-bg">
+                Today
+              </span>
+              <span className="w-0.5 flex-1 rounded-full bg-ink opacity-60" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-divider px-5 py-3.5 text-[12.5px] text-muted">
+            <span>Today is in the period starting {decadeLabel(today)}.</span>
+            <span className="ml-auto text-faint">
+              Colours are scored for every 10-day sowing period over {rows[0]?.decades[0]?.years ?? 0} years
             </span>
           </div>
         </div>
@@ -222,21 +234,52 @@ export function PagePlanting() {
           stationYears={station.coverage.years}
         />
       ) : (
-        <Panel className="flex items-center gap-3 px-5 py-4 text-[13px] text-muted">
-          <Icon name="info" size={14} />
-          Select a crop row for its coefficients, its best period and how the bands were computed.
+        <Panel className="flex items-center gap-3 px-5 py-4 text-[13.5px] text-muted">
+          <Icon name="info" size={15} />
+          Click a crop in the calendar to see its best sowing period and water needs.
         </Panel>
       )}
 
       <Provenance>
-        {station.name} &middot; {station.coverage.days.toLocaleString("en-GB")} daily observations &middot;
-        establishment = P(&ge;20 mm in the 21 days after sowing)
+        {station.name}, {station.coverage.days.toLocaleString("en-GB")} days of weather. &ldquo;Chance to take&rdquo; is
+        how often at least 20 mm of rain fell in the 3 weeks after sowing.
       </Provenance>
     </div>
   );
 }
 
 /* ── A crop row ──────────────────────────────────────────────────────── */
+
+const LABEL_W = 232;
+
+/**
+ * Crops are drawn by family with Lucide icons: no maintained icon set has a
+ * tomato, garlic, potato, olive or lentil, and a family icon beside the crop
+ * name reads cleaner than a drawing of each. The tint tells the families apart.
+ */
+const FAMILY = {
+  cereal: { Icon: Wheat, tint: "#C9962E" },
+  legume: { Icon: Bean, tint: "#38A88A" },
+  vegetable: { Icon: LeafyGreen, tint: "#8E7CC3" },
+  tree: { Icon: TreeDeciduous, tint: "#6F9A4E" },
+} satisfies Record<string, { Icon: LucideIcon; tint: string }>;
+
+const CROP_FAMILY: Record<string, keyof typeof FAMILY> = {
+  "tomate-de-saison": "vegetable",
+  garlic: "vegetable",
+  "pomme-de-terre": "vegetable",
+  barley: "cereal",
+  oats: "cereal",
+  "ble-dur": "cereal",
+  lentil: "legume",
+  feve: "legume",
+  olivier: "tree",
+};
+
+const MONTH_NAME = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
 function CropRow({
   crop,
@@ -257,11 +300,12 @@ function CropRow({
 }) {
   const runs = React.useMemo(() => bands(decades), [decades]);
   const order = React.useMemo(() => seasonOrder(), []);
+  const look = FAMILY[CROP_FAMILY[crop.id] ?? "vegetable"];
 
   /**
    * The crop table names a sowing MONTH, which covers three ten-day periods.
-   * Marking one of them with a dot implied a precision the source does not
-   * have, so it is drawn as a bracket under the row spanning the whole month.
+   * Marking one of them implied a precision the source does not have, so the
+   * whole month is outlined on the bar.
    */
   const statedSpan = React.useMemo(() => {
     const hits = order
@@ -272,89 +316,87 @@ function CropRow({
     return { start: Math.min(...hits), span: Math.max(...hits) - Math.min(...hits) + 1 };
   }, [order, crop.plantingMonth]);
 
+  const pct = (i: number) => `${(i / DECADES_PER_YEAR) * 100}%`;
+
   return (
     <button
       onClick={onSelect}
-      className="grid w-full border-b border-divider text-left transition-colors last:border-b-0 hover:bg-neutral-100"
+      aria-pressed={selected}
+      className="grid w-full items-center rounded-[14px] text-left transition-colors hover:bg-neutral-100"
       style={{
-        gridTemplateColumns: `168px repeat(${DECADES_PER_YEAR}, 1fr)`,
-        background: selected ? "var(--ap-neutral-100)" : "transparent",
-        boxShadow: selected ? "inset 2px 0 0 var(--ap-accent)" : undefined,
+        gridTemplateColumns: `${LABEL_W - 8}px 1fr`,
+        background: selected ? "var(--ap-accent-100)" : undefined,
+        boxShadow: selected ? "inset 0 0 0 1.5px color-mix(in srgb, var(--ap-accent) 60%, transparent)" : undefined,
       }}
     >
-      <span className="flex h-[52px] items-center gap-2.5 px-5">
-        <span style={{ color: openNow ? WATER_CLASS.reliable.color : "var(--ap-muted)" }}>
-          <Icon name="sprout" size={15} />
+      <span className="flex items-center gap-3 px-3 py-2.5">
+        <span
+          className="grid size-11 flex-none place-items-center rounded-[12px]"
+          style={{ color: look.tint, background: `color-mix(in srgb, ${look.tint} 15%, transparent)` }}
+        >
+          <look.Icon size={22} strokeWidth={1.75} aria-hidden="true" />
         </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate text-[13.5px]" style={{ fontWeight: selected ? 600 : 400 }}>
-            {crop.name}
-          </span>
-          <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted">
-            <span style={{ color: openNow ? WATER_CLASS.reliable.color : undefined }}>
-              {openNow ? "open now" : waitDays == null ? "never rain-reliable" : `next in ${waitDays} d`}
-            </span>
-            <span className="text-faint">&middot;</span>
-            <span className="text-faint">sow {MONTH_ABBR[crop.plantingMonth - 1]}</span>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="truncate text-[15px] font-semibold leading-tight">{crop.name}</span>
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-[12px] leading-none">
+            {openNow ? (
+              <span className="rounded-full px-2 py-[3px] font-semibold" style={{ color: "#2E8C72", background: "rgb(56 168 138 / 0.16)" }}>
+                Sow now
+              </span>
+            ) : (
+              <span className="rounded-full bg-neutral-100 px-2 py-[3px] text-muted">
+                {waitDays == null ? "Rain never enough" : `In ${waitDays} days`}
+              </span>
+            )}
+            <span className="text-faint">usually {MONTH_NAME[crop.plantingMonth - 1].slice(0, 3)}</span>
           </span>
         </span>
       </span>
 
-      {/* Column rules sit under the bands so the grid stays readable. */}
-      <span className="relative col-span-full col-start-2 h-[52px]">
-        <span
-          className="absolute inset-0 grid"
-          style={{ gridTemplateColumns: `repeat(${DECADES_PER_YEAR}, 1fr)` }}
-        >
-          {order.map((dec, i) => (
-            <span key={dec} className={i % 3 === 0 ? "border-l border-divider" : ""} />
-          ))}
+      {/* One continuous track; each run is a segment of it. */}
+      <span className="relative mr-1 h-7">
+        <span className="absolute inset-0 flex overflow-hidden rounded-full bg-neutral-100">
+          {runs.map((run, k) => {
+            const cls = WATER_CLASS[run.water];
+            const value =
+              shade === "establishment"
+                ? run.first.establishmentProb
+                : shade === "coverage"
+                  ? run.first.rainfedCoverage
+                  : 1;
+            // Marginal runs are long; kept quieter so the reliable windows lead.
+            const strength =
+              shade === "class" ? (run.water === "marginal" ? 38 : 68) : Math.round(20 + value * 70);
+            return (
+              <motion.span
+                key={`${run.water}-${run.start}`}
+                title={bandTitle(crop, run)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: run.start * 0.006 }}
+                className="absolute inset-y-0"
+                style={{
+                  left: pct(run.start),
+                  width: pct(run.span),
+                  background: `color-mix(in srgb, ${cls.color} ${strength}%, transparent)`,
+                  // A hairline of the panel between runs keeps the joins crisp.
+                  boxShadow: k > 0 ? "inset 2px 0 0 var(--ap-surface)" : undefined,
+                }}
+              />
+            );
+          })}
         </span>
-
-        {runs.map((run) => {
-          const cls = WATER_CLASS[run.water];
-          const value =
-            shade === "establishment"
-              ? run.first.establishmentProb
-              : shade === "coverage"
-                ? run.first.rainfedCoverage
-                : 1;
-          const background =
-            shade === "class"
-              ? cls.fill
-              : `color-mix(in srgb, ${cls.color} ${Math.round(value * 90)}%, transparent)`;
-          return (
-            <motion.span
-              key={`${run.water}-${run.start}`}
-              title={bandTitle(crop, run)}
-              initial={{ opacity: 0, scaleX: 0.96 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              transition={{ duration: 0.28, delay: run.start * 0.004, ease: [0.2, 0.8, 0.2, 1] }}
-              className="absolute inset-y-3 rounded-[3px]"
-              style={{
-                left: `${(run.start / DECADES_PER_YEAR) * 100}%`,
-                width: `${(run.span / DECADES_PER_YEAR) * 100}%`,
-                background,
-                border: `1px solid ${cls.color}`,
-                transformOrigin: "left center",
-              }}
-            />
-          );
-        })}
 
         {statedSpan && (
           <span
-            title={`Crop table: sow in ${MONTH_ABBR[crop.plantingMonth - 1]}`}
-            className="pointer-events-none absolute bottom-[5px] flex h-[6px] items-end"
+            title={`Usually sown in ${MONTH_NAME[crop.plantingMonth - 1]}`}
+            className="pointer-events-none absolute -inset-y-[3px] rounded-full border-2"
             style={{
-              left: `${(statedSpan.start / DECADES_PER_YEAR) * 100}%`,
-              width: `${(statedSpan.span / DECADES_PER_YEAR) * 100}%`,
+              left: `calc(${pct(statedSpan.start)} - 1px)`,
+              width: `calc(${pct(statedSpan.span)} + 2px)`,
+              borderColor: "color-mix(in srgb, var(--ap-text) 70%, transparent)",
             }}
-          >
-            <span className="h-[6px] w-px flex-none bg-accent" />
-            <span className="h-px flex-1 bg-accent" />
-            <span className="h-[6px] w-px flex-none bg-accent" />
-          </span>
+          />
         )}
       </span>
     </button>
@@ -407,58 +449,66 @@ function CropDetail({
       transition={{ duration: 0.25 }}
       className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
     >
-      <Panel className="flex flex-col gap-3.5 px-5 py-4.5">
-        <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
-          {crop.name.toUpperCase()} &middot; RAIN-RELIABLE WINDOW
-        </span>
+      <Panel className="flex flex-col gap-3.5 px-5 py-5">
+        <span className="text-[13px] text-muted">{crop.name}: when rain is enough</span>
         {window ? (
           <>
-            <span className="font-heading text-[clamp(22px,2.6vw,30px)] font-semibold leading-none">
+            <span className="text-[clamp(22px,2.6vw,28px)] font-semibold leading-none">
               {decadeLabel(window.startDecade)}
               <span className="text-muted"> &rarr; </span>
               {decadeLabel((window.endDecade + 1) % DECADES_PER_YEAR)}
             </span>
-            <span className="font-mono text-[11.5px] text-muted">
+            <span className="text-[13px] text-muted">
               {window.days} days open
               {window.runs > 1 && ` · longest of ${window.runs} windows`}
             </span>
           </>
         ) : (
-          <span className="font-heading text-[22px] font-semibold leading-none text-muted">
+          <span className="text-[22px] font-semibold leading-none text-muted">
             Never rain-reliable here
           </span>
         )}
-        <div className="grid grid-cols-2 border-l border-t border-divider">
+        <div className="grid grid-cols-2 gap-2.5">
           {(
             [
-              ["ESTABLISHMENT †", `${(best.establishmentProb * 100).toFixed(0)}%`],
-              ["RAINFED COVERAGE", `${(best.rainfedCoverage * 100).toFixed(0)}%`],
-              ["CYCLE RAIN", `${best.rainMm.toFixed(0)} mm`],
-              ["CYCLE ETc", `${best.etcMm.toFixed(0)} mm`],
-              ["HEAT DAYS >35°C", best.heatDays.toFixed(1)],
-              ["FROST DAYS <0°C", best.frostDays.toFixed(2)],
+              ["Chance to take †", `${(best.establishmentProb * 100).toFixed(0)}%`],
+              ["Rain covers need", `${(best.rainfedCoverage * 100).toFixed(0)}%`],
+              ["Rain over the season", `${best.rainMm.toFixed(0)} mm`],
+              ["Crop water need", `${best.etcMm.toFixed(0)} mm`],
+              ["Days above 35°C", best.heatDays.toFixed(1)],
+              ["Days below 0°C", best.frostDays.toFixed(2)],
             ] as const
           ).map(([k, v]) => (
-            <div key={k} className="flex flex-col gap-0.5 border-b border-r border-divider px-3 py-2.5">
-              <span className="font-mono text-[10px] tracking-[0.08em] text-muted">{k}</span>
-              <span className="font-mono text-[15px]">{v}</span>
+            <div key={k} className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
+              <span className="text-[12.5px] text-muted">{k}</span>
+              <span className="text-[17px] font-semibold tabular-nums">{v}</span>
             </div>
           ))}
         </div>
-        <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-[1.45] text-faint">
-          <span>figures are for the best period inside the window, {decadeLabel(best.decade)}</span>
+        <div className="flex flex-col gap-1 text-[12px] leading-[1.45] text-faint">
+          <span>Figures are for the best period in the window, {decadeLabel(best.decade)}.</span>
           <span>
-            &dagger; establishment counts rain after sowing, so it depends on the date, not the crop &mdash; it
-            reads the same across crops sown together
+            &dagger; Depends on the rain after sowing, so it is the same for every crop sown on the same date.
           </span>
-          <span>heat and frost are counted and shown, but do not set the band</span>
+          <span>Heat and frost days are shown but do not change the calendar colours.</span>
         </div>
       </Panel>
 
-      <Panel className="flex flex-col gap-4 px-5 py-4.5">
+      <Panel className="flex flex-col gap-4 px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="font-mono text-[10.5px] tracking-[0.1em] text-accent">
-            {curve === "kc" ? <>COEFFICIENTS &middot; FROM THE CROP TABLE</> : <>WATER DEMAND &middot; DAILY</>}
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[16px] font-semibold">
+              {curve === "kc" ? "Crop growth stages" : "Daily water need"}
+            </span>
+            <span className="text-[13px] text-muted">
+              {curve === "kc" ? (
+                <>
+                  Crop coefficient (K<sub>c</sub>) from the crop table
+                </>
+              ) : (
+                "How much water the crop uses each day, against the rain"
+              )}
+            </span>
           </span>
           <div className="flex items-center gap-2">
             {curve === "etc" && (
@@ -478,8 +528,8 @@ function CropDetail({
               value={curve}
               onChange={setCurve}
               options={[
-                { value: "kc", label: <>K<sub>c</sub></> },
-                { value: "etc", label: <>ET<sub>c</sub></> },
+                { value: "kc", label: "Stages" },
+                { value: "etc", label: "Water need" },
               ]}
             />
           </div>
@@ -502,8 +552,8 @@ function CropDetail({
           ).map(([label, days, kc]) => (
             <div key={label} className="flex flex-col">
               <span className="text-muted">{label}</span>
-              <span className="font-mono">
-                {days} d{kc != null && ` · Kc ${kc.toFixed(2)}`}
+              <span className="font-semibold tabular-nums">
+                {days} days{kc != null && ` · Kc ${kc.toFixed(2)}`}
               </span>
             </div>
           ))}
@@ -553,13 +603,13 @@ function SowPicker({
       align="end"
       className="max-h-[320px] w-[168px] overflow-y-auto"
       trigger={
-        <MenuTrigger className="h-7 px-2 font-mono text-[11px]">
-          sow {decadeLabel(value)}
+        <MenuTrigger className="h-8 px-3 text-[12.5px]">
+          Sow {decadeLabel(value)}
           <Icon name="down" size={12} />
         </MenuTrigger>
       }
     >
-      <MenuLabel>SOWING PERIOD</MenuLabel>
+      <MenuLabel>Sowing period</MenuLabel>
       {seasonOrder().map((dec) => (
         <MenuItem
           key={dec}
@@ -597,17 +647,17 @@ function YearPicker({
       align="end"
       className="max-h-[320px] w-[150px] overflow-y-auto"
       trigger={
-        <MenuTrigger className="h-7 px-2 font-mono text-[11px]">
-          {value == null ? "30-yr mean" : `${value}–${String(value + 1).slice(2)}`}
+        <MenuTrigger className="h-8 px-3 text-[12.5px]">
+          {value == null ? "30-year average" : `${value}–${String(value + 1).slice(2)}`}
           <Icon name="down" size={12} />
         </MenuTrigger>
       }
     >
-      <MenuLabel>SEASON</MenuLabel>
+      <MenuLabel>Season</MenuLabel>
       <MenuItem onSelect={() => onChange(null)} hint={value == null ? "✓" : undefined}>
-        30-yr mean
+        30-year average
       </MenuItem>
-      <MenuLabel>MEASURED &middot; {years.length} SEASONS</MenuLabel>
+      <MenuLabel>One season ({years.length})</MenuLabel>
       {years
         .slice()
         .reverse()
@@ -644,9 +694,9 @@ function EtcCurve({
     [stationId, crop, sowDecade, year],
   );
 
-  const w = 520;
-  const h = 150;
-  const pad = { l: 30, r: 10, t: 10, b: 20 };
+  const [ref, w] = useElementWidth<HTMLDivElement>(520);
+  const h = 190;
+  const pad = { l: 34, r: 10, t: 10, b: 24 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
   const max = Math.max(...days.map((d) => Math.max(d.etc, d.et0))) * 1.1 || 1;
@@ -669,7 +719,7 @@ function EtcCurve({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+      <div ref={ref} className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
         <HoverReadout hover={hover} left={pad.l} right={pad.r} width={w}>
           {at && (
             <>
@@ -685,7 +735,7 @@ function EtcCurve({
           )}
         </HoverReadout>
 
-        <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
+        <svg width={w} height={h} className="block">
           <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
             {[0, 0.5, 1].map((f) => (
               <line key={f} x1={pad.l} x2={w - pad.r} y1={pad.t + innerH * f} y2={pad.t + innerH * f} />
@@ -726,43 +776,43 @@ function EtcCurve({
             fill="var(--ap-accent)"
             fillOpacity={0.12}
           />
-          <path d={line((d) => d.etc)} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={1.75} />
+          <path d={line((d) => d.etc)} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={2} />
 
           <HoverGuide hover={hover} left={pad.l} right={pad.r} width={w} top={pad.t} bottom={y(0)} />
 
-          <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9}>
-            <text x={pad.l - 5} y={y(max / 1.1) + 3} textAnchor="end">{(max / 1.1).toFixed(1)}</text>
-            <text x={pad.l - 5} y={y(0) + 3} textAnchor="end">0</text>
-            <text x={pad.l} y={h - 5}>{decadeLabel(sowDecade)}</text>
-            <text x={w - pad.r} y={h - 5} textAnchor="end">day {crop.totalDays}</text>
+          <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
+            <text x={pad.l - 6} y={y(max / 1.1) + 4} textAnchor="end">{(max / 1.1).toFixed(1)}</text>
+            <text x={pad.l - 6} y={y(0) + 4} textAnchor="end">0</text>
+            <text x={pad.l} y={h - 6}>Sown {decadeLabel(sowDecade)}</text>
+            <text x={w - pad.r} y={h - 6} textAnchor="end">Day {crop.totalDays}</text>
           </g>
         </svg>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 font-mono text-[10.5px] text-muted">
-        <span className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[12.5px] text-muted">
+        <span className="flex items-center gap-3.5">
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-3.5" style={{ background: "var(--ap-accent)" }} />
-            ET<sub>c</sub> mm/day
+            <span className="h-[3px] w-4 rounded-full" style={{ background: "var(--ap-accent)" }} />
+            Crop need, mm/day
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-3.5" style={{ background: "var(--ap-muted)" }} />
-            ET<sub>0</sub>
+            <span className="h-[3px] w-4 rounded-full" style={{ background: "var(--ap-muted)" }} />
+            Reference (ET<sub>0</sub>)
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2" style={{ background: "var(--ap-teal)", opacity: 0.5 }} />
-            rain
+            <span className="size-2.5 rounded-[3px]" style={{ background: "var(--ap-teal)", opacity: 0.6 }} />
+            Rain
           </span>
         </span>
-        <span className="flex gap-3">
+        <span className="flex gap-3.5">
           <span>
-            ET<sub>c</sub> <span className="text-ink">{total.toFixed(0)} mm</span>
+            Need <span className="font-semibold text-ink">{total.toFixed(0)} mm</span>
           </span>
           <span>
-            RAIN <span className="text-ink">{rain.toFixed(0)} mm</span>
+            Rain <span className="font-semibold text-ink">{rain.toFixed(0)} mm</span>
           </span>
           <span>
-            DEFICIT{" "}
+            Shortfall{" "}
             <span style={{ color: total - rain > 0 ? "#EE8434" : "var(--ap-teal)" }}>
               {Math.max(0, total - rain).toFixed(0)} mm
             </span>
@@ -776,9 +826,9 @@ function EtcCurve({
 /** The FAO-56 single-coefficient curve this crop is scored against. */
 function KcCurve({ crop }: { crop: Crop }) {
   const { kcIni, kcMid, kcEnd, lIni, lDev, lMid, lLate, totalDays } = crop;
-  const w = 520;
-  const h = 96;
-  const pad = { l: 26, r: 8, t: 8, b: 18 };
+  const [ref, w] = useElementWidth<HTMLDivElement>(520);
+  const h = 120;
+  const pad = { l: 30, r: 8, t: 8, b: 22 };
   const innerW = w - pad.l - pad.r;
   const innerH = h - pad.t - pad.b;
   const maxKc = Math.max(kcIni, kcMid, kcEnd, 1) * 1.15;
@@ -795,7 +845,8 @@ function KcCurve({ crop }: { crop: Crop }) {
   const d = "M" + pts.map(([day, kc]) => `${x(day).toFixed(1)} ${y(kc).toFixed(1)}`).join("L");
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
+    <div ref={ref}>
+    <svg width={w} height={h} className="block">
       <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
         <line x1={pad.l} x2={w - pad.r} y1={y(0)} y2={y(0)} />
         <line x1={pad.l} x2={w - pad.r} y1={y(1)} y2={y(1)} />
@@ -805,7 +856,7 @@ function KcCurve({ crop }: { crop: Crop }) {
         fill="var(--ap-accent)"
         fillOpacity={0.12}
       />
-      <path d={d} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={1.75} />
+      <path d={d} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={2} strokeLinejoin="round" />
       {[lIni, lIni + lDev, lIni + lDev + lMid].map((day) => (
         <line
           key={day}
@@ -817,13 +868,14 @@ function KcCurve({ crop }: { crop: Crop }) {
           strokeDasharray="2 3"
         />
       ))}
-      <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9}>
-        <text x={pad.l - 5} y={y(1) + 3} textAnchor="end">1.0</text>
-        <text x={pad.l - 5} y={y(0) + 3} textAnchor="end">0</text>
-        <text x={pad.l} y={h - 5}>day 0</text>
-        <text x={w - pad.r} y={h - 5} textAnchor="end">day {totalDays}</text>
+      <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
+        <text x={pad.l - 6} y={y(1) + 4} textAnchor="end">1.0</text>
+        <text x={pad.l - 6} y={y(0) + 4} textAnchor="end">0</text>
+        <text x={pad.l} y={h - 6}>Sowing</text>
+        <text x={w - pad.r} y={h - 6} textAnchor="end">Day {totalDays}</text>
       </g>
     </svg>
+    </div>
   );
 }
 

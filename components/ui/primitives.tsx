@@ -142,13 +142,13 @@ export function RiskBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap rounded-inset border px-2",
-        "font-mono text-[10.5px] uppercase tracking-[0.06em] tabular-nums",
+        "inline-flex h-[24px] items-center gap-1.5 whitespace-nowrap rounded-full px-2.5",
+        "text-[12.5px] font-semibold tabular-nums",
         className,
       )}
-      style={{ borderColor: tint.border, background: tint.bg, color: tint.ink }}
+      style={{ background: tint.bg, color: tint.ink }}
     >
-      <span className="size-1.5 flex-none" style={{ background: RISK_COLOR[lv] }} />
+      <span className="size-1.5 flex-none rounded-full" style={{ background: RISK_COLOR[lv] }} />
       {RISK_LABEL[lv]}
       {withScore && <span className="opacity-75">{Math.round(score)}</span>}
     </span>
@@ -161,27 +161,29 @@ export function RiskBadge({
 
 export function Kicker({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <span className={cn("font-mono text-[10.5px] tracking-[0.1em] text-muted", className)}>{children}</span>
+    <span className={cn("text-[13px] text-muted", className)}>{children}</span>
   );
 }
 
+/**
+ * Page title, a plain one-line lede and actions. `kicker` is accepted for
+ * older call sites but not drawn: it repeated the top bar's breadcrumb.
+ */
 export function PageHeader({
-  kicker,
   title,
   lede,
   actions,
 }: {
-  kicker: React.ReactNode;
+  kicker?: React.ReactNode;
   title: React.ReactNode;
   lede?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (
     <div className="relative flex flex-wrap items-end justify-between gap-6">
-      <div className="flex flex-col gap-2">
-        <Kicker className="text-[11px]">{kicker}</Kicker>
+      <div className="flex flex-col gap-1.5">
         <h1 className="text-[clamp(28px,4vw,36px)] leading-none tracking-[-0.02em]">{title}</h1>
-        {lede && <div className="max-w-[70ch] text-sm text-muted">{lede}</div>}
+        {lede && <div className="max-w-[120ch] text-[14.5px] text-muted">{lede}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
     </div>
@@ -204,11 +206,11 @@ export function Segmented<T extends string>({
 }) {
   return (
     <div className={cn(
-        "flex overflow-hidden rounded-control border border-divider",
-        size === "sm" ? "h-[30px]" : "h-[34px]",
+        "flex gap-0.5 rounded-full bg-neutral-100 p-[3px]",
+        size === "sm" ? "h-[32px]" : "h-[36px]",
         className,
       )}>
-      {options.map((o, i) => {
+      {options.map((o) => {
         const on = o.value === value;
         return (
           <button
@@ -217,9 +219,8 @@ export function Segmented<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={cn(
-              "flex items-center gap-1.5 px-3 text-[12.5px] transition-colors duration-150",
-              i > 0 && "border-l border-divider",
-              on ? "bg-s3 text-ink" : "text-muted hover:text-ink",
+              "flex items-center gap-1.5 rounded-full px-3.5 text-[13px] transition-colors duration-150",
+              on ? "bg-s2 font-semibold text-ink shadow-[0_1px_3px_rgb(0_0_0/0.18)]" : "text-muted hover:text-ink",
             )}
           >
             {o.label}
@@ -274,8 +275,8 @@ export function Stat({
 }) {
   return (
     <div className={cn("flex flex-col gap-1 px-3 py-2.5", className)}>
-      <div className="font-mono text-[10px] tracking-[0.08em] text-muted">{label}</div>
-      <div className="font-mono text-[15px]">{value}</div>
+      <div className="text-[12.5px] text-muted">{label}</div>
+      <div className="text-[17px] font-semibold tabular-nums">{value}</div>
     </div>
   );
 }
@@ -293,7 +294,7 @@ export function TabStrip<T extends string>({
   className?: string;
 }) {
   return (
-    <div className={cn("flex overflow-x-auto border-b border-divider no-scrollbar", className)} role="tablist">
+    <div className={cn("flex w-fit max-w-full gap-1 overflow-x-auto rounded-full bg-neutral-100 p-1 no-scrollbar", className)} role="tablist">
       {tabs.map((t) => {
         const on = t.value === value;
         return (
@@ -303,12 +304,12 @@ export function TabStrip<T extends string>({
             aria-selected={on}
             onClick={() => onChange(t.value)}
             className={cn(
-              "-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-[13.5px] transition-colors duration-150",
-              on ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink",
+              "whitespace-nowrap rounded-full px-4 py-1.5 text-[13.5px] transition-colors duration-150",
+              on ? "bg-s2 font-semibold text-ink shadow-[0_1px_3px_rgb(0_0_0/0.18)]" : "text-muted hover:text-ink",
             )}
           >
             {t.label}
-            {t.count != null && <span className="ml-2 font-mono text-[10.5px] text-muted">{t.count}</span>}
+            {t.count != null && <span className="ml-2 text-[12px] font-normal text-muted">{t.count}</span>}
           </button>
         );
       })}

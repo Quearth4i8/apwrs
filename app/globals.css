@@ -45,10 +45,17 @@
   --ap-panel-border-hover: rgb(255 255 255 / 0.18);
   --ap-panel-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 6px 20px -12px rgb(0 0 0 / 0.5);
   --ap-panel-top: inset 0 1px 0 rgb(255 255 255 / 0.045);
+  /* Soil-probe depths: categorical slots 1–3, validated against this surface. */
+  --ap-depth-1: #3987e5;
+  --ap-depth-2: #d95926;
+  --ap-depth-3: #199e70;
   color-scheme: dark;
 }
 
 [data-theme="light"] {
+  --ap-depth-1: #2a78d6;
+  --ap-depth-2: #eb6834;
+  --ap-depth-3: #1baf7a;
   --ap-bg: #f2fafc;
   --ap-surface: #ffffff;
   --ap-s2: #ffffff;
@@ -116,7 +123,12 @@
 
   --font-heading: var(--font-barlow-condensed), system-ui, sans-serif;
   --font-body: var(--font-barlow), system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  /* "Mono" is the body face with tabular figures. The monospace labels read
+     as a terminal; the app is for farmers and advisers, so small labels and
+     readouts share the body font and only the digits stay aligned. The real
+     monospace face is kept as --font-code for key hints and identifiers. */
+  --font-mono: var(--font-barlow), system-ui, sans-serif;
+  --font-code: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* NB: the Industry density scale (0.85x) is kept as its own namespace.
      Redefining --spacing-1..8 here would silently retune every p-1/p-4 in
@@ -132,9 +144,9 @@
   --color-panel-border: var(--ap-panel-border);
 
   /* Named so they cannot collide with Tailwind's own rounded-* scale. */
-  --radius-control: 7px;
-  --radius-panel: 11px;
-  --radius-inset: 5px;
+  --radius-control: 10px;
+  --radius-panel: 16px;
+  --radius-inset: 8px;
 
   --shadow-panel: var(--ap-panel-shadow);
   --shadow-pop: var(--ap-shadow-pop);
@@ -212,8 +224,13 @@
   /* Panels are edged surfaces, not drawn frames: a soft radius, a hairline
      that lifts on hover, a hint of elevation and a top highlight so they
      read as sitting above the page rather than cut into it. */
-  .panel {
+  /* Zero specificity, so an `absolute`, `fixed` or `sticky` class on a panel
+     wins; at class specificity this rule silently pinned every floating
+     panel (the Live Map's layer card) back into the flow, behind the map. */
+  :where(.panel) {
     position: relative;
+  }
+  .panel {
     border: 1px solid var(--ap-panel-border);
     border-radius: var(--radius-panel);
     background: var(--ap-panel);

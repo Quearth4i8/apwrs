@@ -168,13 +168,13 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
             aria-label="Search"
             className="flex-1 border-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-faint"
           />
-          <span className="border border-divider px-1.5 py-0.5 font-mono text-[10px] text-muted">ESC</span>
+          <span className="rounded-[6px] bg-neutral-100 px-1.5 py-0.5 text-[11px] text-muted">Esc</span>
         </div>
 
         <div className="max-h-[380px] overflow-y-auto p-2">
           {groups.map((g) => (
             <div key={g.label}>
-              <div className="px-2.5 pb-1 pt-2 font-mono text-[10px] tracking-[0.1em] text-faint">{g.label}</div>
+              <div className="px-2.5 pb-1 pt-2 text-[12px] font-medium text-faint">{g.label.charAt(0) + g.label.slice(1).toLowerCase()}</div>
               {g.items.map((it) => {
                 index += 1;
                 const i = index;
@@ -183,7 +183,7 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
                     key={`${g.label}-${it.label}`}
                     onClick={it.run}
                     onMouseEnter={() => setCursor(i)}
-                    className={`mx-1 flex h-9 items-center gap-2.5 rounded-inset px-2.5 text-left text-[13.5px] transition-colors duration-100 ${
+                    className={`mx-1 flex h-9 items-center gap-2.5 rounded-[10px] px-2.5 text-left text-[13.5px] transition-colors duration-100 ${
                       active === i ? "bg-s3" : ""
                     }`}
                     style={{ width: "calc(100% - 0.5rem)" }}
@@ -192,7 +192,7 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
                       <Icon name={it.icon} size={15} />
                     </span>
                     <span className="flex-1 truncate">{it.label}</span>
-                    <span className="font-mono text-[10.5px] text-muted">{it.hint}</span>
+                    <span className="text-[12px] text-muted">{it.hint}</span>
                   </button>
                 );
               })}
@@ -203,10 +203,10 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="flex gap-4 border-t border-divider px-4 py-2.5 font-mono text-[10.5px] text-muted">
-          <span>&crarr; open</span>
-          <span>&uarr;&darr; navigate</span>
-          <span className="ml-auto">APWRS command</span>
+        <div className="flex gap-4 border-t border-divider px-4 py-2.5 text-[12px] text-muted">
+          <span>&crarr; Open</span>
+          <span>&uarr;&darr; Move</span>
+          <span className="ml-auto">Search</span>
         </div>
       </motion.div>
     </Dialog.Content>

@@ -6,6 +6,8 @@ import { useConsole } from "@/components/app-context";
 import { Menu, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
 import { Panel, PageHeader, Segmented, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
+import { StatTile } from "@/components/ui/simple";
+import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
 import { STATIONS, stationForSite, type Station } from "@/lib/climate";
 import { indexBand, MONTH_ABBR, rainfallPercentile } from "@/lib/metrics";
 
@@ -14,7 +16,11 @@ import { indexBand, MONTH_ABBR, rainfallPercentile } from "@/lib/metrics";
  * totals, the fitted SPEI series and the 1996–2025 monthly normals.
  */
 
-const CHART = { w: 880, h: 260, padL: 42, padR: 12, padT: 14, padB: 30 };
+const CHART = { h: 260, padL: 44, padR: 12, padT: 14, padB: 30 };
+
+/** Year A and year B: categorical slots 1 and 2, validated in globals.css. */
+const YEAR_A = "var(--ap-depth-1)";
+const YEAR_B = "var(--ap-depth-2)";
 
 export function PageHistory({ tab: initial }: { tab: "compare" | "archive" }) {
   const { site } = useConsole();
@@ -31,15 +37,10 @@ export function PageHistory({ tab: initial }: { tab: "compare" | "archive" }) {
   });
 
   return (
-    <div className="flex flex-col gap-5.5 px-4 pb-12 pt-7 sm:px-8">
+    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        kicker={
-          <>
-            HISTORY &middot; {station.name.toUpperCase()} &middot; {station.coverage.from.slice(0, 4)}&ndash;
-            {station.coverage.to.slice(0, 4)} &middot; {station.coverage.days.toLocaleString("en-GB")} DAILY RECORDS
-          </>
-        }
-        title={tab === "compare" ? "Historical comparison" : "Seasonal archive"}
+        title={tab === "compare" ? "Past years" : "Year by year"}
+        lede={`${station.coverage.years} years of daily weather at ${station.name}, ${station.coverage.from.slice(0, 4)} to ${station.coverage.to.slice(0, 4)}.`}
         actions={
           <Menu
             align="end"
@@ -63,8 +64,8 @@ export function PageHistory({ tab: initial }: { tab: "compare" | "archive" }) {
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: "compare", label: "Historical comparison" },
-          { value: "archive", label: "Seasonal archive" },
+          { value: "compare", label: "Compare years" },
+          { value: "archive", label: "Every year" },
         ]}
       />
 
@@ -115,13 +116,6 @@ function Compare({
   );
   const min = Math.min(...series, 0);
   const max = Math.max(...series, 0);
-  const span = max - min || 1;
-
-  const innerW = CHART.w - CHART.padL - CHART.padR;
-  const innerH = CHART.h - CHART.padT - CHART.padB;
-  const barW = innerW / years.length;
-  const yOf = (v: number) => CHART.padT + innerH - ((v - min) / span) * innerH;
-  const zero = yOf(0);
 
   const monthsOf = (year: number) =>
     station.months.filter((m) => m.y === year).sort((a, b) => a.m - b.m);
@@ -130,129 +124,92 @@ function Compare({
 
   return (
     <>
-      <Panel className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        {(
-          [
-            [
-              `${latest.year} RAINFALL`,
-              `${latest.precip.toFixed(0)}`,
-              "mm",
-              pct == null ? null : `P${pct} of ${years.length} years`,
-            ],
-            [
-              `${years.length}-YEAR MEAN`,
-              `${meanPrecip}`,
-              "mm",
-              `${latest.precip >= meanPrecip ? "+" : ""}${(latest.precip - meanPrecip).toFixed(0)} mm vs mean`,
-            ],
-            [
-              "DRIEST ON RECORD",
-              `${driest.year}`,
-              "",
-              `${driest.precip.toFixed(0)} mm · balance ${driest.balance.toFixed(0)} mm`,
-            ],
-            [
-              `${latest.year} MONTHS IN DROUGHT`,
-              `${latest.monthsInDrought}`,
-              "/ 12",
-              latest.minSpei3 == null ? "SPEI-3 not fitted" : `min SPEI-3 ${latest.minSpei3.toFixed(2)}`,
-            ],
-          ] as const
-        ).map(([k, v, unit, note], i) => (
-          <div
-            key={k}
-            className={`flex flex-col gap-2 border-b border-divider px-5 py-4.5 xl:border-b-0 ${
-              i < 3 ? "xl:border-r" : ""
-            }`}
-          >
-            <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">{k}</span>
-            <span className="flex flex-wrap items-baseline gap-1.5">
-              <span className="font-heading text-[44px] font-semibold leading-none tabular-nums">{v}</span>
-              {unit && <span className="font-mono text-xs text-muted">{unit}</span>}
-            </span>
-            {note && <span className="font-mono text-[11px] text-muted">{note}</span>}
-          </div>
-        ))}
-      </Panel>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          icon="rain"
+          label={`Rain in ${latest.year}`}
+          value={latest.precip.toFixed(0)}
+          unit="mm"
+          note={pct == null ? undefined : `Wetter than ${pct}% of years`}
+        />
+        <StatTile
+          icon="bars"
+          tint="#7B8FD9"
+          label="Average year"
+          value={meanPrecip}
+          unit="mm"
+          note={`${latest.year} was ${Math.abs(latest.precip - meanPrecip).toFixed(0)} mm ${latest.precip >= meanPrecip ? "above" : "below"}`}
+        />
+        <StatTile
+          icon="sun"
+          tint="#D96565"
+          label="Driest year"
+          value={driest.year}
+          note={`${driest.precip.toFixed(0)} mm of rain`}
+        />
+        <StatTile
+          icon="gauge"
+          tint={latest.monthsInDrought > 0 ? "#E7A83B" : "#38A88A"}
+          label={`Drought months in ${latest.year}`}
+          value={latest.monthsInDrought}
+          unit="of 12"
+          note={latest.minSpei3 == null ? "Index not fitted" : `Driest point: ${indexBand(latest.minSpei3)}`}
+        />
+      </div>
 
       {/* ── Full record ───────────────────────────────────────────────── */}
-      <Panel className="flex flex-col gap-3 px-5 py-4.5">
+      <Panel className="flex flex-col gap-3 px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="font-heading text-[17px] font-semibold">
-            Every year on record &middot; {station.coverage.from.slice(0, 4)}&ndash;{station.coverage.to.slice(0, 4)}
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[16px] font-semibold">Every year since {station.coverage.from.slice(0, 4)}</span>
+            <span className="text-[13px] text-muted">
+              {metric === "precip"
+                ? "Total rain per year, mm"
+                : metric === "balance"
+                  ? "Rain minus evaporation per year, mm"
+                  : "Average drought index per year"}
+              {" · "}
+              {latest.year} and the driest year are highlighted
+            </span>
           </span>
           <Segmented
             size="sm"
             value={metric}
             onChange={setMetric}
             options={[
-              { value: "precip", label: "Rainfall" },
-              { value: "balance", label: "P − ET₀" },
-              { value: "spei", label: "SPEI-3" },
+              { value: "precip", label: "Rain" },
+              { value: "balance", label: "Rain − evaporation" },
+              { value: "spei", label: "Drought index" },
             ]}
           />
         </div>
 
-        <svg viewBox={`0 0 ${CHART.w} ${CHART.h}`} className="block w-full">
-          <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-            {[0, 0.25, 0.5, 0.75, 1].map((f) => (
-              <line key={f} x1={CHART.padL} x2={CHART.w - CHART.padR} y1={CHART.padT + innerH * f} y2={CHART.padT + innerH * f} />
-            ))}
-          </g>
-
-          {years.map((y, i) => {
-            const v = series[i];
-            const top = Math.min(yOf(v), zero);
-            const h = Math.abs(yOf(v) - zero);
-            const isDriest = y.year === driest.year;
-            const isLatest = y.year === latest.year;
-            return (
-              <g key={y.year}>
-                <rect
-                  x={CHART.padL + i * barW + 1.5}
-                  y={top}
-                  width={barW - 3}
-                  height={Math.max(1, h)}
-                  fill={v < 0 ? "#D96565" : "var(--ap-accent)"}
-                  fillOpacity={isDriest || isLatest ? 0.95 : 0.45}
-                  stroke={isLatest ? "var(--ap-text)" : "none"}
-                  strokeWidth={isLatest ? 1.2 : 0}
-                />
-                <text
-                  x={CHART.padL + i * barW + barW / 2}
-                  y={CHART.h - 10}
-                  textAnchor="middle"
-                  style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }}
-                  fontSize={8.5}
-                >
-                  {String(y.year).slice(2)}
-                </text>
-              </g>
-            );
-          })}
-
-          <line x1={CHART.padL} x2={CHART.w - CHART.padR} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }} />
-          <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
-            <text x={CHART.padL - 6} y={CHART.padT + 4} textAnchor="end">{max.toFixed(0)}</text>
-            <text x={CHART.padL - 6} y={zero + 3} textAnchor="end">0</text>
-            <text x={CHART.padL - 6} y={CHART.padT + innerH} textAnchor="end">{min.toFixed(0)}</text>
-          </g>
-        </svg>
+        <YearBars
+          years={years}
+          series={series}
+          min={min}
+          max={max}
+          highlight={[driest.year, latest.year]}
+          unit={metric === "spei" ? "" : " mm"}
+        />
 
         <Provenance>
-          {station.name} &middot; {station.coverage.days.toLocaleString("en-GB")} daily observations &middot;
-          {metric === "spei" ? " SPEI-3 fitted per calendar month" : " measured totals"}
+          {station.name}, {station.coverage.days.toLocaleString("en-GB")} days of measured weather
+          {metric === "spei" ? " · SPEI-3 fitted per calendar month" : ""}
         </Provenance>
       </Panel>
 
       {/* ── Year vs year ──────────────────────────────────────────────── */}
-      <Panel className="flex flex-col gap-3 px-5 py-4.5">
+      <Panel className="flex flex-col gap-3 px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-heading text-[17px] font-semibold">Year against year &middot; monthly rainfall</span>
-          <div className="flex items-center gap-2 font-mono text-[11.5px]">
-            <YearSelect value={yearA} onChange={setYearA} years={years.map((y) => y.year)} border="var(--ap-accent)" label="First year" />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[16px] font-semibold">Compare two years</span>
+            <span className="text-[13px] text-muted">Rain each month, mm</span>
+          </span>
+          <div className="flex items-center gap-2 text-[13px]">
+            <YearSelect value={yearA} onChange={setYearA} years={years.map((y) => y.year)} color={YEAR_A} label="First year" />
             <span className="text-muted">vs</span>
-            <YearSelect value={yearB} onChange={setYearB} years={years.map((y) => y.year)} border="var(--ap-teal)" label="Second year" />
+            <YearSelect value={yearB} onChange={setYearB} years={years.map((y) => y.year)} color={YEAR_B} label="Second year" />
           </div>
         </div>
 
@@ -275,10 +232,10 @@ function MonthlyCompare({
   yearA: number;
   yearB: number;
 }) {
-  const w = 880;
+  const [ref, w] = useElementWidth<HTMLDivElement>(880);
   const h = 250;
-  const padL = 42;
-  const padB = 34;
+  const padL = 44;
+  const padB = 30;
   const innerW = w - padL - 12;
   const innerH = h - 16 - padB;
   const max = Math.max(...a.map((m) => m.p), ...b.map((m) => m.p), ...station.normals.map((n) => n.precip), 10);
@@ -292,7 +249,22 @@ function MonthlyCompare({
 
   return (
     <>
-      <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
+      <div className="flex flex-wrap gap-4 text-[12.5px] text-muted">
+        <span className="flex items-center gap-1.5">
+          <span className="h-[3px] w-4 rounded-full" style={{ background: YEAR_A }} />
+          {yearA}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-[3px] w-4 rounded-full" style={{ background: YEAR_B }} />
+          {yearB}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 border-t-2 border-dashed" style={{ borderColor: "var(--ap-muted)" }} />
+          Average month
+        </span>
+      </div>
+      <div ref={ref}>
+      <svg width={w} height={h} className="block">
         <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
           {[0, 0.5, 1].map((f) => (
             <line key={f} x1={padL} x2={w - 12} y1={16 + innerH * f} y2={16 + innerH * f} />
@@ -307,40 +279,142 @@ function MonthlyCompare({
           strokeWidth={1.25}
           strokeDasharray="3 3"
         />
-        <path d={line(a)} fill="none" style={{ stroke: "var(--ap-accent)" }} strokeWidth={2} />
-        <path d={line(b)} fill="none" style={{ stroke: "var(--ap-teal)" }} strokeWidth={2} strokeDasharray="6 4" />
+        {[
+          { rows: a, color: YEAR_A },
+          { rows: b, color: YEAR_B },
+        ].map(({ rows, color }, k) => (
+          <g key={k}>
+            <path d={line(rows)} fill="none" style={{ stroke: color }} strokeWidth={2} strokeLinejoin="round" />
+            {rows.map((r) => (
+              <circle key={r.m} cx={x(r.m)} cy={y(r.p)} r={3.5} style={{ fill: color, stroke: "var(--ap-surface)" }} strokeWidth={2} />
+            ))}
+          </g>
+        ))}
 
-        <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
-          <text x={padL - 6} y={20} textAnchor="end">{max.toFixed(0)}</text>
-          <text x={padL - 6} y={16 + innerH} textAnchor="end">0</text>
+        <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
+          <text x={padL - 8} y={20} textAnchor="end">{max.toFixed(0)}</text>
+          <text x={padL - 8} y={16 + innerH + 4} textAnchor="end">0</text>
           {MONTH_ABBR.map((mm, i) => (
-            <text key={mm} x={x(i + 1)} y={h - 12} textAnchor="middle" fontSize={9}>
-              {mm[0]}
+            <text key={mm} x={x(i + 1)} y={h - 8} textAnchor="middle">
+              {mm.charAt(0) + mm.slice(1).toLowerCase()}
             </text>
           ))}
         </g>
       </svg>
-
-      <div className="grid grid-cols-2 border border-divider font-mono text-[11px] sm:grid-cols-3">
-        <div className="border-r border-divider px-3 py-2">
-          <div className="text-[10px] text-muted">ANNUAL TOTAL</div>
-          <span className="text-accent">{totalA.toFixed(0)}</span> / <span className="text-teal">{totalB.toFixed(0)}</span> mm
-        </div>
-        <div className="border-r border-divider px-3 py-2">
-          <div className="text-[10px] text-muted">30-YEAR MEAN</div>
-          {station.normals.reduce((s, n) => s + n.precip, 0).toFixed(0)} mm
-        </div>
-        <div className="px-3 py-2">
-          <div className="text-[10px] text-muted">RAIN DAYS ({yearA} / {yearB})</div>
-          {station.months.filter((m) => m.y === yearA).reduce((s, m) => s + m.rd, 0)} /{" "}
-          {station.months.filter((m) => m.y === yearB).reduce((s, m) => s + m.rd, 0)}
-        </div>
       </div>
 
-      <Provenance>
-        Dashed line is the {station.coverage.years}-year monthly normal for {station.name}
-      </Provenance>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        <div className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
+          <span className="text-[12.5px] text-muted">Rain in the year</span>
+          <span className="text-[16px] font-semibold tabular-nums">
+            <span style={{ color: YEAR_A }}>{totalA.toFixed(0)}</span>
+            <span className="font-normal text-muted"> vs </span>
+            <span style={{ color: YEAR_B }}>{totalB.toFixed(0)}</span> mm
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
+          <span className="text-[12.5px] text-muted">Average year</span>
+          <span className="text-[16px] font-semibold tabular-nums">
+            {station.normals.reduce((s, n) => s + n.precip, 0).toFixed(0)} mm
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
+          <span className="text-[12.5px] text-muted">Days with rain</span>
+          <span className="text-[16px] font-semibold tabular-nums">
+            <span style={{ color: YEAR_A }}>{station.months.filter((m) => m.y === yearA).reduce((s, m) => s + m.rd, 0)}</span>
+            <span className="font-normal text-muted"> vs </span>
+            <span style={{ color: YEAR_B }}>{station.months.filter((m) => m.y === yearB).reduce((s, m) => s + m.rd, 0)}</span>
+          </span>
+        </div>
+      </div>
     </>
+  );
+}
+
+/** One bar per year, drawn at real pixel size, with a hover readout. */
+function YearBars({
+  years,
+  series,
+  min,
+  max,
+  highlight,
+  unit,
+}: {
+  years: Station["annual"];
+  series: number[];
+  min: number;
+  max: number;
+  highlight: number[];
+  unit: string;
+}) {
+  const [ref, w] = useElementWidth<HTMLDivElement>(880);
+  const span = max - min || 1;
+  const innerW = w - CHART.padL - CHART.padR;
+  const innerH = CHART.h - CHART.padT - CHART.padB;
+  const barW = innerW / years.length;
+  const yOf = (v: number) => CHART.padT + innerH - ((v - min) / span) * innerH;
+  const zero = yOf(0);
+  const hover = useBarHover(years.length, CHART.padL, CHART.padR, w);
+  const at = hover.index == null ? null : years[hover.index];
+  const fmt = (v: number) => (unit ? v.toFixed(0) : v.toFixed(2));
+
+  return (
+    <div ref={ref} className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+      <HoverReadout hover={hover} left={CHART.padL} right={CHART.padR} width={w}>
+        {at && (
+          <>
+            {at.year} &middot; {fmt(series[hover.index!])}
+            {unit}
+          </>
+        )}
+      </HoverReadout>
+      <svg width={w} height={CHART.h} className="block">
+        <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
+          {[0, 0.5, 1].map((f) => (
+            <line key={f} x1={CHART.padL} x2={w - CHART.padR} y1={CHART.padT + innerH * f} y2={CHART.padT + innerH * f} />
+          ))}
+        </g>
+
+        {years.map((y, i) => {
+          const v = series[i];
+          const top = Math.min(yOf(v), zero);
+          const h = Math.abs(yOf(v) - zero);
+          const on = highlight.includes(y.year) || hover.index === i;
+          return (
+            <g key={y.year}>
+              <rect
+                x={CHART.padL + i * barW + Math.min(3, barW * 0.12)}
+                y={top}
+                width={barW - 2 * Math.min(3, barW * 0.12)}
+                height={Math.max(1, h)}
+                rx={Math.min(4, barW / 4)}
+                fill={v < 0 ? "#D96565" : "var(--ap-accent)"}
+                fillOpacity={on ? 1 : 0.45}
+              />
+              {(barW > 26 || i % 5 === 0) && (
+                <text
+                  x={CHART.padL + i * barW + barW / 2}
+                  y={CHART.h - 10}
+                  textAnchor="middle"
+                  style={{ fill: highlight.includes(y.year) ? "var(--ap-text)" : "var(--ap-muted)" }}
+                  fontSize={barW > 26 ? 11.5 : 12}
+                >
+                  {barW > 26 ? `'${String(y.year).slice(2)}` : y.year}
+                </text>
+              )}
+            </g>
+          );
+        })}
+
+        <HoverGuide hover={hover} left={CHART.padL} right={CHART.padR} width={w} top={CHART.padT} bottom={CHART.padT + innerH} />
+        <line x1={CHART.padL} x2={w - CHART.padR} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }} />
+        <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
+          <text x={CHART.padL - 8} y={CHART.padT + 4} textAnchor="end">{fmt(max)}</text>
+          {min < 0 && <text x={CHART.padL - 8} y={zero + 4} textAnchor="end">0</text>}
+          <text x={CHART.padL - 8} y={CHART.padT + innerH + 4} textAnchor="end">{fmt(min)}</text>
+        </g>
+      </svg>
+    </div>
   );
 }
 
@@ -362,42 +436,44 @@ function Archive({ station }: { station: Station }) {
           return (
             <Panel key={y.year} hoverable className="flex flex-col gap-3 px-4.5 py-4">
               <div className="flex items-center justify-between">
-                <span className="font-heading text-[22px] font-semibold">{y.year}</span>
+                <span className="text-[22px] font-semibold">{y.year}</span>
                 <span
-                  className="border px-2 py-0.5 font-mono text-[10.5px]"
+                  className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
                   style={{
-                    borderColor: wetter ? "rgb(56 168 138 / 0.45)" : "rgb(217 101 101 / 0.45)",
+                    background: wetter ? "rgb(56 168 138 / 0.14)" : "rgb(217 101 101 / 0.14)",
                     color: wetter ? "#38A88A" : "#E07B7B",
                   }}
                 >
-                  {wetter ? "ABOVE MEAN" : "BELOW MEAN"}
+                  {wetter ? "Wetter than usual" : "Drier than usual"}
                 </span>
               </div>
               <svg viewBox="0 0 200 42" preserveAspectRatio="none" className="block h-10 w-full">
-                <path d={d} fill="none" stroke={wetter ? "var(--ap-accent)" : "#D96565"} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+                <path d={d} fill="none" stroke={wetter ? "var(--ap-accent)" : "#D96565"} strokeWidth={2} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
               </svg>
-              <div className="grid grid-cols-3 border-t border-divider pt-2.5 font-mono text-[11px]">
-                <div>
-                  <div className="text-[9.5px] text-muted">RAIN</div>
-                  {y.precip.toFixed(0)} mm
+              <div className="grid grid-cols-3 gap-2 text-[13px]">
+                <div className="flex flex-col">
+                  <span className="text-[12px] text-muted">Rain</span>
+                  <span className="font-semibold tabular-nums">{y.precip.toFixed(0)} mm</span>
                 </div>
-                <div>
-                  <div className="text-[9.5px] text-muted">P &minus; ET&#8320;</div>
-                  {y.balance.toFixed(0)} mm
+                <div className="flex flex-col">
+                  <span className="text-[12px] text-muted">Balance</span>
+                  <span className="font-semibold tabular-nums">{y.balance.toFixed(0)} mm</span>
                 </div>
-                <div>
-                  <div className="text-[9.5px] text-muted">RAIN DAYS</div>
-                  {months.reduce((s, m) => s + m.rd, 0)}
+                <div className="flex flex-col">
+                  <span className="text-[12px] text-muted">Rain days</span>
+                  <span className="font-semibold tabular-nums">{months.reduce((s, m) => s + m.rd, 0)}</span>
                 </div>
               </div>
-              <div className="font-mono text-[11px] text-muted">
+              <div className="text-[12.5px] text-muted">
                 {y.minSpei3 == null ? (
-                  "SPEI-3 not fitted"
-                ) : (
+                  "Drought index not fitted"
+                ) : y.monthsInDrought > 0 ? (
                   <>
-                    min SPEI-3 {y.minSpei3.toFixed(2)} &middot; {indexBand(y.minSpei3)}
-                    {y.monthsInDrought > 0 && ` · ${y.monthsInDrought} mo ≤ −1`}
+                    {y.monthsInDrought} drought {y.monthsInDrought === 1 ? "month" : "months"} &middot; driest point{" "}
+                    {indexBand(y.minSpei3)}
                   </>
+                ) : (
+                  "No drought months"
                 )}
               </div>
             </Panel>
@@ -406,7 +482,7 @@ function Archive({ station }: { station: Station }) {
       </div>
 
       <Provenance>
-        {station.name} &middot; {station.coverage.years} complete years &middot; sparkline is monthly rainfall
+        {station.name}, {station.coverage.years} complete years. The small line is rain month by month.
       </Provenance>
     </>
   );
@@ -416,13 +492,13 @@ function YearSelect({
   value,
   onChange,
   years,
-  border,
+  color,
   label,
 }: {
   value: number;
   onChange: (v: number) => void;
   years: number[];
-  border: string;
+  color: string;
   label: string;
 }) {
   return (
@@ -430,8 +506,8 @@ function YearSelect({
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
       aria-label={label}
-      className="h-7 border bg-bg px-1.5 font-mono text-[11.5px] text-ink outline-none"
-      style={{ borderColor: border }}
+      className="h-9 rounded-full border-2 bg-bg px-3 text-[13px] font-semibold text-ink outline-none"
+      style={{ borderColor: color }}
     >
       {[...years].reverse().map((y) => (
         <option key={y} value={y}>

@@ -153,6 +153,19 @@ function temperature(ts: string | null): number | null {
   return Number.isFinite(t) && t > -100 ? t : null;
 }
 
+/**
+ * The probe's clock runs on Tunisian wall time (UTC+1, no DST), but SmartFarm
+ * stores `timestamp_arduino` as if it were UTC. Read as-is, a 09:00 reading
+ * displays as 10:00 once converted to Africa/Tunis, so the offset is taken
+ * back out here.
+ */
+const PROBE_UTC_OFFSET_MS = 3_600_000;
+
+function probeTime(stamp: string): string | null {
+  const wall = Date.parse(stamp.replace(/(Z|[+-]\d{2}:?\d{2})$/, "") + "Z");
+  return Number.isFinite(wall) ? new Date(wall - PROBE_UTC_OFFSET_MS).toISOString() : null;
+}
+
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
 /** The configured probe and its readings over the last `days` days, oldest first. */
@@ -177,7 +190,7 @@ export async function fetchSoilProbe(days: number): Promise<SoilProbe | null> {
 
   const readings = raw
     .map((r) => ({
-      time: r.timestamp_arduino && r.timestamp_arduino !== "null" ? r.timestamp_arduino : r.time,
+      time: (r.timestamp_arduino && r.timestamp_arduino !== "null" && probeTime(r.timestamp_arduino)) || r.time,
       m20: moisture(r.mv1, r.niv1),
       m40: moisture(r.mv2, r.niv2),
       m60: moisture(r.mv3, r.niv3),

@@ -13,8 +13,8 @@ export function PageAlerts() {
   const [tab, setTab] = React.useState<"inbox" | "rules">("inbox");
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-12 pt-7 sm:px-8">
-      <PageHeader kicker={<>MONITOR &middot; ALERTS</>} title="Alerts" />
+    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
+      <PageHeader title="Alerts" lede="Warnings when drought or soil moisture crosses a limit you set." />
 
       <TabStrip
         value={tab}
@@ -30,14 +30,14 @@ export function PageAlerts() {
           icon="bell"
           title="No alerts have been raised"
           what="Nothing is evaluating thresholds against model runs yet, so there is no alert history to show. The drought indices these rules would watch — SPEI-3, SPI-3 and the composite risk surface — are already computed and visible on Drought Risk and Historical Comparison."
-          needs="rules engine + alert store"
+          needs="an alert rules engine"
         />
       ) : (
         <NoData
           icon="settings"
           title="No rules defined"
           what="A rule pairs a condition on an index or a sensor reading with a delivery channel. Defining them needs somewhere to persist them and a scheduler to evaluate them after each run."
-          needs="rules engine + persistence"
+          needs="an alert rules engine"
         />
       )}
     </div>

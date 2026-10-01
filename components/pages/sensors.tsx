@@ -2,224 +2,140 @@
 
 import * as React from "react";
 import { Icon } from "@/components/icon";
-import { MapView } from "@/components/map-view";
-import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
-import { Provenance } from "@/components/ui/no-data";
-import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
+import { Panel } from "@/components/ui/primitives";
+import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
 import { SoilProbePanel } from "@/components/soil-probe";
 import { STATIONS, type Station } from "@/lib/climate";
 
 /**
- * Two archive stations exist, and what exists about them is their position
- * and their 30-year record. They have no live telemetry — no battery, no
- * link quality, no uptime — so those columns are absent rather than filled
- * with plausible numbers. The one live instrument is the SmartFarm soil
- * probe, which gets its own panel.
+ * The one live instrument — the SmartFarm soil probe — comes first. The two
+ * weather stations are archives: position and a 30-year record, no live
+ * telemetry, so they show what they hold and nothing about battery or link.
  */
 export function PageSensors() {
-  const [view, setView] = React.useState<"table" | "map">("table");
   const [selected, setSelected] = React.useState<Station>(STATIONS[0]);
 
   return (
-    <div className="flex min-h-full flex-col gap-5 px-4 pb-12 pt-7 sm:px-8">
-      <PageHeader
-        kicker={<>MONITOR &middot; GROUND STATIONS</>}
-        title="Field stations"
-        lede={
-          <>
-            {STATIONS.length} stations with a complete daily record from {STATIONS[0].coverage.from.slice(0, 4)} to{" "}
-            {STATIONS[0].coverage.to.slice(0, 4)}. These are archive stations: they are not reporting live, so there
-            is no status, battery or link to show.
-          </>
-        }
-        actions={
-          <Segmented
-            value={view}
-            onChange={setView}
-            className="h-9"
-            options={[
-              {
-                value: "table",
-                label: (
-                  <>
-                    <Icon name="table" size={14} />
-                    Table
-                  </>
-                ),
-              },
-              {
-                value: "map",
-                label: (
-                  <>
-                    <Icon name="map" size={14} />
-                    Map
-                  </>
-                ),
-              },
-            ]}
-          />
-        }
-      />
+    <div className="flex min-h-full flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[clamp(28px,4vw,36px)] leading-none tracking-[-0.02em]">Sensors</h1>
+        <p className="m-0 text-[14.5px] text-muted">
+          Your field sensor measures how wet the soil is at three depths. The weather stations hold 30 years of past
+          weather used for the drought and planting advice.
+        </p>
+      </div>
 
-      {view === "table" ? (
-        <Panel className="overflow-x-auto">
-          <table className="w-full min-w-[880px] border-collapse text-[13px]">
-            <thead>
-              <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
-                {[
-                  "Station",
-                  "Coordinates",
-                  "Altitude",
-                  "Record",
-                  "Observations",
-                  "Mean annual rain",
-                  "Mean ET₀",
-                ].map((h, i) => (
-                  <th
-                    key={h}
-                    className={`border-b border-divider py-3 font-normal uppercase ${
-                      i === 0 ? "px-4 text-left" : i >= 2 ? "text-right" : "text-left"
-                    }`}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {STATIONS.map((s) => {
-                const meanRain = s.annual.reduce((a, y) => a + y.precip, 0) / s.annual.length;
-                const meanEt = s.annual.reduce((a, y) => a + y.et0, 0) / s.annual.length;
-                return (
-                  <tr
-                    key={s.id}
-                    onClick={() => setSelected(s)}
-                    className="cursor-pointer transition-colors hover:bg-neutral-100"
-                  >
-                    <td className="border-b border-divider px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="font-mono text-xs">{s.id}</span>
-                        <span className="text-xs text-muted">{s.name}</span>
-                      </div>
-                    </td>
-                    <td className="border-b border-divider font-mono text-[11.5px] text-muted">
-                      {s.lat.toFixed(3)}&deg;N {s.lon.toFixed(3)}&deg;E
-                    </td>
-                    <td className="border-b border-divider text-right font-mono">{s.alt} m</td>
-                    <td className="border-b border-divider text-right font-mono text-[11.5px]">
-                      {s.coverage.from.slice(0, 4)}&ndash;{s.coverage.to.slice(0, 4)}
-                    </td>
-                    <td className="border-b border-divider text-right font-mono">
-                      {s.coverage.days.toLocaleString("en-GB")}
-                    </td>
-                    <td className="border-b border-divider text-right font-mono">{meanRain.toFixed(0)} mm</td>
-                    <td className="border-b border-divider pr-4 text-right font-mono">{meanEt.toFixed(0)} mm</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Panel>
-      ) : (
-        <Panel className="relative h-[560px]">
-          <MapView layer="none" sensors className="absolute inset-0" />
-        </Panel>
-      )}
-
-      {/* ── Live soil probe (SmartFarm) ───────────────────────────────── */}
       <SoilProbePanel />
 
-      {/* ── Measured variables ────────────────────────────────────────── */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Panel className="flex flex-col gap-3.5 px-5 py-4.5">
-          <span className="font-mono text-[10.5px] tracking-[0.1em] text-muted">
-            MEASURED AT {selected.name.toUpperCase()}
-          </span>
-          <div className="grid grid-cols-2 border-l border-t border-divider">
-            {(
-              [
-                ["PRECIPITATION", "mm/day"],
-                ["TEMPERATURE", "min / mean / max °C"],
-                ["RELATIVE HUMIDITY", "%"],
-                ["SOLAR RADIATION", "MJ/m²/day"],
-                ["WIND SPEED @2 m", "m/s"],
-                ["ET₀", "mm/day, FAO-56"],
-              ] as const
-            ).map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-0.5 border-b border-r border-divider px-3 py-2.5">
-                <span className="font-mono text-[10px] tracking-[0.08em] text-muted">{k}</span>
-                <span className="font-mono text-[12.5px]">{v}</span>
-              </div>
-            ))}
-          </div>
-          <Provenance>Seven variables, {selected.coverage.days.toLocaleString("en-GB")} days, no gaps</Provenance>
-        </Panel>
-
-        <Panel className="flex flex-col gap-3 px-5 py-4.5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="font-heading text-lg font-semibold">Last 90 days at {selected.name}</span>
-            <span className="font-mono text-[10.5px] text-muted">
-              RAINFALL mm &middot; TO {selected.recent[selected.recent.length - 1].date}
+      <Panel className="flex flex-col gap-5 px-5 py-5">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-lg font-semibold">Weather stations</span>
+          <span className="text-[13px] text-muted">Pick a station to see its daily rain.</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {STATIONS.map((s) => {
+            const meanRain = s.annual.reduce((a, y) => a + y.precip, 0) / s.annual.length;
+            const active = s.id === selected.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSelected(s)}
+                aria-pressed={active}
+                className={`flex items-center gap-4 rounded-[12px] border px-4 py-3.5 text-left transition-colors ${
+                  active ? "border-accent bg-accent-100" : "border-divider hover:bg-neutral-100"
+                }`}
+              >
+                <span
+                  className="grid size-10 flex-none place-items-center rounded-[10px]"
+                  style={{
+                    color: "var(--ap-accent)",
+                    background: "color-mix(in srgb, var(--ap-accent) 14%, transparent)",
+                  }}
+                >
+                  <Icon name="cloudsun" size={20} strokeWidth={1.8} />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-[15px] font-semibold">{s.name}</span>
+                  <span className="text-[13px] text-muted">
+                    Weather from {s.coverage.from.slice(0, 4)} to {s.coverage.to.slice(0, 4)}
+                  </span>
+                </span>
+                <span className="flex flex-col items-end">
+                  <span className="text-[15px] font-semibold tabular-nums">{meanRain.toFixed(0)} mm</span>
+                  <span className="text-[12px] text-muted">rain per year</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-2 border-t border-divider pt-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <span className="text-[15px] font-semibold">Daily rain at {selected.name}</span>
+            <span className="text-[12.5px] text-muted">
+              Last 90 days of the record, to {fmtDay(selected.recent[selected.recent.length - 1].date)}
             </span>
           </div>
           <RecentRain station={selected} />
-        </Panel>
-      </div>
+        </div>
+      </Panel>
     </div>
   );
 }
 
+const fmtDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
 function RecentRain({ station }: { station: Station }) {
   const rows = station.recent.slice(-90);
   const max = Math.max(...rows.map((r) => r.precip), 5);
-  const w = 720;
-  const h = 150;
+  const [ref, w] = useElementWidth<HTMLDivElement>();
+  const h = 200;
   const bw = w / rows.length;
 
   const hover = useBarHover(rows.length, 0, 0, w);
   const at = hover.index == null ? null : rows[hover.index];
 
   return (
-    <div className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
+    <div ref={ref} className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
       <HoverReadout hover={hover} left={0} right={0} width={w}>
         {at && (
           <>
-            {at.date} &middot; {at.precip.toFixed(1)} mm
+            {fmtDay(at.date)} &middot; {at.precip.toFixed(1)} mm
           </>
         )}
       </HoverReadout>
-      <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
-      <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-        <line x1={0} x2={w} y1={h - 20} y2={h - 20} />
-        <line x1={0} x2={w} y1={(h - 20) / 2} y2={(h - 20) / 2} />
-      </g>
-      {rows.map((r, i) => {
-        const bh = (r.precip / max) * (h - 30);
-        return (
-          <rect
-            key={r.date}
-            x={i * bw}
-            y={h - 20 - bh}
-            width={Math.max(1, bw - 0.8)}
-            height={bh}
-            fill="var(--ap-teal)"
-            fillOpacity={hover.index === i ? 1 : 0.85}
-          />
-        );
-      })}
-
-      <HoverGuide hover={hover} left={0} right={0} width={w} top={0} bottom={h - 20} />
-      <g style={{ fontFamily: "var(--font-mono)", fill: "var(--ap-muted)" }} fontSize={9.5}>
-        <text x={2} y={12}>
-          {max.toFixed(0)} mm
-        </text>
-        <text x={2} y={h - 6}>
-          {rows[0].date}
-        </text>
-        <text x={w - 2} y={h - 6} textAnchor="end">
-          {rows[rows.length - 1].date}
-        </text>
-      </g>
+      <svg width={w} height={h} className="block">
+        <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
+          <line x1={0} x2={w} y1={h - 22} y2={h - 22} />
+          <line x1={0} x2={w} y1={(h - 22) / 2} y2={(h - 22) / 2} />
+        </g>
+        {rows.map((r, i) => {
+          const bh = (r.precip / max) * (h - 34);
+          return (
+            <rect
+              key={r.date}
+              x={i * bw}
+              y={h - 22 - bh}
+              width={Math.max(1, bw - 1)}
+              height={bh}
+              rx={1.5}
+              fill="var(--ap-accent)"
+              fillOpacity={hover.index === i ? 1 : 0.8}
+            />
+          );
+        })}
+        <HoverGuide hover={hover} left={0} right={0} width={w} top={0} bottom={h - 22} />
+        <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
+          <text x={2} y={12}>
+            {max.toFixed(0)} mm
+          </text>
+          <text x={2} y={h - 5}>
+            {fmtDay(rows[0].date)}
+          </text>
+          <text x={w - 2} y={h - 5} textAnchor="end">
+            {fmtDay(rows[rows.length - 1].date)}
+          </text>
+        </g>
       </svg>
     </div>
   );

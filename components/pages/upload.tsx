@@ -10,13 +10,13 @@ import { NoData } from "@/components/ui/no-data";
  */
 export function PageUpload() {
   return (
-    <div className="flex flex-col gap-5.5 px-4 pb-12 pt-7 sm:px-8">
-      <PageHeader kicker={<>DATA &middot; UPLOAD</>} title="Upload data" />
+    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
+      <PageHeader title="Upload data" lede="Add your own weather or field records from a file." />
       <NoData
         icon="upload"
         title="No ingestion pipeline connected"
         what="Importing needs somewhere to write to and something to validate against: a store for the rows, a schema per metric group, and a job to fold new observations into the derived series. None of that exists yet, so there is no import to run."
-        needs="storage + validation + ETL trigger"
+        needs="a place to store uploaded data"
       />
     </div>
   );

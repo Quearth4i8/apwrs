@@ -120,3 +120,22 @@ export function HoverGuide({
     />
   );
 }
+
+/**
+ * Rendered width of an element, for charts drawn in real pixels. A chart
+ * scaled through its viewBox grows its text and its height with the window,
+ * which on a wide screen turns 11px labels into 20px ones and a 200px plot
+ * into a 400px one.
+ */
+export function useElementWidth<T extends HTMLElement>(fallback = 640) {
+  const ref = React.useRef<T>(null);
+  const [width, setWidth] = React.useState(fallback);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.max(240, Math.round(entry.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, width] as const;
+}

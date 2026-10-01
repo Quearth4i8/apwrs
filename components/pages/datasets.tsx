@@ -1,131 +1,168 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PageHeader, TabStrip } from "@/components/ui/primitives";
+import { Icon, type IconName } from "@/components/icon";
+import { PageHeader, TabStrip } from "@/components/ui/primitives";
 import { NoData, Provenance } from "@/components/ui/no-data";
 import { climateFile, CROPS, STATIONS } from "@/lib/climate";
 
 /**
- * The only datasets that genuinely exist are the two station workbooks this
- * build was derived from, so those are what the catalogue lists. The activity
- * log needs an audit trail nothing is writing to yet.
+ * Every source the app reads from: the two station workbooks it was derived
+ * from, the crop table, and the live feeds (Open-Meteo, Copernicus
+ * Sentinel-2, the SmartFarm soil probe). The activity log needs an audit
+ * trail nothing is writing to yet.
  */
+
+interface Source {
+  id: string;
+  name: string;
+  icon: IconName;
+  tint: string;
+  source: string;
+  live: boolean;
+  size: string;
+  period: string;
+  contents: string;
+}
+
 export function PageDatasets({ tab: initial }: { tab: "datasets" | "activity" }) {
   const [tab, setTab] = React.useState(initial);
 
-  const rows = STATIONS.map((s) => ({
-    id: s.id,
-    name: `${s.name} daily climate record`,
-    source: "Station workbook",
-    type: "Climate",
-    records: s.coverage.days,
-    period: `${s.coverage.from} → ${s.coverage.to}`,
-    fields: "P, Tmin/Tmean/Tmax, RH, Rs, wind, ET₀",
-  }));
+  const sources: Source[] = [
+    ...STATIONS.map((s) => ({
+      id: s.id,
+      name: `${s.name} weather record`,
+      icon: "cloudsun" as const,
+      tint: "var(--ap-accent)",
+      source: "Station workbook",
+      live: false,
+      size: `${s.coverage.days.toLocaleString("en-GB")} days`,
+      period: `${s.coverage.from.slice(0, 4)} to ${s.coverage.to.slice(0, 4)}`,
+      contents: "Rain, temperature, humidity, sunlight, wind, evaporation",
+    })),
+    {
+      id: "probe",
+      name: "Field sensor",
+      icon: "radio",
+      tint: "#38A88A",
+      source: "SmartFarm",
+      live: true,
+      size: "About 1 reading a day",
+      period: "Since Jul 2026",
+      contents: "Soil moisture at 20, 40 and 60 cm, soil temperature",
+    },
+    {
+      id: "grid",
+      name: "Regional weather grid",
+      icon: "grid",
+      tint: "#7B8FD9",
+      source: "Open-Meteo",
+      live: true,
+      size: "320 points",
+      period: "Last 30 days, refreshed every 30 min",
+      contents: "Rain, evaporation, daytime high, soil moisture",
+    },
+    {
+      id: "forecast",
+      name: "Weather forecast",
+      icon: "cloud",
+      tint: "#7B8FD9",
+      source: "Open-Meteo",
+      live: true,
+      size: "16 days ahead",
+      period: "Plus the last 60 days",
+      contents: "Rain, evaporation, low and high temperature",
+    },
+    {
+      id: "ndvi",
+      name: "Vegetation from satellite",
+      icon: "satellite",
+      tint: "#38A88A",
+      source: "Copernicus Sentinel-2",
+      live: true,
+      size: "One image mosaic",
+      period: "Clearest view of the last 30 days",
+      contents: "How green the plants are (NDVI)",
+    },
+    {
+      id: "crops",
+      name: "Crop table",
+      icon: "sprout",
+      tint: "#E7A83B",
+      source: "Station workbook",
+      live: false,
+      size: `${CROPS.length} crops`,
+      period: "Fixed",
+      contents: "Growth stage lengths and water coefficients (FAO-56)",
+    },
+  ];
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-12 pt-7 sm:px-8">
+    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        kicker={tab === "datasets" ? <>DATA &middot; DATASETS</> : <>DATA &middot; ACTIVITY LOG</>}
         title={tab === "datasets" ? "Datasets" : "Activity log"}
+        lede={tab === "datasets" ? "Everything the app reads its figures from." : "Who changed what, and when."}
       />
 
       <TabStrip
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: "datasets", label: "Datasets", count: rows.length },
+          { value: "datasets", label: "Datasets", count: sources.length },
           { value: "activity", label: "Activity log" },
         ]}
       />
 
       {tab === "datasets" ? (
         <>
-          <Panel className="overflow-x-auto">
-            <table className="w-full min-w-[820px] border-collapse text-[13px]">
-              <thead>
-                <tr className="font-mono text-[10px] tracking-[0.08em] text-muted">
-                  {["Dataset", "Source", "Type", "Records", "Period", "Fields"].map((h, i) => (
-                    <th
-                      key={h}
-                      className={`border-b border-divider py-2.75 font-normal uppercase ${
-                        i === 0 ? "px-4 text-left" : h === "Records" ? "text-right" : "text-left"
-                      }`}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((d) => (
-                  <tr key={d.id} className="transition-colors hover:bg-neutral-100">
-                    <td className="border-b border-divider px-4 py-2.5">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{d.name}</span>
-                        <span className="font-mono text-[10.5px] text-muted">{d.id}</span>
-                      </div>
-                    </td>
-                    <td className="border-b border-divider">
-                      <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">{d.source}</span>
-                    </td>
-                    <td className="border-b border-divider text-muted">{d.type}</td>
-                    <td className="border-b border-divider text-right font-mono">
-                      {d.records.toLocaleString("en-GB")}
-                    </td>
-                    <td className="border-b border-divider font-mono text-[11.5px] text-muted">{d.period}</td>
-                    <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">{d.fields}</td>
-                  </tr>
-                ))}
-                <tr className="transition-colors hover:bg-neutral-100">
-                  <td className="border-b border-divider px-4 py-2.5">
-                    <div className="flex flex-col">
-                      <span className="font-medium">Crop coefficients</span>
-                      <span className="font-mono text-[10.5px] text-muted">FAO-56</span>
-                    </div>
-                  </td>
-                  <td className="border-b border-divider">
-                    <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">Station workbook</span>
-                  </td>
-                  <td className="border-b border-divider text-muted">Agricultural</td>
-                  <td className="border-b border-divider text-right font-mono">{CROPS.length}</td>
-                  <td className="border-b border-divider font-mono text-[11.5px] text-muted">&mdash;</td>
-                  <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">
-                    K<sub>c</sub> ini/mid/end, stage lengths
-                  </td>
-                </tr>
-                <tr className="transition-colors hover:bg-neutral-100">
-                  <td className="border-b border-divider px-4 py-2.5">
-                    <div className="flex flex-col">
-                      <span className="font-medium">Live risk surface</span>
-                      <span className="font-mono text-[10.5px] text-muted">/api/grid</span>
-                    </div>
-                  </td>
-                  <td className="border-b border-divider">
-                    <span className="border border-divider px-1.75 py-0.5 font-mono text-[11px]">Open-Meteo</span>
-                  </td>
-                  <td className="border-b border-divider text-muted">Gridded</td>
-                  <td className="border-b border-divider text-right font-mono">320</td>
-                  <td className="border-b border-divider font-mono text-[11.5px] text-muted">rolling 30 d</td>
-                  <td className="border-b border-divider pr-4 font-mono text-[11px] text-muted">
-                    P, ET&#8320;, Tmax, soil moisture
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </Panel>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {sources.map((d) => (
+              <div key={d.id} className="panel flex flex-col gap-3.5 px-5 py-4.5">
+                <div className="flex items-start gap-3">
+                  <span
+                    className="grid size-10 flex-none place-items-center rounded-[10px]"
+                    style={{ color: d.tint, background: `color-mix(in srgb, ${d.tint} 14%, transparent)` }}
+                  >
+                    <Icon name={d.icon} size={19} strokeWidth={1.8} />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold leading-tight">{d.name}</span>
+                    <span className="text-[12.5px] text-muted">{d.source}</span>
+                  </span>
+                  <span
+                    className="flex-none rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
+                    style={
+                      d.live
+                        ? { color: "#38A88A", background: "rgb(56 168 138 / 0.14)" }
+                        : { color: "var(--ap-muted)", background: "var(--ap-neutral-100)" }
+                    }
+                  >
+                    {d.live ? "Live" : "Archive"}
+                  </span>
+                </div>
+                <p className="m-0 text-[13.5px] leading-snug">{d.contents}</p>
+                <div className="mt-auto flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted">
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="database" size={13} />
+                    {d.size}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="calendar" size={13} />
+                    {d.period}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
 
-          <Provenance>
-            Generated {new Date(climateFile.generatedAt).toISOString().slice(0, 10)} &middot; everything the app
-            reads from is listed here
-          </Provenance>
+          <Provenance>Station data prepared {new Date(climateFile.generatedAt).toISOString().slice(0, 10)}</Provenance>
         </>
       ) : (
         <NoData
           icon="activity"
           title="No activity recorded"
-          what="An activity log needs an audit trail — who changed what, and when. Nothing is writing one yet, and the actions it would record (uploads, edits, role changes) are not wired to storage."
-          needs="audit trail + persistence"
+          what="An activity log needs a record of who changed what, and when. Nothing is keeping one yet, and the actions it would record (uploads, edits, role changes) are not saved anywhere."
+          needs="an audit trail"
         />
       )}
     </div>
