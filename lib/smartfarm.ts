@@ -18,12 +18,27 @@
 
 const API = "https://my.smartfarm.com.tn/api";
 
+/**
+ * An environment value as pasted into a hosting dashboard: trimmed, with
+ * surrounding quotes removed, and a pasted `{"token":"…"}` object unwrapped.
+ * Any of those reaching SmartFarm comes back as a bare "Invalid token".
+ */
+function env(name: string): string {
+  let v = (process.env[name] ?? "").trim();
+  if (v.startsWith("{")) {
+    try {
+      const o = JSON.parse(v) as { token?: string; refreshToken?: string };
+      v = o.refreshToken ?? o.token ?? v;
+    } catch {
+      /* not JSON; use as is */
+    }
+  }
+  return v.replace(/^(["'])(.*)\1$/, "$2").trim();
+}
+
 export function hasCredentials(): boolean {
   return Boolean(
-    process.env.SMARTFARM_EMAIL &&
-      process.env.SMARTFARM_UID &&
-      process.env.SMARTFARM_REFRESH_TOKEN &&
-      process.env.SMARTFARM_SENSOR,
+    env("SMARTFARM_EMAIL") && env("SMARTFARM_UID") && env("SMARTFARM_REFRESH_TOKEN") && env("SMARTFARM_SENSOR"),
   );
 }
 
@@ -31,14 +46,36 @@ export function hasCredentials(): boolean {
 
 let cached: { token: string; expiresAt: number } | null = null;
 
+/** A JWT's payload, read without verifying it; null if it isn't one. */
+function jwtPayload(token: string): { email?: string; id?: string; iat?: number; exp?: number } | null {
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
 /** Expiry of a JWT in ms, read from its payload without verifying it. */
 function jwtExpiry(token: string): number {
-  try {
-    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
-    return typeof payload.exp === "number" ? payload.exp * 1000 : 0;
-  } catch {
-    return 0;
-  }
+  const exp = jwtPayload(token)?.exp;
+  return typeof exp === "number" ? exp * 1000 : 0;
+}
+
+/**
+ * Why SmartFarm would reject these credentials, worked out locally. The
+ * refresh token carries the email and user id it was issued to, and its
+ * lifetime, so a mismatch can be named without exposing any secret. SmartFarm
+ * itself answers every one of these with the same "Invalid token".
+ */
+function credentialProblem(email: string, uid: string, refresh: string): string | null {
+  const p = jwtPayload(refresh);
+  if (!p) return "SMARTFARM_REFRESH_TOKEN is not a token (check it was pasted whole)";
+  if (p.exp && p.iat && p.exp - p.iat <= 2 * 86_400)
+    return "SMARTFARM_REFRESH_TOKEN holds the short-lived access token, not the refresh token";
+  if (p.exp && p.exp * 1000 < Date.now()) return "SMARTFARM_REFRESH_TOKEN has expired; log in to SmartFarm for a new one";
+  if (p.email && p.email !== email) return "SMARTFARM_EMAIL does not match the refresh token (it is case-sensitive)";
+  if (p.id && p.id !== uid) return "SMARTFARM_UID does not match the refresh token";
+  return null;
 }
 
 /**
@@ -49,20 +86,21 @@ function jwtExpiry(token: string): number {
 async function accessToken(force = false): Promise<string> {
   if (!force && cached && Date.now() < cached.expiresAt - 300_000) return cached.token;
 
+  const email = env("SMARTFARM_EMAIL");
+  const uid = env("SMARTFARM_UID");
+  const refreshToken = env("SMARTFARM_REFRESH_TOKEN");
+  const problem = credentialProblem(email, uid, refreshToken);
+  if (problem) throw new Error(`SmartFarm credentials: ${problem}`);
+
   const res = await fetch(`${API}/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: process.env.SMARTFARM_EMAIL,
-      role: "ROLE_USER",
-      uid: process.env.SMARTFARM_UID,
-      refreshToken: process.env.SMARTFARM_REFRESH_TOKEN,
-    }),
+    body: JSON.stringify({ email, role: "ROLE_USER", uid, refreshToken }),
     cache: "no-store",
   });
-  const json = (await res.json().catch(() => null)) as { type?: string; token?: string } | null;
+  const json = (await res.json().catch(() => null)) as { type?: string; message?: string; token?: string } | null;
   if (!res.ok || !json?.token) {
-    throw new Error(`SmartFarm auth failed: ${res.status}${json?.type ? ` (${json.type})` : ""}`);
+    throw new Error(`SmartFarm auth failed: ${res.status}${json?.message ? ` (${json.message})` : ""}`);
   }
   cached = { token: json.token, expiresAt: jwtExpiry(json.token) };
   return cached.token;
@@ -171,7 +209,7 @@ const day = (d: Date) => d.toISOString().slice(0, 10);
 /** The configured probe and its readings over the last `days` days, oldest first. */
 export async function fetchSoilProbe(days: number): Promise<SoilProbe | null> {
   if (!hasCredentials()) return null;
-  const code = process.env.SMARTFARM_SENSOR!;
+  const code = env("SMARTFARM_SENSOR");
 
   const sensors = await get<RawSensor[]>("/sensor/sensors");
   const sensor = sensors.find((s) => s.code === code);
