@@ -6,13 +6,15 @@ import { MapView } from "@/components/map-view";
 import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { useBarHover, HoverReadout, HoverGuide } from "@/components/ui/chart-hover";
+import { SoilProbePanel } from "@/components/soil-probe";
 import { STATIONS, type Station } from "@/lib/climate";
 
 /**
- * Two stations exist, and what exists about them is their position and their
- * 30-year record. There is no live telemetry — no battery, no link quality,
- * no uptime — because nothing is streaming from them, so those columns are
- * absent rather than filled with plausible numbers.
+ * Two archive stations exist, and what exists about them is their position
+ * and their 30-year record. They have no live telemetry — no battery, no
+ * link quality, no uptime — so those columns are absent rather than filled
+ * with plausible numbers. The one live instrument is the SmartFarm soil
+ * probe, which gets its own panel.
  */
 export function PageSensors() {
   const [view, setView] = React.useState<"table" | "map">("table");
@@ -123,6 +125,9 @@ export function PageSensors() {
           <MapView layer="none" sensors className="absolute inset-0" />
         </Panel>
       )}
+
+      {/* ── Live soil probe (SmartFarm) ───────────────────────────────── */}
+      <SoilProbePanel />
 
       {/* ── Measured variables ────────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
