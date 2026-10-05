@@ -156,7 +156,7 @@ function ForecastBody({ station, data }: { station: Station; data: ForecastPaylo
       <Panel className="flex flex-col gap-3 px-5 py-5">
         <CardTitle
           title="Water left in the soil (modelled)"
-          sub="Estimated from rain and evaporation, not measured. See Sensors for the field sensor's readings."
+          sub="Estimated from rain and evaporation, not measured. See Sensors for S.Sensor's readings."
         />
         <BalanceChart rows={balance} />
       </Panel>

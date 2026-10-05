@@ -76,9 +76,9 @@ function SoilStateMessage({ error }: { error: string | null }) {
     <p className="m-0 text-[13.5px] text-muted">
       {error
         ? error === "not configured"
-          ? "The field sensor is not connected yet."
-          : "The field sensor could not be reached right now."
-        : "Reading the field sensor…"}
+          ? "S.Sensor is not connected yet."
+          : "S.Sensor could not be reached right now."
+        : "Reading S.Sensor…"}
     </p>
   );
 }
@@ -92,7 +92,7 @@ export function SoilProbeCard() {
         <div className="flex flex-col gap-0.5">
           <span className="text-lg font-semibold">Soil moisture</span>
           <span className="text-[13px] text-muted">
-            {probe && latest ? `Field sensor · ${probe.field ?? probe.code} · ${fmtTime(latest.time)}` : "Field sensor"}
+            {probe && latest ? `S.Sensor · ${probe.field ?? probe.code} · ${fmtTime(latest.time)}` : "S.Sensor"}
           </span>
         </div>
         <Link
@@ -134,7 +134,7 @@ export function SoilProbePanel() {
   if (!data || !latest) {
     return (
       <Panel className="px-5 py-5">
-        <span className="text-lg font-semibold">Field sensor</span>
+        <span className="text-lg font-semibold">S.Sensor</span>
         <div className="mt-2">
           {data && !latest ? (
             <p className="m-0 text-[13.5px] text-muted">The sensor has not sent a reading from the soil yet.</p>
@@ -153,7 +153,7 @@ export function SoilProbePanel() {
     <Panel className="flex flex-col gap-5 px-5 py-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="text-lg font-semibold">Field sensor &middot; {probe.field ?? probe.code}</span>
+          <span className="text-lg font-semibold">S.Sensor &middot; {probe.field ?? probe.code}</span>
           <span className="text-[13px] text-muted">Last reading {fmtTime(latest.time)}</span>
         </div>
         <LevelPill level={moistureLevel(rootZone(latest))} />

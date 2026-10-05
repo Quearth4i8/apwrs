@@ -445,6 +445,7 @@ async function main() {
   mkdirSync(OUT, { recursive: true });
   const stations = [];
   const stationDaily = new Map<string, DailyRow[]>();
+  const dailyExtra: Record<string, { from: string; tm: number[]; rh: number[]; ws: number[]; rs: number[] }> = {};
 
   for (const s of STATIONS) {
     const daily = await readDaily(s);
@@ -476,6 +477,9 @@ async function main() {
         et0: avg((a) => a.et0),
         tmax: avg((a) => a.tmax),
         tmean: avg((a) => a.tmean),
+        rh: avg((a) => a.rh),
+        wind: avg((a) => a.wind),
+        rs: avg((a) => a.rs),
         rainDays: +(m.reduce((s, a) => s + a.rainDays, 0) / m.length).toFixed(1),
       };
     });
@@ -540,6 +544,15 @@ async function main() {
       et0: daily.map((r) => +r.et0.toFixed(2)),
       precip: daily.map((r) => +r.precip.toFixed(1)),
     };
+    // The other daily variables, for the day view on History. Kept out of
+    // climate.json so the main bundle does not carry them.
+    dailyExtra[s.id] = {
+      from: daily[0].date,
+      tm: daily.map((r) => +r.tmean.toFixed(1)),
+      rh: daily.map((r) => +r.rh.toFixed(0)),
+      ws: daily.map((r) => +r.wind.toFixed(1)),
+      rs: daily.map((r) => +r.rs.toFixed(1)),
+    };
 
     const recentFrom = daily.length - 1095; // three years of daily detail
     const recent = daily.slice(Math.max(0, recentFrom)).map((r, i, arr) => {
@@ -566,7 +579,10 @@ async function main() {
       lon: s.lon,
       alt: s.alt,
       coverage: { from: daily[0].date, to: daily[daily.length - 1].date, days: daily.length, years: years.length },
-      months: months.map((a) => ({ y: a.year, m: a.month, p: a.precip, e: a.et0, b: a.balance, tx: a.tmax, tm: a.tmean, rd: a.rainDays })),
+      months: months.map((a) => ({
+        y: a.year, m: a.month, p: a.precip, e: a.et0, b: a.balance, tx: a.tmax, tm: a.tmean,
+        rh: a.rh, ws: a.wind, rs: a.rs, rd: a.rainDays,
+      })),
       spei,
       spi,
       normals,
@@ -631,6 +647,8 @@ async function main() {
   };
 
   writeFileSync(`${OUT}/climate.json`, JSON.stringify(payload));
+  writeFileSync(`${OUT}/daily.json`, JSON.stringify(dailyExtra));
+  console.log(`  wrote ${OUT}/daily.json  (${(JSON.stringify(dailyExtra).length / 1024).toFixed(0)} KB)`);
   const kb = (JSON.stringify(payload).length / 1024).toFixed(0);
   console.log(`\n  wrote ${OUT}/climate.json  (${kb} KB)`);
   console.log(`  crops: ${crops.map((c) => c.name).join(", ")}`);

@@ -3,12 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Icon } from "@/components/icon";
 import { MapView, type SurfaceInfo } from "@/components/map-view";
 import { useConsole } from "@/components/app-context";
-import { Panel, ButtonLink, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
+import { Panel, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
-import { CardTitle, StatTile } from "@/components/ui/simple";
+import { CardTitle } from "@/components/ui/simple";
 import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
 import { stationForSite, latestSpei, latestSpi, type Station } from "@/lib/climate";
 import { conditionsFor, indexBand, spanLabel, MONTH_ABBR } from "@/lib/metrics";
@@ -36,56 +35,7 @@ export function PageRisk() {
 
   return (
     <div className="relative flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
-      <PageHeader
-        title="Drought risk"
-        lede={
-          spei3 ? (
-            <>
-              Over the three months to {monthWord(spei3.label)} {spei3.label.split(" ")[1]}, {station.name} is{" "}
-              <strong className="font-semibold text-ink">{indexBand(spei3.value)}</strong> compared with the same
-              months in the last {station.coverage.years} years.
-            </>
-          ) : (
-            "No drought index for the latest month."
-          )
-        }
-      />
-
-      {/* ── Standing ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <IndexTile label="Water balance · SPEI-3" icon="gauge" value={spei3?.value ?? null} month={spei3?.label ?? null} />
-        <IndexTile label="Rainfall only · SPI-3" icon="rain" value={cond.spi3?.value ?? null} month={cond.spi3?.label ?? null} />
-        <StatTile
-          icon="droplet"
-          label="Rain in 30 days"
-          value={cond.rain30}
-          unit="mm"
-          note={
-            cond.rain30Normal == null ? (
-              "No normal to compare"
-            ) : (
-              <>
-                Normal is {cond.rain30Normal} mm
-                {cond.rain30Anomaly != null && (
-                  <span style={{ color: cond.rain30Anomaly < 0 ? "#EE8434" : "var(--ap-accent)" }}>
-                    {" "}
-                    ({cond.rain30Anomaly > 0 ? "+" : ""}
-                    {cond.rain30Anomaly}%)
-                  </span>
-                )}
-              </>
-            )
-          }
-        />
-        <StatTile
-          icon="sun"
-          tint="#E7A83B"
-          label="Days since rain"
-          value={cond.dryDays}
-          unit={cond.dryDays === 1 ? "day" : "days"}
-          note={`At least 1 mm · to ${fmtDate(cond.asOf)}`}
-        />
-      </div>
+      <PageHeader title="Drought risk" />
 
       {/* ── Standing + explanation ────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -137,10 +87,6 @@ export function PageRisk() {
           </div>
 
           <div className="mt-auto flex flex-wrap gap-2.5">
-            <ButtonLink href="/app/drivers" size="sm">
-              How the map is weighted
-              <Icon name="arrow" size={14} />
-            </ButtonLink>
             <Link href="/app/history" className="flex items-center px-1 text-[13px] text-accent no-underline hover:underline">
               Compare with past years
             </Link>
@@ -290,8 +236,7 @@ function IndexScales({ station }: { station: Station }) {
   return (
     <Panel className="flex flex-col gap-4 px-5 py-5">
       <CardTitle
-        title="Short and long term"
-        sub="The same index over different spans: short spans react to recent weeks, long ones carry the whole year"
+        title="Drought Index"
       />
       {rows.map((r) => (
         <div key={r.code} className="flex flex-col gap-2">
@@ -361,38 +306,12 @@ function speiToLevel(v: number) {
 /** "OCT–DEC 2025" → "Oct–Dec 2025": month labels are stored in capitals. */
 const mon = (label: string) => label.replace(/\b([A-Z])([A-Z]{2})\b/g, (_, a: string, b: string) => a + b.toLowerCase());
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-
 function monthWord(label: string) {
   const m = label.split(" ")[0];
   const i = MONTH_ABBR.indexOf(m);
   return i >= 0
     ? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]
     : "month";
-}
-
-function IndexTile({
-  label,
-  icon,
-  value,
-  month,
-}: {
-  label: string;
-  icon: "gauge" | "rain";
-  value: number | null;
-  month: string | null;
-}) {
-  return (
-    <StatTile
-      icon={icon}
-      tint={bandColor(value)}
-      label={label}
-      value={value == null ? "—" : value.toFixed(2)}
-      badge={value != null ? <RiskBadge level={speiToLevel(value)} showScore={false} /> : undefined}
-      note={value == null ? "Not fitted" : `${indexBand(value)} · three months to ${month ? mon(month) : "—"}`}
-    />
-  );
 }
 
 /** A linear scale from −3 to +3 with the current value marked. */

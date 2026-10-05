@@ -7,7 +7,6 @@ import { PageSensors } from "@/components/pages/sensors";
 import { PageAlerts } from "@/components/pages/alerts";
 import { PageRisk } from "@/components/pages/risk";
 import { PageForecasts } from "@/components/pages/forecasts";
-import { PageDrivers } from "@/components/pages/drivers";
 import { PagePlanting } from "@/components/pages/planting";
 import { PageHistory } from "@/components/pages/history";
 import { PageUpload } from "@/components/pages/upload";
@@ -45,14 +44,10 @@ function render(page: PageId) {
       return <PageRisk />;
     case "forecasts":
       return <PageForecasts />;
-    case "drivers":
-      return <PageDrivers />;
     case "planting":
       return <PagePlanting />;
     case "history":
-      return <PageHistory key="compare" tab="compare" />;
-    case "archive":
-      return <PageHistory key="archive" tab="archive" />;
+      return <PageHistory />;
     case "upload":
       return <PageUpload />;
     case "manual":

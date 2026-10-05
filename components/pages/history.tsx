@@ -1,45 +1,31 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
-import { Menu, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
-import { Panel, PageHeader, Segmented, TabStrip } from "@/components/ui/primitives";
+import { Menu, MenuItem, MenuTrigger, Popover } from "@/components/ui/dropdown";
+import { Panel, PageHeader, Segmented } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { StatTile } from "@/components/ui/simple";
+import { cn } from "@/lib/utils";
 import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
 import { STATIONS, stationForSite, type Station } from "@/lib/climate";
-import { indexBand, MONTH_ABBR, rainfallPercentile } from "@/lib/metrics";
 
 /**
  * Every figure on this page comes from the 30-year daily record: annual
- * totals, the fitted SPEI series and the 1996–2025 monthly normals.
+ * totals, monthly figures and, for the day view, the daily record.
  */
 
-const CHART = { h: 260, padL: 44, padR: 12, padT: 14, padB: 30 };
-
-/** Year A and year B: categorical slots 1 and 2, validated in globals.css. */
-const YEAR_A = "var(--ap-depth-1)";
-const YEAR_B = "var(--ap-depth-2)";
-
-export function PageHistory({ tab: initial }: { tab: "compare" | "archive" }) {
+export function PageHistory() {
   const { site } = useConsole();
   const station = stationForSite(site.name);
-  const [tab, setTab] = React.useState(initial);
-  const [metric, setMetric] = React.useState<"precip" | "balance" | "spei">("precip");
-
-  const years = station.annual;
-  const yearList = years.map((a) => a.year);
-  const [yearA, setYearA] = React.useState(() => yearList[yearList.length - 1]);
-  const [yearB, setYearB] = React.useState(() => {
-    const driest = [...years].sort((x, y) => x.balance - y.balance)[0];
-    return driest.year;
-  });
+  const [metric, setMetric] = React.useState<Metric>("precip");
 
   return (
     <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
-        title={tab === "compare" ? "Past years" : "Year by year"}
+        title="Past years"
         lede={`${station.coverage.years} years of daily weather at ${station.name}, ${station.coverage.from.slice(0, 4)} to ${station.coverage.to.slice(0, 4)}.`}
         actions={
           <Menu
@@ -60,461 +46,467 @@ export function PageHistory({ tab: initial }: { tab: "compare" | "archive" }) {
         }
       />
 
-      <TabStrip
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: "compare", label: "Compare years" },
-          { value: "archive", label: "Every year" },
-        ]}
-      />
-
-      {tab === "compare" ? (
-        <Compare
-          station={station}
-          metric={metric}
-          setMetric={setMetric}
-          yearA={yearA}
-          yearB={yearB}
-          setYearA={setYearA}
-          setYearB={setYearB}
-        />
-      ) : (
-        <Archive station={station} />
-      )}
+      <Trends station={station} metric={metric} setMetric={setMetric} />
     </div>
   );
 }
 
-/* ── Comparison ──────────────────────────────────────────────────────── */
+/* ── Trends ──────────────────────────────────────────────────────────── */
 
-function Compare({
-  station,
-  metric,
-  setMetric,
-  yearA,
-  yearB,
-  setYearA,
-  setYearB,
-}: {
-  station: Station;
-  metric: "precip" | "balance" | "spei";
-  setMetric: (m: "precip" | "balance" | "spei") => void;
-  yearA: number;
-  yearB: number;
-  setYearA: (y: number) => void;
-  setYearB: (y: number) => void;
-}) {
+type MonthRow = Station["months"][number];
+
+/** Daily tmean, humidity, wind and radiation: lib/generated/daily.json, loaded on demand. */
+type DailyExtra = Record<string, { from: string; tm: number[]; rh: number[]; ws: number[]; rs: number[] }>;
+
+/**
+ * The variables the chart can show. Totals (rain, ET₀) add up over a month
+ * or a year; the rest are means, so a longer period shows their average.
+ */
+// Each variable has its own colour: warm for temperature and sun, blues for
+// water in the air and on the ground, green for the crop's water demand.
+const METRICS = {
+  tmean: { color: "#E0663F", label: "Mean temperature", unit: "°C", total: false, digits: 1, month: (r: MonthRow) => r.tm },
+  precip: { color: "#2F7FD1", label: "Precipitation", unit: "mm", total: true, digits: 0, month: (r: MonthRow) => r.p },
+  rs: { color: "#E7A83B", label: "Solar radiation", unit: "MJ/m²/day", total: false, digits: 1, month: (r: MonthRow) => r.rs },
+  wind: { color: "#7B8FD9", label: "Wind speed", unit: "m/s", total: false, digits: 2, month: (r: MonthRow) => r.ws },
+  rh: { color: "#2BA6B8", label: "Relative humidity", unit: "%", total: false, digits: 1, month: (r: MonthRow) => r.rh },
+  et0: { color: "#38A88A", label: "Evapotranspiration", unit: "mm", total: true, digits: 0, month: (r: MonthRow) => r.e },
+} as const;
+
+type Metric = keyof typeof METRICS;
+type Resolution = "day" | "month" | "year";
+
+const MONTH_NAME = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function Trends({ station, metric, setMetric }: { station: Station; metric: Metric; setMetric: (m: Metric) => void }) {
   const years = station.annual;
-  const latest = years[years.length - 1];
-  const meanPrecip = +(years.reduce((a, y) => a + y.precip, 0) / years.length).toFixed(0);
-  const pct = rainfallPercentile(station, latest.year);
   const driest = [...years].sort((a, b) => a.balance - b.balance)[0];
+  const def = METRICS[metric];
 
-  const series = years.map((y) =>
-    metric === "precip" ? y.precip : metric === "balance" ? y.balance : (y.meanSpei3 ?? 0),
+  const first = station.months[0];
+  const last = station.months[station.months.length - 1];
+  const [res, setRes] = React.useState<Resolution>("year");
+  const [year, setYear] = React.useState(last.y);
+
+  // The rain and driest-month tiles follow the year picked in the filter.
+  const picked = years.find((y) => y.year === year) ?? years[years.length - 1];
+  const driestMonth = station.months
+    .filter((m) => m.y === picked.year)
+    .reduce((d, m) => (m.p < d.p ? m : d));
+  const [month, setMonth] = React.useState(last.m);
+
+  // Daily values beyond rain and ET₀ live in a separate file, fetched the
+  // first time the day view opens.
+  const [extra, setExtra] = React.useState<DailyExtra | null>(null);
+  React.useEffect(() => {
+    if (res !== "day" || extra) return;
+    let live = true;
+    import("@/lib/generated/daily.json").then((m) => {
+      if (live) setExtra(m.default as DailyExtra);
+    });
+    return () => {
+      live = false;
+    };
+  }, [res, extra]);
+
+  const points = React.useMemo(
+    () => seriesFor(station, metric, res, year, month, extra),
+    [station, metric, res, year, month, extra],
   );
-  const min = Math.min(...series, 0);
-  const max = Math.max(...series, 0);
 
-  const monthsOf = (year: number) =>
-    station.months.filter((m) => m.y === year).sort((a, b) => a.m - b.m);
-  const a = monthsOf(yearA);
-  const b = monthsOf(yearB);
+  // Step the period the arrows move through: a year in the month view, a
+  // month in the day view, clamped to the record.
+  const step = (d: number) => {
+    if (res === "month") {
+      setYear((y) => Math.min(last.y, Math.max(first.y, y + d)));
+    } else {
+      const idx = Math.min(last.y * 12 + last.m - 1, Math.max(first.y * 12 + first.m - 1, year * 12 + month - 1 + d));
+      setYear(Math.floor(idx / 12));
+      setMonth((idx % 12) + 1);
+    }
+  };
+  const atStart = res === "month" ? year <= first.y : year * 12 + month <= first.y * 12 + first.m;
+  const atEnd = res === "month" ? year >= last.y : year * 12 + month >= last.y * 12 + last.m;
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          icon="rain"
-          label={`Rain in ${latest.year}`}
-          value={latest.precip.toFixed(0)}
-          unit="mm"
-          note={pct == null ? undefined : `Wetter than ${pct}% of years`}
-        />
-        <StatTile
-          icon="bars"
-          tint="#7B8FD9"
-          label="Average year"
-          value={meanPrecip}
-          unit="mm"
-          note={`${latest.year} was ${Math.abs(latest.precip - meanPrecip).toFixed(0)} mm ${latest.precip >= meanPrecip ? "above" : "below"}`}
-        />
-        <StatTile
-          icon="sun"
-          tint="#D96565"
-          label="Driest year"
-          value={driest.year}
-          note={`${driest.precip.toFixed(0)} mm of rain`}
-        />
-        <StatTile
-          icon="gauge"
-          tint={latest.monthsInDrought > 0 ? "#E7A83B" : "#38A88A"}
-          label={`Drought months in ${latest.year}`}
-          value={latest.monthsInDrought}
-          unit="of 12"
-          note={latest.minSpei3 == null ? "Index not fitted" : `Driest point: ${indexBand(latest.minSpei3)}`}
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile icon="rain" label={`Rain in ${picked.year}`} value={picked.precip.toFixed(0)} unit="mm" />
+        <StatTile icon="sun" tint="#D96565" label="Driest year" value={driest.year} />
+        <StatTile icon="calendar" tint="#E7A83B" label={`Driest month in ${picked.year}`} value={MONTH_NAME[driestMonth.m - 1]} />
       </div>
 
-      {/* ── Full record ───────────────────────────────────────────────── */}
-      <Panel className="flex flex-col gap-3 px-5 py-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="flex flex-col gap-0.5">
-            <span className="text-[16px] font-semibold">Every year since {station.coverage.from.slice(0, 4)}</span>
-            <span className="text-[13px] text-muted">
-              {metric === "precip"
-                ? "Total rain per year, mm"
-                : metric === "balance"
-                  ? "Rain minus evaporation per year, mm"
-                  : "Average drought index per year"}
-              {" · "}
-              {latest.year} and the driest year are highlighted
-            </span>
-          </span>
-          <Segmented
-            size="sm"
-            value={metric}
-            onChange={setMetric}
-            options={[
-              { value: "precip", label: "Rain" },
-              { value: "balance", label: "Rain − evaporation" },
-              { value: "spei", label: "Drought index" },
-            ]}
-          />
-        </div>
+      <Panel className="flex flex-col gap-4 px-5 py-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <ParameterSelect value={metric} onChange={setMetric} />
 
-        <YearBars
-          years={years}
-          series={series}
-          min={min}
-          max={max}
-          highlight={[driest.year, latest.year]}
-          unit={metric === "spei" ? "" : " mm"}
-        />
-
-        <Provenance>
-          {station.name}, {station.coverage.days.toLocaleString("en-GB")} days of measured weather
-          {metric === "spei" ? " · SPEI-3 fitted per calendar month" : ""}
-        </Provenance>
-      </Panel>
-
-      {/* ── Year vs year ──────────────────────────────────────────────── */}
-      <Panel className="flex flex-col gap-3 px-5 py-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="flex flex-col gap-0.5">
-            <span className="text-[16px] font-semibold">Compare two years</span>
-            <span className="text-[13px] text-muted">Rain each month, mm</span>
-          </span>
-          <div className="flex items-center gap-2 text-[13px]">
-            <YearSelect value={yearA} onChange={setYearA} years={years.map((y) => y.year)} color={YEAR_A} label="First year" />
-            <span className="text-muted">vs</span>
-            <YearSelect value={yearB} onChange={setYearB} years={years.map((y) => y.year)} color={YEAR_B} label="Second year" />
+          {/* ── Period filter ─────────────────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmented
+              size="sm"
+              value={res}
+              onChange={setRes}
+              options={[
+                { value: "day", label: "Day" },
+                { value: "month", label: "Month" },
+                { value: "year", label: "Year" },
+              ]}
+            />
+            {res !== "year" && (
+              <div className="flex items-center gap-1 rounded-full bg-neutral-100 p-[3px]">
+                <StepButton icon="left" label="Previous" disabled={atStart} onClick={() => step(-1)} />
+                {res === "day" && (
+                  <Picker
+                    label="Month"
+                    value={MONTH_NAME[month - 1]}
+                    options={MONTH_NAME.map((n, i) => ({ value: i + 1, label: n.slice(0, 3) }))}
+                    selected={month}
+                    onSelect={setMonth}
+                    columns={3}
+                  />
+                )}
+                <Picker
+                  label="Year"
+                  value={String(year)}
+                  options={years.map((y) => ({ value: y.year, label: String(y.year) }))}
+                  selected={year}
+                  onSelect={setYear}
+                  columns={5}
+                />
+                <StepButton icon="right" label="Next" disabled={atEnd} onClick={() => step(1)} />
+              </div>
+            )}
           </div>
         </div>
 
-        <MonthlyCompare station={station} a={a} b={b} yearA={yearA} yearB={yearB} />
+        {points ? (
+          <TrendLine key={`${res}-${metric}`} points={points} digits={def.digits} unit={def.unit} color={def.color} />
+        ) : (
+          <div className="grid h-[250px] place-items-center text-[13px] text-muted">Loading daily weather…</div>
+        )}
+
+        <Provenance>
+          {station.name}, {station.coverage.days.toLocaleString("en-GB")} days of measured weather
+        </Provenance>
       </Panel>
     </>
   );
 }
 
-function MonthlyCompare({
-  station,
-  a,
-  b,
-  yearA,
-  yearB,
+interface Point {
+  /** Axis label. */
+  tick: string;
+  /** Hover label. */
+  label: string;
+  v: number;
+}
+
+/** The chosen variable at the chosen resolution; null while daily data loads. */
+function seriesFor(
+  station: Station,
+  metric: Metric,
+  res: Resolution,
+  year: number,
+  month: number,
+  extra: DailyExtra | null,
+): Point[] | null {
+  const def = METRICS[metric];
+
+  if (res === "year") {
+    return station.annual.map((a) => {
+      const vals = station.months.filter((m) => m.y === a.year).map(def.month);
+      const sum = vals.reduce((s, v) => s + v, 0);
+      return { tick: `'${String(a.year).slice(2)}`, label: String(a.year), v: def.total ? sum : sum / (vals.length || 1) };
+    });
+  }
+
+  if (res === "month") {
+    return station.months
+      .filter((m) => m.y === year)
+      .sort((a, b) => a.m - b.m)
+      .map((m) => ({ tick: MONTH_NAME[m.m - 1].slice(0, 3), label: `${MONTH_NAME[m.m - 1]} ${year}`, v: def.month(m) }));
+  }
+
+  // Day: rain and ET₀ ship with the station record, the rest load separately.
+  let values: number[];
+  let from: string;
+  if (metric === "precip" || metric === "et0") {
+    values = station.series[metric];
+    from = station.series.from;
+  } else {
+    const d = extra?.[station.id];
+    if (!d) return null;
+    values = metric === "tmean" ? d.tm : metric === "rh" ? d.rh : metric === "wind" ? d.ws : d.rs;
+    from = d.from;
+  }
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const out: Point[] = [];
+  for (let day = 1; day <= days; day++) {
+    const i = Math.round((Date.UTC(year, month - 1, day) - start) / 86_400_000);
+    if (i < 0 || i >= values.length) continue;
+    out.push({ tick: String(day), label: `${day} ${MONTH_NAME[month - 1]} ${year}`, v: values[i] });
+  }
+  return out;
+}
+
+/** One point per period, with a hover readout. */
+function TrendLine({
+  points,
+  digits,
+  unit: rawUnit,
+  color,
 }: {
-  station: Station;
-  a: { m: number; p: number; e: number }[];
-  b: { m: number; p: number; e: number }[];
-  yearA: number;
-  yearB: number;
+  points: Point[];
+  digits: number;
+  unit: string;
+  color: string;
 }) {
   const [ref, w] = useElementWidth<HTMLDivElement>(880);
   const h = 250;
-  const padL = 44;
+  const padL = 48;
+  const padR = 12;
+  const padT = 16;
   const padB = 30;
-  const innerW = w - padL - 12;
-  const innerH = h - 16 - padB;
-  const max = Math.max(...a.map((m) => m.p), ...b.map((m) => m.p), ...station.normals.map((n) => n.precip), 10);
-  const x = (m: number) => padL + ((m - 1) / 11) * innerW;
-  const y = (v: number) => 16 + innerH - (v / max) * innerH;
-  const line = (rows: { m: number; p: number }[]) =>
-    "M" + rows.map((r) => `${x(r.m).toFixed(1)} ${y(r.p).toFixed(1)}`).join("L");
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
 
-  const totalA = a.reduce((s, m) => s + m.p, 0);
-  const totalB = b.reduce((s, m) => s + m.p, 0);
+  const hi = Math.max(...points.map((r) => r.v));
+  const { ticks, min, max, decimals } = niceAxis(0, hi);
+  const slot = innerW / Math.max(1, points.length);
+  const x = (i: number) => padL + (i + 0.5) * slot;
+  const y = (v: number) => padT + innerH - ((v - min) / (max - min)) * innerH;
+  const unit = rawUnit === "%" || rawUnit === "°C" ? rawUnit : ` ${rawUnit}`;
+  const every = slot > 26 ? 1 : slot > 13 ? 2 : 5;
 
-  return (
-    <>
-      <div className="flex flex-wrap gap-4 text-[12.5px] text-muted">
-        <span className="flex items-center gap-1.5">
-          <span className="h-[3px] w-4 rounded-full" style={{ background: YEAR_A }} />
-          {yearA}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-[3px] w-4 rounded-full" style={{ background: YEAR_B }} />
-          {yearB}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-4 border-t-2 border-dashed" style={{ borderColor: "var(--ap-muted)" }} />
-          Average month
-        </span>
-      </div>
-      <div ref={ref}>
-      <svg width={w} height={h} className="block">
-        <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-          {[0, 0.5, 1].map((f) => (
-            <line key={f} x1={padL} x2={w - 12} y1={16 + innerH * f} y2={16 + innerH * f} />
-          ))}
-        </g>
+  const hover = useBarHover(points.length, padL, padR, w);
+  const at = hover.index == null ? null : points[hover.index];
+  const line = "M" + points.map((r, i) => `${x(i).toFixed(1)} ${y(r.v).toFixed(1)}`).join("L");
 
-        {/* 30-year normal, as the reference both years are read against. */}
-        <path
-          d={"M" + station.normals.map((n) => `${x(n.month).toFixed(1)} ${y(n.precip).toFixed(1)}`).join("L")}
-          fill="none"
-          style={{ stroke: "var(--ap-muted)" }}
-          strokeWidth={1.25}
-          strokeDasharray="3 3"
-        />
-        {[
-          { rows: a, color: YEAR_A },
-          { rows: b, color: YEAR_B },
-        ].map(({ rows, color }, k) => (
-          <g key={k}>
-            <path d={line(rows)} fill="none" style={{ stroke: color }} strokeWidth={2} strokeLinejoin="round" />
-            {rows.map((r) => (
-              <circle key={r.m} cx={x(r.m)} cy={y(r.p)} r={3.5} style={{ fill: color, stroke: "var(--ap-surface)" }} strokeWidth={2} />
-            ))}
-          </g>
-        ))}
-
-        <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
-          <text x={padL - 8} y={20} textAnchor="end">{max.toFixed(0)}</text>
-          <text x={padL - 8} y={16 + innerH + 4} textAnchor="end">0</text>
-          {MONTH_ABBR.map((mm, i) => (
-            <text key={mm} x={x(i + 1)} y={h - 8} textAnchor="middle">
-              {mm.charAt(0) + mm.slice(1).toLowerCase()}
-            </text>
-          ))}
-        </g>
-      </svg>
-      </div>
-
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        <div className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
-          <span className="text-[12.5px] text-muted">Rain in the year</span>
-          <span className="text-[16px] font-semibold tabular-nums">
-            <span style={{ color: YEAR_A }}>{totalA.toFixed(0)}</span>
-            <span className="font-normal text-muted"> vs </span>
-            <span style={{ color: YEAR_B }}>{totalB.toFixed(0)}</span> mm
-          </span>
-        </div>
-        <div className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
-          <span className="text-[12.5px] text-muted">Average year</span>
-          <span className="text-[16px] font-semibold tabular-nums">
-            {station.normals.reduce((s, n) => s + n.precip, 0).toFixed(0)} mm
-          </span>
-        </div>
-        <div className="flex flex-col gap-0.5 rounded-[12px] bg-neutral-100 px-3.5 py-2.5">
-          <span className="text-[12.5px] text-muted">Days with rain</span>
-          <span className="text-[16px] font-semibold tabular-nums">
-            <span style={{ color: YEAR_A }}>{station.months.filter((m) => m.y === yearA).reduce((s, m) => s + m.rd, 0)}</span>
-            <span className="font-normal text-muted"> vs </span>
-            <span style={{ color: YEAR_B }}>{station.months.filter((m) => m.y === yearB).reduce((s, m) => s + m.rd, 0)}</span>
-          </span>
-        </div>
-      </div>
-    </>
-  );
-}
-
-/** One bar per year, drawn at real pixel size, with a hover readout. */
-function YearBars({
-  years,
-  series,
-  min,
-  max,
-  highlight,
-  unit,
-}: {
-  years: Station["annual"];
-  series: number[];
-  min: number;
-  max: number;
-  highlight: number[];
-  unit: string;
-}) {
-  const [ref, w] = useElementWidth<HTMLDivElement>(880);
-  const span = max - min || 1;
-  const innerW = w - CHART.padL - CHART.padR;
-  const innerH = CHART.h - CHART.padT - CHART.padB;
-  const barW = innerW / years.length;
-  const yOf = (v: number) => CHART.padT + innerH - ((v - min) / span) * innerH;
-  const zero = yOf(0);
-  const hover = useBarHover(years.length, CHART.padL, CHART.padR, w);
-  const at = hover.index == null ? null : years[hover.index];
-  const fmt = (v: number) => (unit ? v.toFixed(0) : v.toFixed(2));
+  if (!points.length) {
+    return <div className="grid h-[250px] place-items-center text-[13px] text-muted">No data for this period.</div>;
+  }
 
   return (
     <div ref={ref} className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
-      <HoverReadout hover={hover} left={CHART.padL} right={CHART.padR} width={w}>
+      <HoverReadout hover={hover} left={padL} right={padR} width={w}>
         {at && (
           <>
-            {at.year} &middot; {fmt(series[hover.index!])}
+            {at.label} &middot; {at.v.toFixed(digits)}
             {unit}
           </>
         )}
       </HoverReadout>
-      <svg width={w} height={CHART.h} className="block">
+      <svg width={w} height={h} className="block">
         <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-          {[0, 0.5, 1].map((f) => (
-            <line key={f} x1={CHART.padL} x2={w - CHART.padR} y1={CHART.padT + innerH * f} y2={CHART.padT + innerH * f} />
+          {ticks.map((t) => (
+            <line key={t} x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} />
           ))}
         </g>
 
-        {years.map((y, i) => {
-          const v = series[i];
-          const top = Math.min(yOf(v), zero);
-          const h = Math.abs(yOf(v) - zero);
-          const on = highlight.includes(y.year) || hover.index === i;
-          return (
-            <g key={y.year}>
-              <rect
-                x={CHART.padL + i * barW + Math.min(3, barW * 0.12)}
-                y={top}
-                width={barW - 2 * Math.min(3, barW * 0.12)}
-                height={Math.max(1, h)}
-                rx={Math.min(4, barW / 4)}
-                fill={v < 0 ? "#D96565" : "var(--ap-accent)"}
-                fillOpacity={on ? 1 : 0.45}
-              />
-              {(barW > 26 || i % 5 === 0) && (
-                <text
-                  x={CHART.padL + i * barW + barW / 2}
-                  y={CHART.h - 10}
-                  textAnchor="middle"
-                  style={{ fill: highlight.includes(y.year) ? "var(--ap-text)" : "var(--ap-muted)" }}
-                  fontSize={barW > 26 ? 11.5 : 12}
-                >
-                  {barW > 26 ? `'${String(y.year).slice(2)}` : y.year}
-                </text>
-              )}
-            </g>
-          );
-        })}
+        <HoverGuide hover={hover} left={padL} right={padR} width={w} top={padT} bottom={padT + innerH} />
 
-        <HoverGuide hover={hover} left={CHART.padL} right={CHART.padR} width={w} top={CHART.padT} bottom={CHART.padT + innerH} />
-        <line x1={CHART.padL} x2={w - CHART.padR} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }} />
+        <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <path d={line} fill="none" style={{ stroke: color }} strokeWidth={2} strokeLinejoin="round" />
+          {points.map((r, i) =>
+            hover.index === i || points.length <= 40 ? (
+              <circle
+                key={i}
+                cx={x(i)}
+                cy={y(r.v)}
+                r={hover.index === i ? 5 : 3}
+                style={{ fill: color, stroke: "var(--ap-surface)" }}
+                strokeWidth={2}
+              />
+            ) : null,
+          )}
+        </motion.g>
+
         <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
-          <text x={CHART.padL - 8} y={CHART.padT + 4} textAnchor="end">{fmt(max)}</text>
-          {min < 0 && <text x={CHART.padL - 8} y={zero + 4} textAnchor="end">0</text>}
-          <text x={CHART.padL - 8} y={CHART.padT + innerH + 4} textAnchor="end">{fmt(min)}</text>
+          {ticks.map((t) => (
+            <text key={t} x={padL - 8} y={y(t) + 4} textAnchor="end">
+              {t.toFixed(decimals)}
+            </text>
+          ))}
+          {points.map(
+            (r, i) =>
+              i % every === 0 && (
+                <text key={i} x={x(i)} y={h - 8} textAnchor="middle" fontSize={11.5}>
+                  {r.tick}
+                </text>
+              ),
+          )}
         </g>
       </svg>
     </div>
   );
 }
 
-/* ── Archive ─────────────────────────────────────────────────────────── */
+/**
+ * Round axis ticks: a step of 1, 2 or 5 times a power of ten giving about
+ * four intervals, with the axis ends snapped to whole steps. 0/10/20/30, not
+ * 0/17/35.
+ */
+function niceAxis(lo: number, hi: number) {
+  if (hi - lo < 1e-9) {
+    lo -= 1;
+    hi += 1;
+  }
+  const raw = (hi - lo) / 4;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  let step = [1, 2, 5, 10].map((f) => f * mag).find((s) => s >= raw) ?? 10 * mag;
+  // Whole numbers once the values are in double figures; only small ones
+  // such as wind speed need a decimal step.
+  if (hi >= 10) step = Math.max(1, step);
+  // None of these variables can be negative.
+  const min = Math.max(0, Math.floor(lo / step) * step);
+  const max = Math.ceil(hi / step) * step;
+  const ticks: number[] = [];
+  for (let t = min; t <= max + step / 2; t += step) ticks.push(+t.toFixed(6));
+  return { ticks, min, max, decimals: step >= 1 ? 0 : Math.ceil(-Math.log10(step)) };
+}
 
-function Archive({ station }: { station: Station }) {
-  const years = [...station.annual].reverse();
-  const meanPrecip = station.annual.reduce((a, y) => a + y.precip, 0) / station.annual.length;
-
+/** The variable picker: a labelled field showing the unit, with a dropdown list. */
+function ParameterSelect({ value, onChange }: { value: Metric; onChange: (m: Metric) => void }) {
+  const def = METRICS[value];
   return (
-    <>
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {years.map((y) => {
-          const months = station.months.filter((m) => m.y === y.year).sort((p, q) => p.m - q.m);
-          const max = Math.max(...months.map((m) => m.p), 1);
-          const d =
-            "M" + months.map((m, i) => `${(i * 200) / 11} ${(40 - (m.p / max) * 36).toFixed(1)}`).join("L");
-          const wetter = y.precip >= meanPrecip;
+    <div className="flex w-[280px] max-w-full flex-col gap-1.5">
+      <span className="flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted">
+        Parameter
+        <span className="rounded-[6px] bg-accent-100 px-1.5 py-px text-[11px] normal-case tracking-normal text-accent">
+          {def.unit}
+        </span>
+      </span>
+      <Menu
+        className="max-h-[320px] overflow-y-auto"
+        sideOffset={6}
+        trigger={
+          <button
+            type="button"
+            aria-label="Parameter"
+            className={cn(
+              "group flex h-10 w-full items-center justify-between gap-2 rounded-[10px] border border-divider bg-bg px-3.5 text-[14px] text-ink outline-none transition-[border-color,box-shadow] duration-150",
+              "hover:border-[var(--ap-accent)] focus-visible:border-[var(--ap-accent)]",
+              "data-[state=open]:border-[var(--ap-accent)] data-[state=open]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ap-accent)_18%,transparent)]",
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-2 truncate">
+              <span className="size-2 flex-none rounded-full" style={{ background: def.color }} />
+              {def.label} <span className="text-muted">({def.unit})</span>
+            </span>
+            <span className="text-muted transition-transform duration-150 group-data-[state=open]:rotate-180">
+              <Icon name="down" size={15} />
+            </span>
+          </button>
+        }
+      >
+        {(Object.keys(METRICS) as Metric[]).map((k) => {
+          const on = k === value;
           return (
-            <Panel key={y.year} hoverable className="flex flex-col gap-3 px-4.5 py-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[22px] font-semibold">{y.year}</span>
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
-                  style={{
-                    background: wetter ? "rgb(56 168 138 / 0.14)" : "rgb(217 101 101 / 0.14)",
-                    color: wetter ? "#38A88A" : "#E07B7B",
-                  }}
-                >
-                  {wetter ? "Wetter than usual" : "Drier than usual"}
-                </span>
-              </div>
-              <svg viewBox="0 0 200 42" preserveAspectRatio="none" className="block h-10 w-full">
-                <path d={d} fill="none" stroke={wetter ? "var(--ap-accent)" : "#D96565"} strokeWidth={2} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-              </svg>
-              <div className="grid grid-cols-3 gap-2 text-[13px]">
-                <div className="flex flex-col">
-                  <span className="text-[12px] text-muted">Rain</span>
-                  <span className="font-semibold tabular-nums">{y.precip.toFixed(0)} mm</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[12px] text-muted">Balance</span>
-                  <span className="font-semibold tabular-nums">{y.balance.toFixed(0)} mm</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[12px] text-muted">Rain days</span>
-                  <span className="font-semibold tabular-nums">{months.reduce((s, m) => s + m.rd, 0)}</span>
-                </div>
-              </div>
-              <div className="text-[12.5px] text-muted">
-                {y.minSpei3 == null ? (
-                  "Drought index not fitted"
-                ) : y.monthsInDrought > 0 ? (
-                  <>
-                    {y.monthsInDrought} drought {y.monthsInDrought === 1 ? "month" : "months"} &middot; driest point{" "}
-                    {indexBand(y.minSpei3)}
-                  </>
-                ) : (
-                  "No drought months"
-                )}
-              </div>
-            </Panel>
+            <MenuItem
+              key={k}
+              onSelect={() => onChange(k)}
+              className={cn(
+                "h-9 text-[13.5px]",
+                on &&
+                  "bg-accent-100 font-semibold before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-[var(--ap-accent)]",
+              )}
+            >
+              <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ background: METRICS[k].color }} />
+              {METRICS[k].label} <span className="font-normal text-muted">({METRICS[k].unit})</span>
+            </MenuItem>
           );
         })}
-      </div>
-
-      <Provenance>
-        {station.name}, {station.coverage.years} complete years. The small line is rain month by month.
-      </Provenance>
-    </>
+      </Menu>
+    </div>
   );
 }
 
-function YearSelect({
-  value,
-  onChange,
-  years,
-  color,
+/** A round arrow in the period stepper. */
+function StepButton({
+  icon,
   label,
+  disabled,
+  onClick,
 }: {
-  value: number;
-  onChange: (v: number) => void;
-  years: number[];
-  color: string;
+  icon: "left" | "right";
   label: string;
+  disabled: boolean;
+  onClick: () => void;
 }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
+    <button
+      type="button"
       aria-label={label}
-      className="h-9 rounded-full border-2 bg-bg px-3 text-[13px] font-semibold text-ink outline-none"
-      style={{ borderColor: color }}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid size-[26px] place-items-center rounded-full text-muted transition-colors hover:bg-s2 hover:text-ink disabled:pointer-events-none disabled:opacity-35"
     >
-      {[...years].reverse().map((y) => (
-        <option key={y} value={y}>
-          {y}
-        </option>
-      ))}
-    </select>
+      <Icon name={icon} size={14} />
+    </button>
+  );
+}
+
+/**
+ * A compact picker inside the period stepper: the choices laid out as a grid
+ * (years chronologically, months as a 3 × 4 calendar) so the whole range is
+ * visible at once, with the current one filled.
+ */
+function Picker({
+  label,
+  value,
+  options,
+  selected,
+  onSelect,
+  columns,
+}: {
+  label: string;
+  value: string;
+  options: { value: number; label: string }[];
+  selected: number;
+  onSelect: (v: number) => void;
+  columns: number;
+}) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <Popover
+      open={open}
+      onOpenChange={setOpen}
+      align="end"
+      className="p-2.5"
+      trigger={
+        <MenuTrigger aria-label={label} className="h-[26px] gap-1.5 bg-s2 px-3 font-semibold shadow-[0_1px_3px_rgb(0_0_0/0.18)]">
+          {value}
+          <Icon name="down" size={13} />
+        </MenuTrigger>
+      }
+    >
+      <div className="px-1 pb-2 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</div>
+      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+        {options.map((o) => {
+          const on = o.value === selected;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              autoFocus={on}
+              aria-pressed={on}
+              onClick={() => {
+                onSelect(o.value);
+                setOpen(false);
+              }}
+              className={cn(
+                "h-8 min-w-[52px] rounded-[8px] px-2 text-[13px] tabular-nums outline-none transition-colors duration-100",
+                "focus-visible:ring-2 focus-visible:ring-[var(--ap-accent)]",
+                on ? "bg-[var(--ap-accent)] font-semibold text-white" : "text-ink hover:bg-neutral-100",
+              )}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </Popover>
   );
 }
 

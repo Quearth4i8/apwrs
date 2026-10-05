@@ -19,10 +19,6 @@ export function PageSensors() {
     <div className="flex min-h-full flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <div className="flex flex-col gap-1.5">
         <h1 className="text-[clamp(28px,4vw,36px)] leading-none tracking-[-0.02em]">Sensors</h1>
-        <p className="m-0 text-[14.5px] text-muted">
-          Your field sensor measures how wet the soil is at three depths. The weather stations hold 30 years of past
-          weather used for the drought and planting advice.
-        </p>
       </div>
 
       <SoilProbePanel />

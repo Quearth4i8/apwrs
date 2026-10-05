@@ -19,6 +19,12 @@ export interface MonthRow {
   /** Mean daily maximum temperature, °C. */
   tx: number;
   tm: number;
+  /** Mean relative humidity, %. */
+  rh: number;
+  /** Mean wind speed, m/s. */
+  ws: number;
+  /** Mean daily solar radiation, MJ/m²/day. */
+  rs: number;
   /** Days with ≥ 1 mm. */
   rd: number;
 }
@@ -44,6 +50,9 @@ export interface NormalRow {
   et0: number;
   tmax: number;
   tmean: number;
+  rh: number;
+  wind: number;
+  rs: number;
   rainDays: number;
 }
 

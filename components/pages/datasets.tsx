@@ -42,7 +42,7 @@ export function PageDatasets({ tab: initial }: { tab: "datasets" | "activity" })
     })),
     {
       id: "probe",
-      name: "Field sensor",
+      name: "S.Sensor",
       icon: "radio",
       tint: "#38A88A",
       source: "SmartFarm",

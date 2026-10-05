@@ -18,10 +18,8 @@ export type PageId =
   | "alerts"
   | "risk"
   | "forecasts"
-  | "drivers"
   | "planting"
   | "history"
-  | "archive"
   | "upload"
   | "manual"
   | "datasets"
@@ -60,16 +58,14 @@ export const NAV: NavGroup[] = [
     items: [
       { id: "risk", en: "Drought Risk", fr: "Risque de sécheresse", icon: "gauge" },
       { id: "forecasts", en: "Forecasts", fr: "Prévisions", icon: "trend" },
-      { id: "drivers", en: "Risk Drivers", fr: "Facteurs de risque", icon: "bars" },
-      { id: "planting", en: "Planting Windows", fr: "Fenêtres de semis", icon: "sprout" },
+      { id: "planting", en: "Calendar", fr: "Calendrier", icon: "sprout" },
     ],
   },
   {
     key: "HISTORY",
     fr: "HISTORIQUE",
     items: [
-      { id: "history", en: "Historical Comparison", fr: "Comparaison historique", icon: "history" },
-      { id: "archive", en: "Seasonal Archive", fr: "Archive saisonnière", icon: "archive" },
+      { id: "history", en: "Historical", fr: "Données historiques", icon: "history" },
     ],
   },
   {

@@ -129,10 +129,18 @@ export function AppShell({
         <div className="flex h-14 items-center gap-2.5 border-b border-divider px-4">
           <Brand />
           {expanded && (
-            <div className="flex flex-col leading-none">
-              <span className="font-heading text-xl font-semibold tracking-[0.02em]">APWRS</span>
-              <span className="mt-[3px] text-[11.5px] text-muted">
-                {isFarmer ? "My farm" : "Planting & drought"}
+            <div className="flex min-w-0 flex-col leading-none">
+              <span className="font-heading text-[17px] font-semibold tracking-[0.02em]">APWRS</span>
+              <span className="mt-[3px] text-[10.5px] leading-[1.25] text-muted">
+                {isFarmer ? (
+                  "My farm"
+                ) : (
+                  <>
+                    Adaptive Planting Window
+                    <br />
+                    Recommendation System
+                  </>
+                )}
               </span>
             </div>
           )}

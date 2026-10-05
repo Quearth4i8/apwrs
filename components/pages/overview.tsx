@@ -20,8 +20,8 @@ const CARD_IN = {
 };
 
 /**
- * The at-a-glance page: four plain answers (is there a drought, how much
- * rain fell, how much is coming, how wet is the soil), the soil sensor, the
+ * The at-a-glance page: four plain answers (how much rain fell, how much is
+ * coming, how wet is the soil, is there a drought), the soil sensor, the
  * risk map and the next sowing period. Index values, units and method notes
  * live on the analysis pages; this page says what they mean.
  */
@@ -51,13 +51,7 @@ export function PageOverview() {
       />
 
       <div className="relative flex flex-wrap items-end justify-between gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-[clamp(28px,4.4vw,40px)] leading-none tracking-[-0.02em]">{station.name}</h1>
-          <p className="m-0 text-[15px] text-muted">
-            {drought ? drought.sentence : "No drought reading yet."}{" "}
-            {soilLevel && <>The field sensor shows the soil is {MOISTURE_LABEL[soilLevel].toLowerCase()}.</>}
-          </p>
-        </div>
+        <h1 className="text-[clamp(28px,4.4vw,40px)] leading-none tracking-[-0.02em]">{station.name}</h1>
         <ButtonLink href="/app/planting" variant="primary">
           <Icon name="sprout" size={15} />
           When to plant
@@ -67,18 +61,11 @@ export function PageOverview() {
       {/* ── Four plain answers ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <InfoTile
-          icon="gauge"
-          tint={drought?.color ?? "var(--ap-muted)"}
-          label="Drought level"
-          value={<span style={{ color: drought?.color }}>{drought?.word ?? "—"}</span>}
-          note={`Last 3 months, to ${asOf}`}
-        />
-        <InfoTile
           icon="rain"
           tint="var(--ap-accent)"
           label="Rain in 30 days"
           value={`${Math.round(cond.rain30)} mm`}
-          note={`${rainWord} · to ${asOf}`}
+          note={`${asOf}`}
         />
         <InfoTile
           icon="cloud"
@@ -100,7 +87,14 @@ export function PageOverview() {
               "…"
             )
           }
-          note={soilPct == null ? "Field sensor" : `${Math.round(soilPct)}% · field sensor, today`}
+          note={soilPct == null ? "S.Sensor" : `${Math.round(soilPct)}% · S.Sensor, today`}
+        />
+        <InfoTile
+          icon="gauge"
+          tint={drought?.color ?? "var(--ap-muted)"}
+          label="Drought level"
+          value={<span style={{ color: drought?.color }}>{drought?.word ?? "—"}</span>}
+          note={`Last 3 months`}
         />
       </div>
 
@@ -127,53 +121,19 @@ export function PageOverview() {
           </Panel>
         </motion.div>
       </div>
-
-      {/* ── Next sowing period ────────────────────────────────────────── */}
-      <motion.div {...CARD_IN} transition={{ ...CARD_IN.transition, delay: 0.1 }}>
-        <Panel className="flex flex-wrap items-center gap-x-8 gap-y-4 px-5 py-5">
-          <span
-            className="grid size-12 flex-none place-items-center rounded-[12px]"
-            style={{ color: "#38A88A", background: "color-mix(in srgb, #38A88A 14%, transparent)" }}
-          >
-            <Icon name="sprout" size={24} strokeWidth={1.8} />
-          </span>
-          {upcoming ? (
-            <>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[13px] text-muted">Next good time to sow</span>
-                <span className="text-[22px] font-semibold leading-tight">
-                  {upcoming.crop.name} &middot; from {decadeLabel(upcoming.decade.decade)}
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[13px] text-muted">Chance the crop takes well</span>
-                <span className="text-[22px] font-semibold leading-tight">
-                  {(upcoming.decade.establishmentProb * 100).toFixed(0)}%
-                </span>
-              </div>
-            </>
-          ) : (
-            <span className="text-[14px] text-muted">No period has reliable enough rain for any crop here.</span>
-          )}
-          <ButtonLink href="/app/planting" className="ml-auto">
-            All crops
-            <Icon name="arrow" size={14} />
-          </ButtonLink>
-        </Panel>
-      </motion.div>
     </div>
   );
 }
 
 /* ── Plain-language wording ──────────────────────────────────────────── */
 
-/** SPEI-3 as a word, a colour and a sentence. The index value itself lives on Drought Risk. */
+/** SPEI-3 as a word and a colour. The index value itself lives on Drought Risk. */
 function droughtWord(v: number) {
-  if (v <= -2) return { word: "Extreme", color: "#D96565", sentence: "Extreme drought over the last three months." };
-  if (v <= -1.5) return { word: "Severe", color: "#EE8434", sentence: "Severe drought over the last three months." };
-  if (v <= -1) return { word: "Dry", color: "#E7A83B", sentence: "Drier than usual over the last three months." };
-  if (v < 1) return { word: "Normal", color: "#38A88A", sentence: "No drought: the last three months were normal." };
-  return { word: "Wet", color: "var(--ap-accent)", sentence: "Wetter than usual over the last three months." };
+  if (v <= -2) return { word: "Extreme", color: "#D96565" };
+  if (v <= -1.5) return { word: "Severe", color: "#EE8434" };
+  if (v <= -1) return { word: "Dry", color: "#E7A83B" };
+  if (v < 1) return { word: "Normal", color: "#38A88A" };
+  return { word: "Wet", color: "var(--ap-accent)" };
 }
 
 function rainVsNormal(anomaly: number | null) {
