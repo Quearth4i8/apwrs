@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { areaHa, centroid, type Land, type LngLat } from "@/lib/land-geometry";
+import { landStore } from "@/lib/land-store";
 
 /**
  * Farmers' fields, shared between the farmer who draws them and the expert
- * who reviews them on the Live Map.
- *
- * Stored as one JSON file under data/ — enough for a single server and a
- * few hundred fields, and swappable for a database later without touching
- * the pages: they only see GET / POST / DELETE here.
+ * who reviews them on the Live Map. Storage is Redis in production and a
+ * local JSON file in development (lib/land-store.ts).
  *
  *   GET    /api/lands[?owner=id]   every field, or one farmer's
  *   POST   /api/lands              create, or update when `id` is given
@@ -18,44 +14,46 @@ import { areaHa, centroid, type Land, type LngLat } from "@/lib/land-geometry";
 
 export const dynamic = "force-dynamic";
 
-const FILE = path.join(process.cwd(), "data", "lands.json");
-
 /** The region the app covers, with a margin: a field outside it is a typo. */
 const LIMITS = { minLon: 7, maxLon: 12, minLat: 30, maxLat: 38.5 };
 
-async function readAll(): Promise<Land[]> {
-  try {
-    return JSON.parse(await readFile(FILE, "utf8")) as Land[];
-  } catch {
-    return [];
-  }
-}
-
-/** Write to a temp file and rename, so a crash never leaves half a file. */
-async function writeAll(lands: Land[]) {
-  await mkdir(path.dirname(FILE), { recursive: true });
-  const tmp = `${FILE}.${process.pid}.tmp`;
-  await writeFile(tmp, JSON.stringify(lands, null, 1));
-  await rename(tmp, FILE);
-}
-
-// Requests are handled one at a time so two saves cannot overwrite each other.
-let queue: Promise<unknown> = Promise.resolve();
-function serial<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.catch(() => undefined);
-  return run;
-}
-
 const bad = (msg: string, status = 400) => NextResponse.json({ error: msg }, { status });
+
+/**
+ * A deployment with a read-only disk (Vercel) and no Redis cannot keep a
+ * field. Say so plainly rather than failing on the write.
+ */
+function unconfigured() {
+  const store = landStore();
+  if (store.kind === "file" && process.env.VERCEL) {
+    return bad(
+      "Field storage is not set up on this deployment. Add Upstash Redis from the Vercel Marketplace and redeploy.",
+      503,
+    );
+  }
+  return null;
+}
+
+function failed(e: unknown) {
+  console.error("[api/lands]", e);
+  return bad(`Could not reach field storage (${landStore().kind}). Try again in a moment.`, 502);
+}
 
 export async function GET(req: Request) {
   const owner = new URL(req.url).searchParams.get("owner");
-  const lands = await readAll();
-  return NextResponse.json(owner ? lands.filter((l) => l.ownerId === owner) : lands);
+  if (unconfigured()) return NextResponse.json([]); // nothing stored, nothing to show
+  try {
+    const lands = await landStore().all();
+    return NextResponse.json(owner ? lands.filter((l) => l.ownerId === owner) : lands);
+  } catch (e) {
+    return failed(e);
+  }
 }
 
 export async function POST(req: Request) {
+  const blocked = unconfigured();
+  if (blocked) return blocked;
+
   let body: Partial<Land> & { polygon?: unknown };
   try {
     body = await req.json();
@@ -86,13 +84,13 @@ export async function POST(req: Request) {
   if (ha <= 0.001) return bad("the corners do not enclose an area");
   if (ha > 5000) return bad("that is larger than a single field (over 5,000 ha)");
 
-  return serial(async () => {
-    const lands = await readAll();
-    const now = new Date().toISOString();
-    const existing = body.id ? lands.find((l) => l.id === body.id) : undefined;
+  try {
+    const store = landStore();
+    const existing = body.id ? await store.get(body.id) : null;
     if (body.id && !existing) return bad("no such field", 404);
     if (existing && existing.ownerId !== ownerId) return bad("that field belongs to someone else", 403);
 
+    const now = new Date().toISOString();
     const land: Land = {
       id: existing?.id ?? crypto.randomUUID(),
       ownerId,
@@ -105,23 +103,28 @@ export async function POST(req: Request) {
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
-    const next = existing ? lands.map((l) => (l.id === land.id ? land : l)) : [...lands, land];
-    await writeAll(next);
+    await store.put(land);
     return NextResponse.json(land, { status: existing ? 200 : 201 });
-  });
+  } catch (e) {
+    return failed(e);
+  }
 }
 
 export async function DELETE(req: Request) {
+  const blocked = unconfigured();
+  if (blocked) return blocked;
   const q = new URL(req.url).searchParams;
   const id = q.get("id");
   const owner = q.get("owner");
   if (!id || !owner) return bad("id and owner are required");
-  return serial(async () => {
-    const lands = await readAll();
-    const land = lands.find((l) => l.id === id);
+  try {
+    const store = landStore();
+    const land = await store.get(id);
     if (!land) return bad("no such field", 404);
     if (land.ownerId !== owner) return bad("that field belongs to someone else", 403);
-    await writeAll(lands.filter((l) => l.id !== id));
+    await store.remove(id);
     return NextResponse.json({ ok: true });
-  });
+  } catch (e) {
+    return failed(e);
+  }
 }
