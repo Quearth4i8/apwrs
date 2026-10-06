@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { scoreGrid, type GridCell } from "@/lib/risk";
-import { fetchNdviGrid } from "@/lib/copernicus";
+import { fetchNdviGrid, fetchNdwiGrid } from "@/lib/copernicus";
 import { fetchGridIndices, CLIMATOLOGY_SOURCE } from "@/lib/grid-indices";
 
 /**
@@ -103,10 +103,13 @@ export async function GET() {
 
     // Both are optional and independent, so they run together and neither can
     // fail the request on its own.
-    const [ndviSettled, indicesSettled] = await Promise.allSettled([
+    const [ndviSettled, indicesSettled, ndwiSettled] = await Promise.allSettled([
       fetchNdviGrid(REGION, ROWS, COLS),
       fetchGridIndices(lats, lons, revalidate),
+      // NDWI is a map layer only; it does not enter the risk score.
+      fetchNdwiGrid(REGION, ROWS, COLS),
     ]);
+    const ndwi = ndwiSettled.status === "fulfilled" ? ndwiSettled.value : null;
     if (ndviSettled.status === "fulfilled") ndvi = ndviSettled.value;
     else ndviError = String(ndviSettled.reason?.message ?? ndviSettled.reason);
     if (indicesSettled.status === "fulfilled") indices = indicesSettled.value;
@@ -158,6 +161,7 @@ export async function GET() {
         ndvi: surface.cells.map((c) => round(c.ndvi ?? null, 3)),
         spei3: surface.cells.map((c) => round(c.spei3 ?? null, 2)),
         spi3: surface.cells.map((c) => round(c.spi3 ?? null, 2)),
+        ndwi: surface.cells.map((_, i) => round(ndwi?.values[i] ?? null, 3)),
       },
       weights: surface.weights,
       entropy: surface.entropy,

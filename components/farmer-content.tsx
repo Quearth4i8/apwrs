@@ -9,6 +9,7 @@ import { CROPS, STATIONS, type Station } from "@/lib/climate";
 import { conditionsFor, decadeLabel, suitability, type DecadeSuitability } from "@/lib/metrics";
 import { useForecast } from "@/lib/use-forecast";
 import { FARMER_TEXT, type Lang } from "@/lib/farmer-data";
+import { FarmLands } from "@/components/farm-lands";
 import type { FarmerTab } from "@/lib/data";
 
 /**
@@ -271,16 +272,7 @@ export function FarmerContent({
 
       {tab === "fields" && (
         <div className="lg:col-span-2">
-          <NoData
-            icon="map"
-            title={lang === "fr" ? "Aucune parcelle enregistrée" : "No fields registered"}
-            what={
-              lang === "fr"
-                ? "Les parcelles, leurs cultures et leurs surfaces doivent être saisies par l’exploitant. Aucun profil d’exploitation n’existe pour le moment, donc il n’y a rien à afficher."
-                : "Fields, their crops and their areas have to be entered by the farmer. No farm profile exists yet, so there is nothing to show."
-            }
-            needs={lang === "fr" ? "profil d’exploitation" : "farm profile"}
-          />
+          <FarmLands lang={lang} />
         </div>
       )}
 

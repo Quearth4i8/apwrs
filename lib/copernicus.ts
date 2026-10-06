@@ -150,6 +150,21 @@ function evaluatePixel(s){
 }`;
 
 /**
+ * NDWI in Gao's form, (NIR − SWIR) / (NIR + SWIR) with B08 and B11: the water
+ * held in vegetation and topsoil, which falls ahead of NDVI as a drought sets
+ * in. (McFeeters' green/NIR NDWI maps open water instead, which the land
+ * mask already removes.) Same land mask as NDVI.
+ */
+const NDWI_EVALSCRIPT = `//VERSION=3
+function setup(){return{input:[{bands:['B08','B11','SCL','dataMask']}],output:{bands:2,sampleType:'FLOAT32'}}}
+function evaluatePixel(s){
+  var land = ${USABLE_SCL};
+  var den = s.B08 + s.B11;
+  var ok = s.dataMask == 1 && land && den > 0;
+  return [ok ? (s.B08 - s.B11) / den : 0, ok ? 1 : 0];
+}`;
+
+/**
  * Sentinel-2 imposes a 1500 m/pixel ceiling, so the raster is requested finer
  * than the risk grid and averaged down. That is better than sampling one
  * point per cell anyway: each cell becomes a block statistic over ~16 pixels.
@@ -172,11 +187,22 @@ export interface IndexField {
  * Returns null when no credentials are configured, so callers degrade to the
  * weather-only model rather than failing.
  */
-export async function fetchNdviGrid(
+export function fetchNdviGrid(region: Region, rows: number, cols: number, days = 30) {
+  return fetchIndexGrid(NDVI_EVALSCRIPT, "NDVI", region, rows, cols, days);
+}
+
+/** Mean NDWI per risk-grid cell; shown on the map, not scored. */
+export function fetchNdwiGrid(region: Region, rows: number, cols: number, days = 30) {
+  return fetchIndexGrid(NDWI_EVALSCRIPT, "NDWI", region, rows, cols, days);
+}
+
+async function fetchIndexGrid(
+  evalscript: string,
+  name: string,
   region: Region,
   rows: number,
   cols: number,
-  days = 30,
+  days: number,
 ): Promise<IndexField | null> {
   const token = await accessToken();
   if (!token) return null;
@@ -210,7 +236,7 @@ export async function fetchNdviGrid(
         height,
         responses: [{ identifier: "default", format: { type: "image/tiff" } }],
       },
-      evalscript: NDVI_EVALSCRIPT,
+      evalscript,
     }),
     next: { revalidate: 21_600 }, // six hours; Sentinel-2 revisits in ~5 days
   });
@@ -220,7 +246,7 @@ export async function fetchNdviGrid(
   }
 
   const tiff = readFloatTiff(Buffer.from(await res.arrayBuffer()));
-  return aggregate(tiff, rows, cols, `Sentinel-2 L2A NDVI · ${days} d least-cloud mosaic · CDSE`);
+  return aggregate(tiff, rows, cols, `Sentinel-2 L2A ${name} · ${days} d least-cloud mosaic · CDSE`);
 }
 
 /**

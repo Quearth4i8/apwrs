@@ -208,6 +208,37 @@
   }
   ::selection { background: color-mix(in srgb, var(--ap-accent) 30%, transparent); }
 
+  /* Tailwind v4 resets buttons to the default arrow; everything clickable
+     shows the hand, and anything disabled says it is not available. */
+  button,
+  [role="button"],
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"],
+  [role="tab"],
+  [role="switch"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="slider"],
+  select,
+  summary,
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="file"],
+  input[type="color"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  [data-disabled],
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {

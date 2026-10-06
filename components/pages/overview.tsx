@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { motion } from "motion/react";
-import { Icon } from "@/components/icon";
-import { MapView } from "@/components/map-view";
+import { BasinMap } from "@/components/basin-map";
+import { BasinWaterCard } from "@/components/basin-water";
 import { useConsole } from "@/components/app-context";
-import { Panel, ButtonLink } from "@/components/ui/primitives";
+import { Panel } from "@/components/ui/primitives";
 import { InfoTile, MOISTURE_COLOR, MOISTURE_LABEL, moistureLevel } from "@/components/ui/simple";
-import { SoilProbeCard, rootZone, useLatestSoil } from "@/components/soil-probe";
+import { rootZone, useLatestSoil } from "@/components/soil-probe";
 import { CROPS, stationForSite } from "@/lib/climate";
 import { conditionsFor, decadeLabel, decadesUntil, periodScore, suitability, type DecadeSuitability } from "@/lib/metrics";
 import { useForecast } from "@/lib/use-forecast";
@@ -21,7 +20,7 @@ const CARD_IN = {
 
 /**
  * The at-a-glance page: four plain answers (how much rain fell, how much is
- * coming, how wet is the soil, is there a drought), the soil sensor, the
+ * coming, how wet is the soil, is there a drought), the catchment's water, the
  * risk map and the next sowing period. Index values, units and method notes
  * live on the analysis pages; this page says what they mean.
  */
@@ -50,13 +49,7 @@ export function PageOverview() {
         style={{ background: "radial-gradient(ellipse at 30% 50%, var(--ap-glow), transparent 65%)" }}
       />
 
-      <div className="relative flex flex-wrap items-end justify-between gap-6">
-        <h1 className="text-[clamp(28px,4.4vw,40px)] leading-none tracking-[-0.02em]">{station.name}</h1>
-        <ButtonLink href="/app/planting" variant="primary">
-          <Icon name="sprout" size={15} />
-          When to plant
-        </ButtonLink>
-      </div>
+      <h1 className="relative text-[clamp(28px,4.4vw,40px)] leading-none tracking-[-0.02em]">{station.name}</h1>
 
       {/* ── Four plain answers ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -98,26 +91,15 @@ export function PageOverview() {
         />
       </div>
 
-      {/* ── Soil sensor + map ─────────────────────────────────────────── */}
+      {/* ── Catchment water + map ─────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <motion.div {...CARD_IN}>
-          <SoilProbeCard />
+          <BasinWaterCard />
         </motion.div>
 
         <motion.div {...CARD_IN} transition={{ ...CARD_IN.transition, delay: 0.06 }}>
-          <Panel hoverable className="flex h-full flex-col">
-            <div className="flex items-center justify-between gap-3 px-5 pb-3 pt-5">
-              <span className="text-lg font-semibold">Drought risk map</span>
-              <Link
-                href="/app/map"
-                className="flex items-center gap-1 whitespace-nowrap text-[13px] text-accent no-underline hover:underline"
-              >
-                Open map <Icon name="arrow" size={14} />
-              </Link>
-            </div>
-            <div className="relative min-h-[300px] flex-1">
-              <MapView layer="risk" sensors legend className="absolute inset-0" />
-            </div>
+          <Panel className="relative h-full min-h-[460px] overflow-hidden sm:min-h-[580px]">
+            <BasinMap className="absolute inset-0" />
           </Panel>
         </motion.div>
       </div>

@@ -1,16 +1,16 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { motion } from "motion/react";
 import { MapView, type SurfaceInfo } from "@/components/map-view";
+import { RiskGauge } from "@/components/risk-gauge";
+import { AnimatedBars, BandLegend, IndexHistory, PeriodFilter, sliceYears, type Period } from "@/components/index-history";
+import { LayerSwitcher } from "@/components/layer-switcher";
+import type { LayerKey } from "@/lib/map-layers";
 import { useConsole } from "@/components/app-context";
-import { Panel, PageHeader, RiskBadge, TabStrip } from "@/components/ui/primitives";
+import { Panel, PageHeader, TabStrip } from "@/components/ui/primitives";
 import { Provenance } from "@/components/ui/no-data";
 import { CardTitle } from "@/components/ui/simple";
-import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
-import { stationForSite, latestSpei, latestSpi, type Station } from "@/lib/climate";
-import { conditionsFor, indexBand, spanLabel, MONTH_ABBR } from "@/lib/metrics";
+import { stationForSite, type Station } from "@/lib/climate";
 import { riskLevel } from "@/lib/utils";
 
 /**
@@ -26,12 +26,10 @@ export function PageRisk() {
   const { site } = useConsole();
   const station = stationForSite(site.name);
   const [tab, setTab] = React.useState<"trend" | "spatial">("trend");
+  const [mapLayer, setMapLayer] = React.useState<LayerKey>("risk");
   const [surface, setSurface] = React.useState<SurfaceInfo | null>(null);
   const onSurface = React.useCallback((info: SurfaceInfo) => setSurface(info), []);
-  const cond = React.useMemo(() => conditionsFor(station), [station]);
 
-  const spei3 = cond.spei3;
-  const level = spei3 ? speiToLevel(spei3.value) : null;
 
   return (
     <div className="relative flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
@@ -39,62 +37,22 @@ export function PageRisk() {
 
       {/* ── Standing + explanation ────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Panel className="flex flex-col items-center gap-3 px-6 py-5">
-          <CardTitle className="w-full" title="Where this month sits" sub={`SPEI-3 · ${spei3 ? mon(spei3.label) : "—"}`} />
-          {spei3 ? (
-            <>
-              <SpeiDial value={spei3.value} />
-              <span className="-mt-3 text-[52px] font-semibold leading-none tracking-[-0.02em] tabular-nums">
-                {spei3.value.toFixed(2)}
-              </span>
-              {level && <RiskBadge level={level} showScore={false} />}
-              <span className="text-center text-[13.5px] text-muted">{indexBand(spei3.value)}</span>
-            </>
-          ) : (
-            <div className="py-10 text-[13.5px] text-muted">Not fitted for this month.</div>
-          )}
-        </Panel>
+        <RiskGauge lat={station.lat} lon={station.lon} />
 
-        <Panel className="flex flex-col gap-4 px-6 py-5">
-          <CardTitle
-            title="What the number means"
-            sub={`Compared with every other ${spei3 ? monthWord(spei3.label) : "month"} since ${station.coverage.from.slice(0, 4)}`}
+        {/* The drought risk surface, as on Live Map, and each factor behind it. */}
+        <Panel className="relative min-h-[420px] overflow-hidden">
+          <MapView
+            layer={mapLayer}
+            sensors
+            legend
+            opacity={mapLayer === "risk" ? 0.55 : 0.7}
+            className="absolute inset-0"
           />
-          <p className="m-0 text-[14px] leading-[1.6] text-muted text-pretty">
-            The index takes the rain that fell minus the water the air could evaporate, over three months, and
-            ranks it against the same months in past years. Zero is a normal year; below &minus;1 is drier than
-            about 84% of years, which counts as drought.
-          </p>
-
-          <div className="flex flex-col gap-2.5">
-            {BANDS.map((b) => {
-              const active = spei3 != null && spei3.value > b.from && spei3.value <= b.to;
-              return (
-                <div
-                  key={b.label}
-                  className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-3 rounded-[10px] px-3 py-2 text-[13.5px]"
-                  style={{ background: active ? `color-mix(in srgb, ${b.color} 14%, transparent)` : undefined }}
-                >
-                  <span className="size-2.5 rounded-full" style={{ background: b.color, opacity: active ? 1 : 0.5 }} />
-                  <span className={active ? "font-semibold text-ink" : "text-muted"}>
-                    {b.label}
-                    {active && <span className="ml-2 font-normal text-muted">&larr; now</span>}
-                  </span>
-                  <span className="text-[12.5px] text-faint tabular-nums">{b.range}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-auto flex flex-wrap gap-2.5">
-            <Link href="/app/history" className="flex items-center px-1 text-[13px] text-accent no-underline hover:underline">
-              Compare with past years
-            </Link>
-          </div>
+          <LayerSwitcher value={mapLayer} onChange={setMapLayer} className="absolute left-3 top-3 z-10" />
         </Panel>
       </div>
 
-      <IndexScales station={station} />
+      <IndexHistory station={station} />
 
       <TabStrip
         value={tab}
@@ -106,20 +64,7 @@ export function PageRisk() {
       />
 
       {tab === "trend" ? (
-        <Panel className="flex flex-col gap-3 px-5 py-5">
-          <CardTitle
-            title={`Every month since ${station.coverage.from.slice(0, 4)}`}
-            sub="SPEI-3: bars below −1 are drought months"
-            right={
-              <span className="flex gap-3.5 text-[12.5px] text-muted">
-                <Swatch color="var(--ap-accent)" label="Wetter" />
-                <Swatch color="#E7A83B" label="Slightly dry" />
-                <Swatch color="#D96565" label="Drought" />
-              </span>
-            }
-          />
-          <SpeiSeries station={station} />
-        </Panel>
+        <SpeiHistory station={station} />
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
           <Panel className="relative h-[520px]">
@@ -129,15 +74,6 @@ export function PageRisk() {
         </div>
       )}
     </div>
-  );
-}
-
-function Swatch({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span className="size-2.5 rounded-[3px]" style={{ background: color }} />
-      {label}
-    </span>
   );
 }
 
@@ -216,213 +152,24 @@ function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
   );
 }
 
-/**
- * Every standardised index the record supports, at every fitted timescale.
- *
- * Both are computed the same way and differ only in what goes in: SPEI
- * accumulates P − ET₀, so it feels evaporative demand, while SPI accumulates
- * rainfall alone. Reading them together separates a dry spell caused by heat
- * from one caused by absent rain. The timescales matter as much: a short one
- * reacts to the last few weeks, a long one carries the whole year.
- */
-function IndexScales({ station }: { station: Station }) {
-  const rows = [
-    { name: "Water balance", code: "SPEI", scales: [1, 3, 6, 12], latest: (k: number) => latestSpei(station, k as 1 | 3 | 6 | 12) },
-    // SPI has no six-month fit in the record.
-    { name: "Rainfall only", code: "SPI", scales: [1, 3, 12], latest: (k: number) => latestSpi(station, k as 1 | 3 | 12) },
-  ];
-  const scaleName: Record<number, string> = { 1: "1 month", 3: "3 months", 6: "6 months", 12: "12 months" };
-
-  return (
-    <Panel className="flex flex-col gap-4 px-5 py-5">
-      <CardTitle
-        title="Drought Index"
-      />
-      {rows.map((r) => (
-        <div key={r.code} className="flex flex-col gap-2">
-          <span className="text-[13px] font-semibold">
-            {r.name} <span className="font-normal text-faint">({r.code})</span>
-          </span>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {r.scales.map((k) => {
-              const l = r.latest(k);
-              const v = l?.value ?? null;
-              const c = bandColor(v);
-              return (
-                <div
-                  key={k}
-                  className="flex flex-col gap-1 rounded-[12px] border border-divider px-3.5 py-3"
-                  style={{ background: v == null ? undefined : `color-mix(in srgb, ${c} 8%, transparent)` }}
-                >
-                  <span className="flex items-center justify-between gap-2 text-[12.5px] text-muted">
-                    {scaleName[k]}
-                    <span className="size-2 rounded-full" style={{ background: v == null ? "transparent" : c }} />
-                  </span>
-                  {v == null ? (
-                    <span className="text-[13px] text-faint">Not fitted</span>
-                  ) : (
-                    <>
-                      <span className="text-[22px] font-semibold leading-none tabular-nums">
-                        {v > 0 ? "+" : ""}
-                        {v.toFixed(2)}
-                      </span>
-                      <span className="text-[12px] text-muted">
-                        {indexBand(v)} · {l ? mon(spanLabel(l.month, k)) : ""}
-                      </span>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </Panel>
-  );
-}
-
 /* ── Pieces ──────────────────────────────────────────────────────────── */
 
-const BANDS = [
-  { label: "Extremely dry", range: "≤ −2.0", from: -99, to: -2, color: "#D96565" },
-  { label: "Severely dry", range: "−2.0 to −1.5", from: -2, to: -1.5, color: "#EE8434" },
-  { label: "Moderately dry", range: "−1.5 to −1.0", from: -1.5, to: -1, color: "#E7A83B" },
-  { label: "Near normal", range: "−1.0 to 1.0", from: -1, to: 1, color: "#38A88A" },
-  { label: "Wet", range: "≥ 1.0", from: 1, to: 99, color: "#2BA6B8" },
-];
-
-function bandColor(v: number | null) {
-  if (v == null) return "var(--ap-muted)";
-  return BANDS.find((b) => v > b.from && v <= b.to)?.color ?? "#2BA6B8";
-}
-
-function speiToLevel(v: number) {
-  if (v <= -2) return "extreme" as const;
-  if (v <= -1.5) return "severe" as const;
-  if (v <= -1) return "watch" as const;
-  return "safe" as const;
-}
-
-/** "OCT–DEC 2025" → "Oct–Dec 2025": month labels are stored in capitals. */
-const mon = (label: string) => label.replace(/\b([A-Z])([A-Z]{2})\b/g, (_, a: string, b: string) => a + b.toLowerCase());
-
-function monthWord(label: string) {
-  const m = label.split(" ")[0];
-  const i = MONTH_ABBR.indexOf(m);
-  return i >= 0
-    ? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i]
-    : "month";
-}
-
-/** A linear scale from −3 to +3 with the current value marked. */
-function SpeiDial({ value }: { value: number }) {
-  const clamped = Math.max(-3, Math.min(3, value));
-  const pct = ((clamped + 3) / 6) * 100;
+/** SPEI-3 month by month, with the same bars as the Drought Index chart. */
+function SpeiHistory({ station }: { station: Station }) {
+  const [period, setPeriod] = React.useState<Period>("all");
+  const { months, values } = sliceYears(station, station.spei["3"], period);
   return (
-    <div className="flex w-full max-w-[380px] flex-col gap-2 pt-4">
-      <div className="relative h-3 rounded-full">
-        <div
-          className="absolute inset-0 rounded-full opacity-85"
-          style={{
-            background:
-              "linear-gradient(to right, #D96565 0%, #EE8434 16%, #E7A83B 25%, #38A88A 50%, #2BA6B8 75%, #9EDFF1 100%)",
-          }}
-        />
-        <motion.span
-          className="absolute top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-[var(--ap-bg)] bg-[var(--ap-text)] shadow"
-          animate={{ left: `${pct}%` }}
-          initial={false}
-          transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-        />
+    <Panel className="flex flex-col gap-4 px-5 py-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <span className="flex flex-col gap-0.5">
+          <span className="text-lg font-semibold">Every month since {months[0]?.y ?? station.coverage.from.slice(0, 4)}</span>
+          <span className="text-[13px] text-muted">SPEI-3: bars below −1 are drought months</span>
+        </span>
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
-      <div className="flex justify-between text-[12px] text-faint tabular-nums">
-        {[-3, -2, -1, 0, 1, 2, 3].map((t) => (
-          <span key={t}>{t > 0 ? `+${t}` : t}</span>
-        ))}
-      </div>
-      <div className="flex justify-between text-[12px] text-muted">
-        <span>Drier</span>
-        <span>Wetter</span>
-      </div>
-    </div>
-  );
-}
-
-function SpeiSeries({ station }: { station: Station }) {
-  const series = station.spei["3"];
-  const [ref, w] = useElementWidth<HTMLDivElement>(880);
-  const h = 220;
-  const padL = 34;
-  const padB = 26;
-  const padR = 10;
-  const innerW = w - padL - padR;
-  const innerH = h - 12 - padB;
-  const bw = innerW / series.length;
-  const scale = 3;
-  const y = (v: number) => 12 + innerH / 2 - (Math.max(-scale, Math.min(scale, v)) / scale) * (innerH / 2);
-  const zero = y(0);
-
-  const hover = useBarHover(series.length, padL, padR, w);
-  const atMonth = hover.index == null ? null : station.months[hover.index];
-  const atValue = hover.index == null ? null : series[hover.index];
-
-  // A label every five years, starting from the first January.
-  const yearTicks = station.months
-    .map((m, i) => ({ ...m, i }))
-    .filter((m) => m.m === 1 && m.y % 5 === 0);
-
-  return (
-    <div ref={ref} className="relative" onMouseMove={hover.onMouseMove} onMouseLeave={hover.onMouseLeave}>
-      <HoverReadout hover={hover} left={padL} right={padR} width={w}>
-        {atMonth && (
-          <>
-            {MONTH_ABBR[atMonth.m - 1]} {atMonth.y} &middot;{" "}
-            {atValue == null ? "no value" : `${atValue > 0 ? "+" : ""}${atValue.toFixed(2)} · ${indexBand(atValue)}`}
-          </>
-        )}
-      </HoverReadout>
-      <svg width={w} height={h} className="block">
-        <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-          {[-2, -1, 1, 2].map((t) => (
-            <line key={t} x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} strokeDasharray={t === -1 ? "3 3" : undefined} />
-          ))}
-        </g>
-
-        {series.map((v, i) => {
-          if (v == null) return null;
-          const top = Math.min(y(v), zero);
-          const hh = Math.abs(y(v) - zero);
-          return (
-            <rect
-              key={i}
-              x={padL + i * bw}
-              y={top}
-              width={Math.max(0.8, bw - 0.6)}
-              height={Math.max(0.6, hh)}
-              rx={Math.min(1.5, bw / 3)}
-              fill={v <= -1 ? "#D96565" : v < 0 ? "#E7A83B" : "var(--ap-accent)"}
-              fillOpacity={hover.index === i ? 1 : 0.8}
-            />
-          );
-        })}
-
-        <HoverGuide hover={hover} left={padL} right={padR} width={w} top={12} bottom={h - padB} />
-        <line x1={padL} x2={w - padR} y1={zero} y2={zero} style={{ stroke: "var(--ap-text)", strokeOpacity: 0.35 }} />
-
-        <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
-          {[2, 0, -2].map((t) => (
-            <text key={t} x={padL - 8} y={y(t) + 4} textAnchor="end">
-              {t > 0 ? `+${t}` : t}
-            </text>
-          ))}
-          {yearTicks.map((m) => (
-            <text key={m.i} x={padL + m.i * bw} y={h - 6} textAnchor="middle">
-              {m.y}
-            </text>
-          ))}
-        </g>
-      </svg>
-    </div>
+      <AnimatedBars months={months} values={values} code="SPEI-3" id={period} />
+      <BandLegend />
+    </Panel>
   );
 }
 

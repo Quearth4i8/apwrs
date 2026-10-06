@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
 import { Menu, MenuItem, MenuTrigger, Popover } from "@/components/ui/dropdown";
@@ -179,11 +179,22 @@ function Trends({ station, metric, setMetric }: { station: Station; metric: Metr
           </div>
         </div>
 
-        {points ? (
-          <TrendLine key={`${res}-${metric}`} points={points} digits={def.digits} unit={def.unit} color={def.color} />
-        ) : (
-          <div className="grid h-[250px] place-items-center text-[13px] text-muted">Loading daily weather…</div>
-        )}
+        {/* A new parameter, view or period redraws the chart from the left. */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={`${res}-${metric}-${res === "year" ? "" : year}-${res === "day" ? month : ""}`}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+          >
+            {points ? (
+              <TrendLine points={points} digits={def.digits} unit={def.unit} color={def.color} />
+            ) : (
+              <div className="grid h-[250px] place-items-center text-[13px] text-muted">Loading daily weather…</div>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         <Provenance>
           {station.name}, {station.coverage.days.toLocaleString("en-GB")} days of measured weather
@@ -250,6 +261,9 @@ function seriesFor(
   return out;
 }
 
+/** How long the line takes to draw, s. */
+const DRAW = 1.1;
+
 /** One point per period, with a hover readout. */
 function TrendLine({
   points,
@@ -299,28 +313,57 @@ function TrendLine({
       </HoverReadout>
       <svg width={w} height={h} className="block">
         <g style={{ stroke: "var(--ap-text)", strokeOpacity: 0.08 }}>
-          {ticks.map((t) => (
-            <line key={t} x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} />
+          {ticks.map((t, k) => (
+            <motion.line
+              key={t}
+              x1={padL}
+              x2={w - padR}
+              y1={y(t)}
+              y2={y(t)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: k * 0.05 }}
+            />
           ))}
         </g>
 
         <HoverGuide hover={hover} left={padL} right={padR} width={w} top={padT} bottom={padT + innerH} />
 
-        <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <path d={line} fill="none" style={{ stroke: color }} strokeWidth={2} strokeLinejoin="round" />
-          {points.map((r, i) =>
-            hover.index === i || points.length <= 40 ? (
-              <circle
-                key={i}
-                cx={x(i)}
-                cy={y(r.v)}
-                r={hover.index === i ? 5 : 3}
-                style={{ fill: color, stroke: "var(--ap-surface)" }}
-                strokeWidth={2}
-              />
-            ) : null,
-          )}
-        </motion.g>
+        {/* The line draws itself left to right; each point pops in as the line reaches it. */}
+        <motion.path
+          d={line}
+          fill="none"
+          style={{ stroke: color }}
+          strokeWidth={2.25}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: DRAW, ease: [0.4, 0, 0.2, 1] }}
+        />
+        {points.length <= 40 &&
+          points.map((r, i) => (
+            <motion.circle
+              key={i}
+              cx={x(i)}
+              cy={y(r.v)}
+              r={3}
+              style={{ fill: color, stroke: "var(--ap-surface)" }}
+              strokeWidth={2}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 22, delay: (i / Math.max(1, points.length - 1)) * DRAW * 0.9 }}
+            />
+          ))}
+        {at && (
+          <circle
+            cx={x(hover.index!)}
+            cy={y(at.v)}
+            r={5.5}
+            style={{ fill: color, stroke: "var(--ap-surface)" }}
+            strokeWidth={2.5}
+          />
+        )}
 
         <g style={{ fill: "var(--ap-muted)" }} fontSize={12}>
           {ticks.map((t) => (

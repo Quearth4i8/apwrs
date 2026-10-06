@@ -19,6 +19,8 @@ export type PageId =
   | "risk"
   | "forecasts"
   | "planting"
+  | "profile"
+  | "irrigation"
   | "history"
   | "upload"
   | "manual"
@@ -59,6 +61,8 @@ export const NAV: NavGroup[] = [
       { id: "risk", en: "Drought Risk", fr: "Risque de sécheresse", icon: "gauge" },
       { id: "forecasts", en: "Forecasts", fr: "Prévisions", icon: "trend" },
       { id: "planting", en: "Calendar", fr: "Calendrier", icon: "sprout" },
+      { id: "irrigation", en: "Irrigation", fr: "Irrigation", icon: "droplet" },
+      { id: "profile", en: "Field Profile", fr: "Profil de parcelle", icon: "leaf" },
     ],
   },
   {

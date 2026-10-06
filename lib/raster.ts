@@ -49,7 +49,17 @@ export interface RiskGrid {
  * again when magnifying, so a modest output size is already smooth.
  */
 export function renderRiskImage(grid: RiskGrid, width = 512): HTMLCanvasElement {
-  const { rows, cols, risk } = grid;
+  return renderFieldImage(grid.rows, grid.cols, grid.risk, rampColor, width);
+}
+
+/** Any field on the grid, coloured by `color`; null cells are transparent. */
+export function renderFieldImage(
+  rows: number,
+  cols: number,
+  risk: (number | null)[],
+  color: (v: number) => [number, number, number],
+  width = 512,
+): HTMLCanvasElement {
   const height = Math.max(1, Math.round((width * rows) / cols));
 
   const canvas = document.createElement("canvas");
@@ -93,7 +103,7 @@ export function renderRiskImage(grid: RiskGrid, width = 512): HTMLCanvasElement 
       const bottom = v10 + (v11 - v10) * fx;
       const v = top + (bottom - top) * fy;
 
-      const [r, g, b] = rampColor(v);
+      const [r, g, b] = color(v);
       px[i] = r;
       px[i + 1] = g;
       px[i + 2] = b;

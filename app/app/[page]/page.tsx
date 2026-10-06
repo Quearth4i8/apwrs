@@ -8,6 +8,8 @@ import { PageAlerts } from "@/components/pages/alerts";
 import { PageRisk } from "@/components/pages/risk";
 import { PageForecasts } from "@/components/pages/forecasts";
 import { PagePlanting } from "@/components/pages/planting";
+import { PageFieldProfile } from "@/components/pages/field-profile";
+import { PageIrrigation } from "@/components/pages/irrigation";
 import { PageHistory } from "@/components/pages/history";
 import { PageUpload } from "@/components/pages/upload";
 import { PageManual } from "@/components/pages/manual";
@@ -46,6 +48,10 @@ function render(page: PageId) {
       return <PageForecasts />;
     case "planting":
       return <PagePlanting />;
+    case "profile":
+      return <PageFieldProfile />;
+    case "irrigation":
+      return <PageIrrigation />;
     case "history":
       return <PageHistory />;
     case "upload":

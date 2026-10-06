@@ -23,3 +23,6 @@ __pycache__/
 *.py[cod]
 # Excel lock files
 ~$*.xls*
+
+# Farmers' fields saved by /api/lands (user data, not source)
+data/lands.json
