@@ -150,7 +150,7 @@ export function RiskBadge({
     >
       <span className="size-1.5 flex-none rounded-full" style={{ background: RISK_COLOR[lv] }} />
       {RISK_LABEL[lv]}
-      {withScore && <span className="opacity-75">{Math.round(score)}%</span>}
+      {withScore && <span className="opacity-75">{Math.round(score)}</span>}
     </span>
   );
 }

@@ -6,11 +6,13 @@
  * by direction, scored by information entropy, and weighted by how much it
  * disperses. Nobody picks the weights by hand.
  *
- * The source paper uses NDVI, soil moisture, LST and PET. Rainfall and ET₀
- * are no longer scored directly: they enter through SPEI-3 and SPI-3, which
- * say how this three-month period compares with thirty years at the same
- * place rather than how many millimetres fell. They are still carried in the
- * payload for the map readout.
+ * The source paper uses NDVI, soil moisture, LST and PET. Every factor the
+ * grid carries is scored, so each has a measurable impact on the result:
+ * vegetation (NDVI) and vegetation water (NDWI), the standardised indices
+ * (SPEI-3, SPI-3), soil moisture, maximum temperature, and the raw 30-day
+ * rainfall and ET₀. Rainfall and ET₀ overlap with SPEI/SPI, which are built
+ * from them; the entropy method weights each by how much it actually varies
+ * across the region, so a factor that adds little gets little weight.
  *
  * NDVI is now the real thing: Sentinel-2 L2A, cloud- and water-masked, from
  * the Copernicus Data Space Ecosystem (lib/copernicus.ts). It appears only
@@ -39,6 +41,8 @@ export interface GridCell {
   spi3?: number | null;
   /** Sentinel-2 NDVI, cell mean over usable land pixels. Null without CDSE. */
   ndvi?: number | null;
+  /** Sentinel-2 NDWI (NIR − SWIR), same masking. Null without CDSE. */
+  ndwi?: number | null;
 }
 
 export interface ScoredCell extends GridCell {
@@ -55,6 +59,7 @@ export interface RiskSurface {
 
 export const FACTOR_META = [
   { key: "ndvi", label: "Vegetation (NDVI)", direction: "positive" as const, note: "Sentinel-2 L2A" },
+  { key: "ndwi", label: "Vegetation water (NDWI)", direction: "positive" as const, note: "Sentinel-2 L2A" },
   { key: "spei3", label: "SPEI-3", direction: "positive" as const, note: "30-yr fit per cell" },
   { key: "spi3", label: "SPI-3", direction: "positive" as const, note: "30-yr fit per cell" },
   { key: "soilMoisture", label: "Soil moisture", direction: "positive" as const },
@@ -63,18 +68,6 @@ export const FACTOR_META = [
   { key: "et030", label: "Evapotranspiration", direction: "negative" as const },
 ];
 
-/**
- * Rainfall and ET₀ stand in for the standardised indices until the gridded
- * climatology exists.
- *
- * SPEI-3 and SPI-3 say more than raw totals — they compare this period with
- * thirty years at the same place — but they need a fitted distribution per
- * cell, which is a build step. Rather than score a thinner model while that
- * is missing, the raw quantities the indices are built from are used instead,
- * and drop out automatically once the indices arrive.
- */
-const SUPERSEDED: Record<string, string> = { precip30: "spei3", et030: "spi3" };
-
 export function scoreGrid(cells: GridCell[]): RiskSurface {
   // NDVI is only present when a Copernicus feed is configured. Including a
   // factor that is null everywhere would hand it a weight it has not earned,
@@ -82,16 +75,11 @@ export function scoreGrid(cells: GridCell[]): RiskSurface {
   // A factor that is null everywhere would take a weight it has not earned,
   // so it is dropped rather than carried at zero. NDVI needs Copernicus
   // credentials; the standardised indices need the fitted climatology.
-  const OPTIONAL = new Set(["ndvi", "spei3", "spi3"]);
+  const OPTIONAL = new Set(["ndvi", "ndwi", "spei3", "spi3"]);
   const has = (key: string) =>
     cells.some((c) => (c[key as keyof GridCell] as number | null) != null);
 
-  const present = FACTOR_META.filter((f) => {
-    // A superseded factor yields to its replacement once that has values.
-    const replacement = SUPERSEDED[f.key];
-    if (replacement && has(replacement)) return false;
-    return !OPTIONAL.has(f.key) || has(f.key);
-  });
+  const present = FACTOR_META.filter((f) => !OPTIONAL.has(f.key) || has(f.key));
 
   const factors: Factor[] = present.map((f) => ({
     key: f.key,

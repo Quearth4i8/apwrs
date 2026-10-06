@@ -7,7 +7,6 @@ import { Panel, RiskBadge } from "@/components/ui/primitives";
 import { CardTitle } from "@/components/ui/simple";
 import { cellFor, impactsAt } from "@/lib/impact";
 import { RISK_COLOR, riskLevel } from "@/lib/utils";
-import { indexPct, percentile } from "@/lib/map-layers";
 
 /**
  * The drought risk at one place, as a needle on a 0–100 dial, and what it is
@@ -32,9 +31,9 @@ const FACTOR_COLOR: Record<string, string> = {
 
 /** How each factor's own value reads. */
 const FORMAT: Record<string, (v: number) => string> = {
-  ndvi: indexPct,
-  spei3: percentile,
-  spi3: percentile,
+  ndvi: (v) => v.toFixed(2),
+  spei3: (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}`,
+  spi3: (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}`,
   soilMoisture: (v) => `${(v * 100).toFixed(0)}% vol`,
   tmax: (v) => `${v.toFixed(1)} °C`,
   precip30: (v) => `${v.toFixed(0)} mm`,
