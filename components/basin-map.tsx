@@ -1,36 +1,24 @@
 "use client";
 
 import * as React from "react";
-import Map, { Layer, Marker, NavigationControl, Popup, ScaleControl, Source, type MapRef } from "react-map-gl/maplibre";
-import type { ExpressionSpecification, LngLatBoundsLike } from "maplibre-gl";
+import Map, { Layer, Marker, NavigationControl, ScaleControl, Source, type MapRef } from "react-map-gl/maplibre";
+import type { LngLatBoundsLike } from "maplibre-gl";
 import type * as GeoJSON from "geojson";
 import { MAX_BOUNDS, SATELLITE_LABELS, SATELLITE_STYLE, SATELLITE_WATER, lockToPlan } from "@/components/map-view";
 import { STATIONS } from "@/lib/climate";
-import { BASIN, WATER_CLASSES, monthLabel, waterClass } from "@/lib/basin";
+import { BASIN } from "@/lib/basin";
 
 /**
- * The Ichkeul catchment on the satellite basemap: its outline from the study
- * shapefile, and the 29 ERA5-Land sections inside it coloured by how their
- * root-zone soil water compares with the same month in 1991–2020.
- *
- * The fill sits beneath the water layer, so Lake Ichkeul and the sea mask it
- * just as they mask the risk surface on the other maps.
+ * The Ichkeul catchment on the satellite basemap, as the study shapefile
+ * draws it: the outline and the 29 sections inside it, and nothing else.
+ * The Drought risk page colours the same sections by its layers
+ * (components/basin-layer-map.tsx), reusing the loader and framing here.
  */
 
-interface SectionProps {
-  kind: "section";
-  id: string;
-  km2: number;
-  pct: number | null;
-  mm: number | null;
-  rain: number | null;
-  rainNormal: number | null;
-}
-
-type BasinGeo = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon> & { month: string };
+export type BasinGeo = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon> & { month: string };
 
 let basinPromise: Promise<BasinGeo> | null = null;
-function loadBasin(): Promise<BasinGeo> {
+export function loadBasin(): Promise<BasinGeo> {
   basinPromise ??= fetch("/data/basin.geojson")
     .then((r) => {
       if (!r.ok) throw new Error(`basin ${r.status}`);
@@ -43,20 +31,7 @@ function loadBasin(): Promise<BasinGeo> {
   return basinPromise;
 }
 
-/** Percentile → class colour, the same steps as WATER_CLASSES. */
-const FILL: ExpressionSpecification = [
-  "case",
-  ["==", ["get", "pct"], null],
-  "#8a8f93",
-  [
-    "step",
-    ["get", "pct"],
-    WATER_CLASSES[0].color,
-    ...WATER_CLASSES.slice(0, -1).flatMap((c, i) => [c.max, WATER_CLASSES[i + 1].color]),
-  ] as unknown as ExpressionSpecification,
-];
-
-function boundsOf(fc: BasinGeo): LngLatBoundsLike {
+export function boundsOf(fc: BasinGeo): LngLatBoundsLike {
   let w = 180;
   let s = 90;
   let e = -180;
@@ -78,7 +53,6 @@ export function BasinMap({ className }: { className?: string }) {
   const mapRef = React.useRef<MapRef | null>(null);
   const [data, setData] = React.useState<BasinGeo | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [hover, setHover] = React.useState<{ lng: number; lat: number; p: SectionProps } | null>(null);
 
   React.useEffect(() => {
     let live = true;
@@ -98,8 +72,6 @@ export function BasinMap({ className }: { className?: string }) {
   }, [bounds]);
   React.useEffect(fit, [fit]);
 
-  const month = data?.month ?? BASIN.months[BASIN.months.length - 1];
-
   return (
     <div className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
       <Map
@@ -108,7 +80,7 @@ export function BasinMap({ className }: { className?: string }) {
         initialViewState={{ longitude: 9.48, latitude: 37.06, zoom: 9 }}
         maxBounds={MAX_BOUNDS}
         minZoom={7}
-        maxZoom={13}
+        maxZoom={14}
         attributionControl={{ compact: true }}
         dragRotate={false}
         pitchWithRotate={false}
@@ -118,37 +90,24 @@ export function BasinMap({ className }: { className?: string }) {
           lockToPlan(e);
           fit();
         }}
-        interactiveLayerIds={data ? ["basin-fill"] : []}
-        onMouseMove={(e) => {
-          const f = e.features?.[0];
-          setHover(f ? { lng: e.lngLat.lng, lat: e.lngLat.lat, p: f.properties as SectionProps } : null);
-        }}
-        onMouseLeave={() => setHover(null)}
-        cursor={hover ? "pointer" : "grab"}
         style={{ width: "100%", height: "100%" }}
       >
         {data && (
           <Source id="basin" type="geojson" data={data}>
+            {/* A faint wash inside the catchment, so its extent reads at a glance. */}
             <Layer
-              id="basin-fill"
+              id="basin-wash"
               type="fill"
               beforeId={SATELLITE_WATER}
-              filter={["==", ["get", "kind"], "section"]}
-              paint={{ "fill-color": FILL, "fill-opacity": 0.58 }}
+              filter={["==", ["get", "kind"], "outline"]}
+              paint={{ "fill-color": "#ffffff", "fill-opacity": 0.08 }}
             />
             <Layer
               id="basin-cells"
               type="line"
               beforeId={SATELLITE_LABELS}
               filter={["==", ["get", "kind"], "section"]}
-              paint={{ "line-color": "#ffffff", "line-opacity": 0.35, "line-width": 0.6 }}
-            />
-            <Layer
-              id="basin-hover"
-              type="line"
-              beforeId={SATELLITE_LABELS}
-              filter={["all", ["==", ["get", "kind"], "section"], ["==", ["get", "id"], hover?.p.id ?? ""]]}
-              paint={{ "line-color": "#ffffff", "line-width": 2.2 }}
+              paint={{ "line-color": "#ffffff", "line-opacity": 0.4, "line-width": 0.7 }}
             />
             {/* A dark casing under the white line keeps the outline legible over bright fields. */}
             <Layer
@@ -178,27 +137,15 @@ export function BasinMap({ className }: { className?: string }) {
           </Marker>
         ))}
 
-        {hover && <SectionPopup {...hover} />}
-
         <NavigationControl position="top-right" showCompass={false} />
         <ScaleControl position="bottom-right" maxWidth={90} unit="metric" />
       </Map>
 
-      {/* What the colours show, and when. */}
       <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col gap-0.5 rounded-[12px] bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-2 shadow-pop backdrop-blur-md">
-        <span className="text-[12.5px] font-semibold text-ink">Soil water · {monthLabel(month)}</span>
+        <span className="text-[12.5px] font-semibold text-ink">Ichkeul catchment</span>
         <span className="text-[11.5px] text-muted">
-          Ichkeul catchment · {BASIN.areaKm2.toLocaleString("en-GB")} km² · {BASIN.sections} sections
+          {BASIN.areaKm2.toLocaleString("en-GB")} km² · {BASIN.sections} sections
         </span>
-      </div>
-
-      <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-1.5 text-[12px] text-muted shadow-pop backdrop-blur-md">
-        {WATER_CLASSES.map((c) => (
-          <span key={c.label} className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full" style={{ background: c.color }} />
-            {c.label}
-          </span>
-        ))}
       </div>
 
       {(error || !data) && (
@@ -208,42 +155,4 @@ export function BasinMap({ className }: { className?: string }) {
       )}
     </div>
   );
-}
-
-function SectionPopup({ lng, lat, p }: { lng: number; lat: number; p: SectionProps }) {
-  const cls = waterClass(p.pct);
-  return (
-    <Popup longitude={lng} latitude={lat} closeButton={false} closeOnClick={false} offset={14} maxWidth="240px">
-      <div className="flex flex-col gap-1 text-[12.5px]">
-        <span className="flex items-center gap-2 font-semibold">
-          {p.id}
-          {cls && (
-            <span className="flex items-center gap-1 font-normal text-muted">
-              <span className="size-2 rounded-full" style={{ background: cls.color }} />
-              {cls.label}
-            </span>
-          )}
-        </span>
-        {p.mm != null && (
-          <span>
-            Root zone <strong>{Math.round(p.mm)} mm</strong>
-            {p.pct != null && <span className="text-muted"> · {ordinal(p.pct)} percentile</span>}
-          </span>
-        )}
-        {p.rain != null && (
-          <span>
-            Rain <strong>{Math.round(p.rain)} mm</strong>
-            {p.rainNormal != null && <span className="text-muted"> · normal {Math.round(p.rainNormal)} mm</span>}
-          </span>
-        )}
-        <span className="text-muted">{p.km2.toFixed(0)} km² of the catchment</span>
-      </div>
-    </Popup>
-  );
-}
-
-function ordinal(n: number) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }

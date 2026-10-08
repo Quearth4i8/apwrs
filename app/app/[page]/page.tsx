@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { NAV, type PageId } from "@/lib/data";
 import { PageOverview } from "@/components/pages/overview";
-import { PageLiveMap } from "@/components/pages/live-map";
 import { PageSensors } from "@/components/pages/sensors";
 import { PageAlerts } from "@/components/pages/alerts";
 import { PageRisk } from "@/components/pages/risk";
@@ -11,9 +10,6 @@ import { PagePlanting } from "@/components/pages/planting";
 import { PageFieldProfile } from "@/components/pages/field-profile";
 import { PageIrrigation } from "@/components/pages/irrigation";
 import { PageHistory } from "@/components/pages/history";
-import { PageUpload } from "@/components/pages/upload";
-import { PageManual } from "@/components/pages/manual";
-import { PageDatasets } from "@/components/pages/datasets";
 import { PageAdmin } from "@/components/pages/admin";
 
 const ALL = NAV.flatMap((g) => g.items);
@@ -36,8 +32,6 @@ function render(page: PageId) {
   switch (page) {
     case "overview":
       return <PageOverview />;
-    case "map":
-      return <PageLiveMap />;
     case "sensors":
       return <PageSensors />;
     case "alerts":
@@ -54,14 +48,6 @@ function render(page: PageId) {
       return <PageIrrigation />;
     case "history":
       return <PageHistory />;
-    case "upload":
-      return <PageUpload />;
-    case "manual":
-      return <PageManual />;
-    case "datasets":
-      return <PageDatasets key="datasets" tab="datasets" />;
-    case "activity":
-      return <PageDatasets key="activity" tab="activity" />;
     case "users":
       return <PageAdmin key="users" section="users" />;
     case "regions":

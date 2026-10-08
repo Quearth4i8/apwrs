@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Reveal } from "@/components/ui/reveal";
 import { Icon } from "@/components/icon";
 import { Panel } from "@/components/ui/primitives";
 import { useBarHover, HoverReadout, HoverGuide, useElementWidth } from "@/components/ui/chart-hover";
@@ -16,7 +17,7 @@ export function PageSensors() {
   const [selected, setSelected] = React.useState<Station>(STATIONS[0]);
 
   return (
-    <div className="flex min-h-full flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
+    <Reveal className="flex min-h-full flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <div className="flex flex-col gap-1.5">
         <h1 className="text-[clamp(28px,4vw,36px)] leading-none tracking-[-0.02em]">Sensors</h1>
       </div>
@@ -74,7 +75,7 @@ export function PageSensors() {
           <RecentRain station={selected} />
         </div>
       </Panel>
-    </div>
+    </Reveal>
   );
 }
 

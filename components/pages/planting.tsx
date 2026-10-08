@@ -45,7 +45,7 @@ export function PagePlanting() {
   const station = stationForSite(site.name);
   const [cropId, setCropId] = React.useState("wheat-durum");
   const crop = calendarCrop(cropId);
-  const { profile, saved } = useFieldProfile(PROFILE_USER, station);
+  const { profile, saved } = useFieldProfile(PROFILE_USER);
   const [today] = React.useState(() => monthPos());
 
   const advice = React.useMemo(() => advise(crop, profile, station, today), [crop, profile, station, today]);
@@ -81,8 +81,8 @@ export function PagePlanting() {
         >
           <Icon name="info" size={16} />
           <span className="flex-1">
-            The advice uses default values: {station.name}&apos;s 30-year climate and a typical loam. Set your own field for
-            advice that fits it.
+            The advice uses a typical loam until you describe your field&apos;s soil and how it is farmed. Climate comes from{" "}
+            {station.name}&apos;s 30-year record.
           </span>
           <Link href="/app/profile" className="font-semibold text-accent no-underline hover:underline">
             Set up field profile &rarr;

@@ -12,13 +12,16 @@ import { cn } from "@/lib/utils";
 
 export function InfoTile({
   icon,
+  glyph,
   tint,
   label,
   value,
   note,
   className,
 }: {
-  icon: IconName;
+  icon?: IconName;
+  /** A drawn glyph instead of an app icon (e.g. a weather symbol). */
+  glyph?: React.ReactNode;
   /** Colour of the icon and its tile. */
   tint: string;
   label: React.ReactNode;
@@ -32,7 +35,7 @@ export function InfoTile({
         className="grid size-10 place-items-center rounded-[10px]"
         style={{ color: tint, background: `color-mix(in srgb, ${tint} 14%, transparent)` }}
       >
-        <Icon name={icon} size={20} strokeWidth={1.8} />
+        {glyph ?? (icon && <Icon name={icon} size={20} strokeWidth={1.8} />)}
       </span>
       <span className="text-[13px] text-muted">{label}</span>
       <span className="text-[26px] font-semibold leading-none tabular-nums">{value}</span>

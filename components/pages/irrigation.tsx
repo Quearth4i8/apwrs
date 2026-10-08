@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Reveal } from "@/components/ui/reveal";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icon";
@@ -70,7 +71,7 @@ function defaultSowing(crop: CalendarCrop): string {
 export function PageIrrigation() {
   const { site } = useConsole();
   const station = stationForSite(site.name);
-  const { profile, saved } = useFieldProfile(PROFILE_USER, station);
+  const { profile, saved } = useFieldProfile(PROFILE_USER);
   const { data, error } = useForecast(station.id);
 
   // Start on the crop the profile says is in the field, if any.
@@ -95,7 +96,7 @@ export function PageIrrigation() {
   const ahead = water.filter((r) => r.date >= today).slice(0, 16);
 
   return (
-    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
+    <Reveal className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
         title="Irrigation calendar"
         lede="How much water your crop uses each day, and when and how much to irrigate."
@@ -216,7 +217,7 @@ export function PageIrrigation() {
         FAO-56 single crop coefficient and root-zone water balance · ET₀ and rain: Open-Meteo forecast, {station.name} 30-year means before
         it · soil from your field profile
       </Provenance>
-    </div>
+    </Reveal>
   );
 }
 

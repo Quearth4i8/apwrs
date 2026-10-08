@@ -29,7 +29,7 @@ import {
  * The farmer's own fields: a list beside a satellite map, and a three-step
  * way to add one — go to the land by its coordinates, tap its corners on
  * the map, name it. Fields are saved to the server, so the expert sees them
- * on the Live Map.
+ * on the Drought risk map.
  */
 
 type Lang = "en" | "fr";

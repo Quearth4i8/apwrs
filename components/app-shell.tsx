@@ -9,20 +9,19 @@ import { Brand } from "@/components/brand";
 import { CommandPalette } from "@/components/command-palette";
 import { useConsole } from "@/components/app-context";
 import { useMounted, useTheme } from "@/components/theme-provider";
-import { Menu, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Popover, PopoverRow } from "@/components/ui/dropdown";
-import { COUNTRIES, FARM_NAV, IDENTITY, NAV, SEASONS } from "@/lib/data";
-import { COVERAGE, climateFile } from "@/lib/climate";
+import { Menu, MenuItem, MenuTrigger, Popover, PopoverRow } from "@/components/ui/dropdown";
+import { COUNTRIES, FARM_NAV, IDENTITY, NAV } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 /**
  * The console frame: a collapsing sidebar, a header of scoped controls
- * (site, season, search, language, theme, account) and the routed page.
+ * (site, search, language, theme, account) and the routed page.
  * Navigation is real routing, so every page is linkable and the back button
  * works — the prototype switched a state variable instead.
  *
  * One shell serves both roles (App.dc.html's `role` prop). The farmer gets a
  * single "MY FARM" group and loses the controls that only make sense to an
- * analyst: the season selector and the ⌘K palette.
+ * analyst: the ⌘K palette.
  */
 export function AppShell({
   children,
@@ -33,7 +32,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { site, setSite, season, setSeason, lang, setLang, sidebarCollapsed, toggleSidebar } = useConsole();
+  const { site, setSite, lang, setLang, sidebarCollapsed, toggleSidebar } = useConsole();
   const { theme, setTheme } = useTheme();
   const mounted = useMounted();
   const [cmdOpen, setCmdOpen] = React.useState(false);
@@ -149,17 +148,6 @@ export function AppShell({
         {sidebar}
 
         <div className="flex flex-col gap-2 border-t border-divider p-2.5">
-          {expanded && (
-            <div className="flex items-center gap-2.5 rounded-[12px] bg-neutral-100 px-3 py-2.5 text-[12px] text-muted">
-              <Icon name="database" size={15} />
-              <div className="flex flex-col leading-snug">
-                <span className="text-ink">
-                  Weather {COVERAGE.from.slice(0, 4)}&ndash;{COVERAGE.to.slice(0, 4)}
-                </span>
-                <span>Updated {climateFile.generatedAt.slice(0, 10)}</span>
-              </div>
-            </div>
-          )}
           <button
             onClick={toggleSidebar}
             className="flex h-9 items-center gap-2.5 rounded-[10px] px-2.5 text-muted transition-colors hover:bg-neutral-100 hover:text-ink"
@@ -281,31 +269,6 @@ export function AppShell({
             </div>
           </Popover>
 
-          {/* Season — analyst control, hidden for the farmer. */}
-          {!isFarmer && (
-          <Menu
-            className="w-[240px]"
-            trigger={
-              <MenuTrigger className="hidden md:flex">
-                <Icon name="calendar" size={14} />
-                <span className="text-[13px]">{season}</span>
-                <Icon name="down" size={14} />
-              </MenuTrigger>
-            }
-          >
-            <MenuLabel>Season</MenuLabel>
-            {SEASONS.map((y) => (
-              <MenuItem key={y.label} hint={y.note} onSelect={() => setSeason(y.label)}>
-                <span className="text-[13px]">{y.label}</span>
-              </MenuItem>
-            ))}
-            <MenuSeparator />
-            <MenuItem icon="history" hint="2016–2026" onSelect={() => setSeason("2016 – 2026")}>
-              Custom period&hellip;
-            </MenuItem>
-          </Menu>
-          )}
-
           <div className="flex-1" />
 
           {!isFarmer && (
@@ -394,7 +357,7 @@ export function AppShell({
           </Menu>
         </header>
 
-        <main className={cn("relative min-h-0 flex-1", !isFarmer && current === "map" ? "overflow-hidden" : "overflow-auto")}>
+        <main className="relative min-h-0 flex-1 overflow-auto">
           {children}
         </main>
       </div>

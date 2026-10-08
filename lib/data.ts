@@ -13,7 +13,6 @@ import type { IconName } from "@/components/icon";
 
 export type PageId =
   | "overview"
-  | "map"
   | "sensors"
   | "alerts"
   | "risk"
@@ -22,10 +21,6 @@ export type PageId =
   | "profile"
   | "irrigation"
   | "history"
-  | "upload"
-  | "manual"
-  | "datasets"
-  | "activity"
   | "users"
   | "regions"
   | "settings";
@@ -49,7 +44,6 @@ export const NAV: NavGroup[] = [
     fr: "SURVEILLER",
     items: [
       { id: "overview", en: "Overview", fr: "Vue d’ensemble", icon: "dashboard" },
-      { id: "map", en: "Live Map", fr: "Carte en direct", icon: "map" },
       { id: "sensors", en: "Sensors", fr: "Capteurs", icon: "radio" },
       { id: "alerts", en: "Alerts", fr: "Alertes", icon: "bell" },
     ],
@@ -70,16 +64,6 @@ export const NAV: NavGroup[] = [
     fr: "HISTORIQUE",
     items: [
       { id: "history", en: "Historical", fr: "Données historiques", icon: "history" },
-    ],
-  },
-  {
-    key: "DATA",
-    fr: "DONNÉES",
-    items: [
-      { id: "upload", en: "Upload", fr: "Importer", icon: "upload" },
-      { id: "manual", en: "Manual Entry", fr: "Saisie manuelle", icon: "pencil" },
-      { id: "datasets", en: "Datasets", fr: "Jeux de données", icon: "database" },
-      { id: "activity", en: "Activity Log", fr: "Journal d’activité", icon: "activity" },
     ],
   },
   {
@@ -147,11 +131,6 @@ export const COUNTRIES: Country[] = [
 ];
 
 /** Hydrological years covered by the station record. */
-export const SEASONS = Array.from({ length: 5 }, (_, i) => {
-  const y = 2025 - i;
-  return { label: `${y - 1}/${String(y).slice(2)}`, note: i === 0 ? "latest" : "" };
-});
-
 /* ── Overview ────────────────────────────────────────────────────────── */
 
 export const LANDING_INPUTS: { t: string; d: string; icon: IconName }[] = [

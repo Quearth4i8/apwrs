@@ -2,11 +2,9 @@
  * Should this crop go in the ground on this field, and if not, what instead?
  *
  * Each crop's requirements (lib/crop-calendar.ts) are checked against the
- * user's field profile (lib/field-profile.ts). Climate is judged over the
- * crop's own growing season: the user gives annual figures, and the
- * station's 30-year monthly normals say how those spread over the year — so
- * a field 1 °C warmer than the station is taken to be 1 °C warmer in every
- * month, and a field with 10% more rain to get 10% more in every month.
+ * user's field profile (lib/field-profile.ts) for soil and farming, and
+ * against the selected station's 30-year monthly normals for climate, over
+ * the crop's own growing season.
  *
  * Every check lands as good, caution or bad. Any bad check rules the crop
  * out; timing is separate, so a crop can suit the field but not be due yet.
@@ -84,26 +82,23 @@ function inRange(v: number, r: Range): Level {
   return "bad";
 }
 
-/** The user's annual figures, carried onto the crop's season months. */
-export function seasonClimate(profile: FieldProfile, station: Station, months: number[]) {
-  const n = station.normals;
-  const at = months.map((m) => n[m]);
+/** The station's 1996–2025 climate over the crop's season months. */
+export function seasonClimate(station: Station, months: number[]) {
+  const at = months.map((m) => station.normals[m]);
   const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-  const c = profile.climate;
-  const ratio = (season: number, year: number) => (year > 0 ? season / year : 1);
   return {
-    temp: c.meanTemperature + (mean(at.map((x) => x.tmean)) - mean(n.map((x) => x.tmean))),
-    rain: c.precipitation * ratio(at.reduce((a, x) => a + x.precip, 0), n.reduce((a, x) => a + x.precip, 0)),
-    rh: c.relativeHumidity + (mean(at.map((x) => x.rh)) - mean(n.map((x) => x.rh))),
-    wind: c.windSpeed * ratio(mean(at.map((x) => x.wind)), mean(n.map((x) => x.wind))),
-    radiation: c.solarRadiation * ratio(mean(at.map((x) => x.rs)), mean(n.map((x) => x.rs))),
+    temp: mean(at.map((x) => x.tmean)),
+    rain: at.reduce((a, x) => a + x.precip, 0),
+    rh: mean(at.map((x) => x.rh)),
+    wind: mean(at.map((x) => x.wind)),
+    radiation: mean(at.map((x) => x.rs)),
   };
 }
 
 export function advise(crop: CalendarCrop, profile: FieldProfile, station: Station, today = monthPos()): Advice {
   const r = crop.req;
   const season = growingSeason(crop, today);
-  const sc = seasonClimate(profile, station, season.months);
+  const sc = seasonClimate(station, season.months);
   const checks: Check[] = [];
   const irrigated = profile.agriculture.irrigation !== "rainfed";
 

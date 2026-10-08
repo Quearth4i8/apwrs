@@ -12,7 +12,7 @@ import { RISK_COLOR, riskLevel } from "@/lib/utils";
  * The drought risk at one place, as a needle on a 0–100 dial, and what it is
  * made of.
  *
- * It is the same number the Live Map paints (lib/risk.ts): each impact factor
+ * It is the same number the risk maps paint (lib/risk.ts): each impact factor
  * is min–max normalised across the region by direction, weighted by the
  * entropy weight method, and the weighted dryness is the score. So a factor's
  * share of the score is its weight × how dry this cell is on that factor,
@@ -24,7 +24,7 @@ const FACTOR_COLOR: Record<string, string> = {
   spei3: "#2F7FD1",
   spi3: "#7B8FD9",
   soilMoisture: "#2BA6B8",
-  tmax: "#E0663F",
+  tmean: "#E0663F",
   precip30: "#5B9BD5",
   et030: "#E7A83B",
 };
@@ -35,7 +35,7 @@ const FORMAT: Record<string, (v: number) => string> = {
   spei3: (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}`,
   spi3: (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}`,
   soilMoisture: (v) => `${(v * 100).toFixed(0)}% vol`,
-  tmax: (v) => `${v.toFixed(1)} °C`,
+  tmean: (v) => `${v.toFixed(1)} °C`,
   precip30: (v) => `${v.toFixed(0)} mm`,
   et030: (v) => `${v.toFixed(0)} mm`,
 };

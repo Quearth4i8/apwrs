@@ -5,7 +5,7 @@
  * threshold region), or on the spread of today's values across the region.
  */
 
-export type LayerKey = "risk" | "ndvi" | "ndwi" | "spei3" | "spi3" | "soilMoisture" | "tmax" | "precip30" | "et030";
+export type LayerKey = "risk" | "ndvi" | "ndwi" | "spei3" | "spi3" | "soilMoisture" | "tmean" | "precip30" | "et030";
 
 type RGB = [number, number, number];
 
@@ -71,8 +71,8 @@ export const MAP_LAYERS: MapLayer[] = [
     ends: ["Dry", "Wet"],
   },
   {
-    key: "tmax",
-    label: "Max temperature",
+    key: "tmean",
+    label: "Mean temperature",
     ramp: ["#FFF3B0", "#FDC46B", "#F98C4A", "#E0663F", "#B8282E"],
     domain: null,
     format: (v) => `${v.toFixed(1)} °C`,

@@ -10,15 +10,23 @@ import { cn } from "@/lib/utils";
  * The map's layer picker: a floating pill over the map showing the current
  * layer, opening onto every layer with a swatch of its colour ramp.
  */
-export function LayerSwitcher({
+export function LayerSwitcher<V extends LayerKey | "none" = LayerKey>({
   value,
   onChange,
+  only,
+  allowNone = false,
   className,
 }: {
-  value: LayerKey;
-  onChange: (v: LayerKey) => void;
+  value: V;
+  onChange: (v: V) => void;
+  /** Offer just these layers, in this order; every layer when omitted. */
+  only?: LayerKey[];
+  /** Add a "No layer" choice that shows the map without any colours. */
+  allowNone?: boolean;
   className?: string;
 }) {
+  const layers = only ? only.map((k) => LAYER[k]) : MAP_LAYERS;
+  const none = value === "none";
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -31,10 +39,15 @@ export function LayerSwitcher({
             className,
           )}
         >
-          <span className="grid size-6 place-items-center rounded-full bg-accent-100 text-accent">
+          <span
+            className={cn(
+              "grid size-6 place-items-center rounded-full",
+              none ? "bg-neutral-100 text-muted" : "bg-accent-100 text-accent",
+            )}
+          >
             <Icon name="layers" size={14} />
           </span>
-          <span className="font-semibold">{LAYER[value].label}</span>
+          <span className="font-semibold">{none ? "No layer" : LAYER[value as LayerKey].label}</span>
           <span className="text-muted transition-transform duration-150 group-data-[state=open]:rotate-180">
             <Icon name="down" size={14} />
           </span>
@@ -47,12 +60,12 @@ export function LayerSwitcher({
           className="z-50 w-[260px] rounded-panel border border-panel-border bg-s2 p-1.5 text-ink shadow-pop outline-none data-[state=open]:animate-[pop-in_0.16s_var(--ease-out-expo)_both]"
         >
           <div className="px-2.5 pb-1.5 pt-1 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted">Map layer</div>
-          {MAP_LAYERS.map((l) => {
+          {layers.map((l) => {
             const on = l.key === value;
             return (
               <DropdownMenu.Item
                 key={l.key}
-                onSelect={() => onChange(l.key)}
+                onSelect={() => onChange(l.key as V)}
                 className={cn(
                   "relative flex h-9 cursor-pointer select-none items-center gap-2.5 rounded-inset px-2.5 text-[13px] outline-none transition-colors duration-100 data-[highlighted]:bg-s3",
                   on &&
@@ -72,6 +85,27 @@ export function LayerSwitcher({
               </DropdownMenu.Item>
             );
           })}
+          {allowNone && (
+            <>
+              <DropdownMenu.Separator className="mx-1.5 my-1 h-px bg-divider" />
+              <DropdownMenu.Item
+                onSelect={() => onChange("none" as V)}
+                className={cn(
+                  "relative flex h-9 cursor-pointer select-none items-center gap-2.5 rounded-inset px-2.5 text-[13px] outline-none transition-colors duration-100 data-[highlighted]:bg-s3",
+                  none &&
+                    "bg-accent-100 font-semibold before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-[var(--ap-accent)]",
+                )}
+              >
+                <span className="h-2.5 w-7 flex-none rounded-full border border-dashed border-[var(--ap-divider-strong)]" />
+                <span className="flex-1 truncate">No layer</span>
+                {none && (
+                  <span className="text-accent">
+                    <Icon name="check" size={14} />
+                  </span>
+                )}
+              </DropdownMenu.Item>
+            </>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

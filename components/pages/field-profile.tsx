@@ -4,9 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon, type IconName } from "@/components/icon";
-import { useConsole } from "@/components/app-context";
 import { Button, Panel, PageHeader, Segmented } from "@/components/ui/primitives";
-import { stationForSite } from "@/lib/climate";
 import { CALENDAR_CROPS, FAMILY_LABEL } from "@/lib/crop-calendar";
 import { CropImage } from "@/components/crop-visual";
 import { Select } from "@/components/ui/select";
@@ -16,7 +14,6 @@ import {
   PROFILE_USER,
   IRRIGATION,
   TEXTURES,
-  climateFromStation,
   clearProfile,
   defaultProfile,
   saveProfile,
@@ -25,14 +22,12 @@ import {
 } from "@/lib/field-profile";
 
 /**
- * Where a user describes their field: the climate, soil and farming facts
+ * Where a user describes their field: the soil and farming facts
  * the Planting calendar judges each crop against. Each user has their own,
  * and can come back and change it at any time.
  */
 export function PageFieldProfile() {
-  const { site } = useConsole();
-  const station = stationForSite(site.name);
-  const { profile, saved } = useFieldProfile(PROFILE_USER, station);
+  const { profile, saved } = useFieldProfile(PROFILE_USER);
 
   // Edits are a draft until saved; a new stored profile resets the draft.
   const [draft, setDraft] = React.useState<FieldProfile>(profile);
@@ -84,69 +79,8 @@ export function PageFieldProfile() {
         <span>Stored for this account in this browser.</span>
       </div>
 
-      {/* ── Climate ───────────────────────────────────────────────────── */}
-      <Section
-        index={0}
-        icon="sun"
-        title="Climate"
-        sub="Annual figures for your field. The advice spreads them over each crop's season."
-        action={
-          <button
-            type="button"
-            onClick={() => set("climate", climateFromStation(station))}
-            className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-accent-100"
-          >
-            <Icon name="refresh" size={13} />
-            Use {station.name} 30-year averages
-          </button>
-        }
-      >
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <NumberField
-            label="Precipitation"
-            unit="mm/yr"
-            value={draft.climate.precipitation}
-            step={10}
-            min={0}
-            onChange={(v) => set("climate", { precipitation: v })}
-          />
-          <NumberField
-            label="Solar radiation"
-            unit="MJ/m²/day"
-            value={draft.climate.solarRadiation}
-            step={0.1}
-            min={0}
-            onChange={(v) => set("climate", { solarRadiation: v })}
-          />
-          <NumberField
-            label="Wind speed"
-            unit="m/s"
-            value={draft.climate.windSpeed}
-            step={0.1}
-            min={0}
-            onChange={(v) => set("climate", { windSpeed: v })}
-          />
-          <NumberField
-            label="Relative humidity"
-            unit="%"
-            value={draft.climate.relativeHumidity}
-            step={1}
-            min={0}
-            max={100}
-            onChange={(v) => set("climate", { relativeHumidity: v })}
-          />
-          <NumberField
-            label="Mean temperature"
-            unit="°C"
-            value={draft.climate.meanTemperature}
-            step={0.1}
-            onChange={(v) => set("climate", { meanTemperature: v })}
-          />
-        </div>
-      </Section>
-
       {/* ── Soil ──────────────────────────────────────────────────────── */}
-      <Section index={1} icon="layers" title="Soil" sub="From a soil test if you have one; otherwise your best estimate.">
+      <Section index={0} icon="layers" title="Soil" sub="From a soil test if you have one; otherwise your best estimate.">
         <div className="flex flex-col gap-5">
           <Field label="Texture">
             <Segmented
@@ -199,7 +133,7 @@ export function PageFieldProfile() {
       </Section>
 
       {/* ── Agriculture ───────────────────────────────────────────────── */}
-      <Section index={2} icon="sprout" title="Agriculture" sub="What is on the field now, and how it is watered.">
+      <Section index={1} icon="sprout" title="Agriculture" sub="What is on the field now, and how it is watered.">
         <div className="flex flex-col gap-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Crop type (current or last season)">
@@ -294,7 +228,7 @@ export function PageFieldProfile() {
           type="button"
           onClick={() => {
             clearProfile(PROFILE_USER);
-            setDraft(defaultProfile(station));
+            setDraft(defaultProfile());
           }}
           className="w-fit text-[12.5px] text-muted underline-offset-2 hover:text-ink hover:underline"
         >

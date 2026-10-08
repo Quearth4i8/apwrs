@@ -4,7 +4,7 @@ import { landStore } from "@/lib/land-store";
 
 /**
  * Farmers' fields, shared between the farmer who draws them and the expert
- * who reviews them on the Live Map. Storage is Redis in production and a
+ * who reviews them on the Drought risk map. Storage is Redis in production and a
  * local JSON file in development (lib/land-store.ts).
  *
  *   GET    /api/lands[?owner=id]   every field, or one farmer's

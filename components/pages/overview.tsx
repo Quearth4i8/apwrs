@@ -4,6 +4,9 @@ import * as React from "react";
 import { motion } from "motion/react";
 import { BasinMap } from "@/components/basin-map";
 import { BasinWaterCard } from "@/components/basin-water";
+import { CurrentWeatherCard } from "@/components/current-weather";
+import { Reveal } from "@/components/ui/reveal";
+import { skyOf, useCurrentWeather } from "@/lib/use-current";
 import { useConsole } from "@/components/app-context";
 import { Panel } from "@/components/ui/primitives";
 import { InfoTile, MOISTURE_COLOR, MOISTURE_LABEL, moistureLevel } from "@/components/ui/simple";
@@ -19,7 +22,7 @@ const CARD_IN = {
 };
 
 /**
- * The at-a-glance page: four plain answers (how much rain fell, how much is
+ * The at-a-glance page: today's weather, four plain answers (how much rain fell, how much is
  * coming, how wet is the soil, is there a drought), the catchment's water, the
  * risk map and the next sowing period. Index values, units and method notes
  * live on the analysis pages; this page says what they mean.
@@ -51,8 +54,9 @@ export function PageOverview() {
 
       <h1 className="relative text-[clamp(28px,4.4vw,40px)] leading-none tracking-[-0.02em]">{station.name}</h1>
 
-      {/* ── Four plain answers ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      {/* ── Today's weather and four plain answers ──────────────────── */}
+      <Reveal className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5" itemClassName="[&>*]:h-full" step={0.07}>
+        <WeatherTile stationId={station.id} />
         <InfoTile
           icon="rain"
           tint="var(--ap-accent)"
@@ -89,12 +93,15 @@ export function PageOverview() {
           value={<span style={{ color: drought?.color }}>{drought?.word ?? "—"}</span>}
           note={`Last 3 months`}
         />
-      </div>
+      </Reveal>
 
       {/* ── Catchment water + map ─────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <motion.div {...CARD_IN}>
+        <motion.div {...CARD_IN} className="flex flex-col gap-6">
           <BasinWaterCard />
+          <motion.div {...CARD_IN} transition={{ ...CARD_IN.transition, delay: 0.12 }}>
+            <CurrentWeatherCard stationId={station.id} />
+          </motion.div>
         </motion.div>
 
         <motion.div {...CARD_IN} transition={{ ...CARD_IN.transition, delay: 0.06 }}>
@@ -104,6 +111,39 @@ export function PageOverview() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+/** Today at the station: the sky, the temperature now, and the day's range. */
+function WeatherTile({ stationId }: { stationId: string }) {
+  const { data, error } = useCurrentWeather(stationId);
+  const sky = skyOf(data?.weatherCode ?? null, data?.isDay ?? true);
+  const Glyph = sky.icon;
+  const t = data?.today;
+  return (
+    <InfoTile
+      glyph={<Glyph size={20} strokeWidth={1.8} />}
+      tint={sky.color}
+      label="Weather today"
+      value={data?.temperature != null ? `${Math.round(data.temperature)}°C` : error ? "—" : "…"}
+      note={
+        data ? (
+          <>
+            {sky.label}
+            {t?.tmax != null && t.tmin != null && (
+              <>
+                {" "}· {Math.round(t.tmin)}° / {Math.round(t.tmax)}°
+              </>
+            )}
+            {t?.rainChance != null && t.rainChance >= 20 && <> · {t.rainChance}% rain</>}
+          </>
+        ) : error ? (
+          "Unavailable"
+        ) : (
+          "Reading…"
+        )
+      }
+    />
   );
 }
 

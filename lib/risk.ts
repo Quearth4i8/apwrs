@@ -9,7 +9,7 @@
  * The source paper uses NDVI, soil moisture, LST and PET. Every factor the
  * grid carries is scored, so each has a measurable impact on the result:
  * vegetation (NDVI) and vegetation water (NDWI), the standardised indices
- * (SPEI-3, SPI-3), soil moisture, maximum temperature, and the raw 30-day
+ * (SPEI-3, SPI-3), soil moisture, mean temperature, and the raw 30-day
  * rainfall and ET₀. Rainfall and ET₀ overlap with SPEI/SPI, which are built
  * from them; the entropy method weights each by how much it actually varies
  * across the region, so a factor that adds little gets little weight.
@@ -20,7 +20,7 @@
  * and the weighting redistributes across the remaining four on its own.
  *
  * One substitution remains, and is labelled as such in the UI:
- *   • LST → 2 m maximum air temperature (no thermal satellite feed wired up)
+ *   • LST → 2 m mean air temperature (no thermal satellite feed wired up)
  */
 import { entropyWeights, type Factor } from "@/lib/drought";
 
@@ -31,8 +31,8 @@ export interface GridCell {
   precip30: number | null;
   /** 30-day reference evapotranspiration total, mm. */
   et030: number | null;
-  /** Mean daily maximum temperature over the window, °C. */
-  tmax: number | null;
+  /** Mean daily air temperature over the window, °C. */
+  tmean: number | null;
   /** Volumetric soil water content, 3–9 cm, m³/m³. */
   soilMoisture: number | null;
   /** Gridded SPEI-3 over the last three complete calendar months. */
@@ -63,7 +63,7 @@ export const FACTOR_META = [
   { key: "spei3", label: "SPEI-3", direction: "positive" as const, note: "30-yr fit per cell" },
   { key: "spi3", label: "SPI-3", direction: "positive" as const, note: "30-yr fit per cell" },
   { key: "soilMoisture", label: "Soil moisture", direction: "positive" as const },
-  { key: "tmax", label: "Max temperature", direction: "negative" as const, note: "stands in for LST" },
+  { key: "tmean", label: "Mean temperature", direction: "negative" as const, note: "stands in for LST" },
   { key: "precip30", label: "Rainfall (30 d)", direction: "positive" as const },
   { key: "et030", label: "Evapotranspiration", direction: "negative" as const },
 ];
@@ -119,7 +119,7 @@ export function toGeoJSON(surface: RiskSurface, cellSizeDeg: { lat: number; lon:
           risk: c.risk,
           precip30: c.precip30,
           et030: c.et030,
-          tmax: c.tmax,
+          tmean: c.tmean,
           soilMoisture: c.soilMoisture,
           lat: c.lat,
           lon: c.lon,

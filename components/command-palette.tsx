@@ -98,7 +98,6 @@ function PalettePanel({ onClose }: { onClose: () => void }) {
 
     const actions: Cmd[] = (
       [
-        ["Upload CSV / XLSX", "upload", "DATA", "upload"],
         ["Register new sensor", "plus", "SENSORS", "sensors"],
         ["Export historical report", "download", "HISTORY", "history"],
       ] as const

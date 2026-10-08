@@ -1,15 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { MapView, type SurfaceInfo } from "@/components/map-view";
+import { AnimatePresence } from "motion/react";
+import { loadGrid, type GridPayload } from "@/components/map-view";
+import { SoilDepth } from "@/components/soil-depth";
+import { Icon } from "@/components/icon";
+import { LandPanel } from "@/components/land-panel";
+import { LAND_FILL } from "@/components/land-pin";
+import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/ui/dropdown";
+import { bounds, useLands, type Land } from "@/lib/lands";
 import { RiskGauge } from "@/components/risk-gauge";
 import { AnimatedBars, BandLegend, IndexHistory, PeriodFilter, sliceYears, type Period } from "@/components/index-history";
 import { LayerSwitcher } from "@/components/layer-switcher";
+import { BasinLayerMap } from "@/components/basin-layer-map";
 import type { LayerKey } from "@/lib/map-layers";
 import { useConsole } from "@/components/app-context";
-import { Panel, PageHeader, TabStrip } from "@/components/ui/primitives";
-import { Provenance } from "@/components/ui/no-data";
-import { CardTitle } from "@/components/ui/simple";
+import { Panel, PageHeader } from "@/components/ui/primitives";
 import { stationForSite, type Station } from "@/lib/climate";
 import { riskLevel } from "@/lib/utils";
 
@@ -25,10 +31,30 @@ import { riskLevel } from "@/lib/utils";
 export function PageRisk() {
   const { site } = useConsole();
   const station = stationForSite(site.name);
-  const [tab, setTab] = React.useState<"trend" | "spatial">("trend");
-  const [mapLayer, setMapLayer] = React.useState<LayerKey>("risk");
-  const [surface, setSurface] = React.useState<SurfaceInfo | null>(null);
-  const onSurface = React.useCallback((info: SurfaceInfo) => setSurface(info), []);
+  const [mapLayer, setMapLayer] = React.useState<LayerKey | "none">("risk");
+
+  // Farmers' fields on the catchment map.
+  const { lands } = useLands();
+  const fields = lands ?? [];
+  const [showFields, setShowFields] = React.useState(true);
+  const [landId, setLandId] = React.useState<string | null>(null);
+  const [focus, setFocus] = React.useState<[number, number, number, number] | null>(null);
+  const [payload, setPayload] = React.useState<GridPayload | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    loadGrid()
+      .then((g) => live && setPayload(g))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+  const land = landId ? (fields.find((l) => l.id === landId) ?? null) : null;
+  const openLand = (l: Land) => {
+    setLandId(l.id);
+    setShowFields(true);
+    setFocus(bounds(l.polygon));
+  };
 
 
   return (
@@ -36,119 +62,109 @@ export function PageRisk() {
       <PageHeader title="Drought risk" />
 
       {/* ── Standing + explanation ────────────────────────────────────── */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <RiskGauge lat={station.lat} lon={station.lon} />
-
-        {/* The drought risk surface, as on Live Map, and each factor behind it. */}
-        <Panel className="relative min-h-[420px] overflow-hidden">
-          <MapView
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        {/* The catchment, as on the Overview, coloured by the risk or a vegetation layer. */}
+        <Panel className="relative min-h-[460px] overflow-hidden">
+          <BasinLayerMap
             layer={mapLayer}
-            sensors
-            legend
-            opacity={mapLayer === "risk" ? 0.55 : 0.7}
+            lands={showFields ? fields : []}
+            selectedLand={landId}
+            onLand={openLand}
+            focus={focus}
             className="absolute inset-0"
           />
-          <LayerSwitcher value={mapLayer} onChange={setMapLayer} className="absolute left-3 top-3 z-10" />
+          <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-2">
+            <LayerSwitcher value={mapLayer} onChange={setMapLayer} only={["risk", "ndvi", "ndwi"]} allowNone />
+            <FieldsMenu
+              fields={fields}
+              loading={lands == null}
+              shown={showFields}
+              onToggle={() => {
+                setShowFields((v) => !v);
+                setLandId(null);
+              }}
+              onPick={openLand}
+            />
+          </div>
+          <AnimatePresence>
+            {land && (
+              <LandPanel
+                land={land}
+                payload={payload}
+                onZoom={() => setFocus(bounds(land.polygon))}
+                onClose={() => setLandId(null)}
+              />
+            )}
+          </AnimatePresence>
         </Panel>
+
+        <RiskGauge lat={station.lat} lon={station.lon} />
       </div>
 
       <IndexHistory station={station} />
 
-      <TabStrip
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: "trend", label: "Past 30 years" },
-          { value: "spatial", label: "Risk map today" },
-        ]}
-      />
+      <SoilDepth />
 
-      {tab === "trend" ? (
-        <SpeiHistory station={station} />
-      ) : (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-          <Panel className="relative h-[520px]">
-            <MapView layer="risk" sensors legend onSurface={onSurface} className="absolute inset-0" />
-          </Panel>
-          <FactorComparison surface={surface} />
-        </div>
-      )}
+      <SpeiHistory station={station} />
     </div>
   );
 }
 
-/**
- * What the composite surface is actually made of.
- *
- * The entropy weight method (`formlas and data/entroy_weight_method.png`,
- * §3.4) normalises each factor by direction (eq. 4), scores it by information
- * entropy (eq. 5) and weights it by how much it disperses (eq. 6):
- * ωₖ = (1 − Hₖ) / (K − ΣH). A factor whose values spread out across the
- * region carries more information and so earns more weight. Nothing is set
- * by hand, which is the point of the method.
- */
-function FactorComparison({ surface }: { surface: SurfaceInfo | null }) {
-  if (!surface) {
-    return (
-      <Panel className="flex items-center justify-center px-5 py-10">
-        <span className="text-[13px] text-muted">Computing weights…</span>
-      </Panel>
-    );
-  }
-
-  const rows = surface.factors
-    .map((f) => ({
-      ...f,
-      weight: surface.weights[f.key] ?? 0,
-      entropy: surface.entropy[f.key] ?? 0,
-    }))
-    .sort((a, b) => b.weight - a.weight);
-
-  const top = rows[0];
-  const maxWeight = Math.max(...rows.map((r) => r.weight), 1e-9);
-
+/** The fields pill over the map: show or hide them, and jump to any one. */
+function FieldsMenu({
+  fields,
+  loading,
+  shown,
+  onToggle,
+  onPick,
+}: {
+  fields: Land[];
+  loading: boolean;
+  shown: boolean;
+  onToggle: () => void;
+  onPick: (l: Land) => void;
+}) {
   return (
-    <Panel className="flex flex-col gap-5 px-5 py-5">
-      <CardTitle title="What shapes the map" sub="Weights set by the data, not by hand" />
-
-      {/* The headline the panel exists to answer. */}
-      <div className="flex flex-col gap-1 rounded-[12px] bg-accent-100 px-4 py-3.5">
-        <span className="text-[13px] text-muted">Biggest influence today</span>
-        <span className="flex items-baseline gap-2.5">
-          <span className="text-[22px] font-semibold leading-tight">{top.label}</span>
-          <span className="text-[15px] font-semibold text-accent">{(top.weight * 100).toFixed(0)}%</span>
-        </span>
-        <span className="text-[12.5px] leading-snug text-muted">
-          It varies the most across the region, so it tells the most apart.
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-3.5">
-        {rows.map((f) => (
-          <div key={f.key} className="flex flex-col gap-1.5">
-            <div className="flex items-baseline justify-between gap-3 text-[13.5px]">
-              <span className="flex items-baseline gap-2">
-                {f.label}
-                <span className="text-[12px] text-faint">{f.direction === "positive" ? "higher is wetter" : "higher is drier"}</span>
-              </span>
-              <span className="font-semibold tabular-nums">{(f.weight * 100).toFixed(1)}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-neutral-100">
-              <div
-                className="h-full rounded-full transition-[width] duration-500"
-                style={{
-                  width: `${(f.weight / maxWeight) * 100}%`,
-                  background: "var(--ap-accent)",
-                  opacity: f.key === top.key ? 1 : 0.55,
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <Provenance>Entropy weight method · weights sum to 100%</Provenance>
-    </Panel>
+    <Menu
+      className="max-h-[360px] w-[280px] overflow-y-auto"
+      trigger={
+        <button
+          type="button"
+          className="group flex h-9 items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_90%,transparent)] pl-2 pr-3 text-[13px] text-ink shadow-pop outline-none backdrop-blur-md transition-colors hover:bg-[var(--ap-bg)] data-[state=open]:bg-[var(--ap-bg)]"
+        >
+          <span
+            className="grid size-6 place-items-center rounded-full"
+            style={{ background: shown ? `${LAND_FILL}33` : "var(--ap-neutral-100)", color: shown ? "#1C9C93" : "var(--ap-muted)" }}
+          >
+            <Icon name="map" size={13} />
+          </span>
+          <span className="font-semibold">Fields</span>
+          <span className="text-muted tabular-nums">{loading ? "…" : fields.length}</span>
+          <span className="text-muted transition-transform duration-150 group-data-[state=open]:rotate-180">
+            <Icon name="down" size={14} />
+          </span>
+        </button>
+      }
+    >
+      <MenuItem icon={shown ? "x" : "map"} onSelect={onToggle}>
+        {shown ? "Hide farmers' fields" : "Show farmers' fields"}
+      </MenuItem>
+      {fields.length > 0 && <MenuSeparator />}
+      {fields.length > 0 && <MenuLabel>Go to a field</MenuLabel>}
+      {fields.map((l) => (
+        <MenuItem key={l.id} hint={`${l.areaHa.toFixed(1)} ha`} onSelect={() => onPick(l)}>
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate font-medium">{l.name}</span>
+            <span className="truncate text-[11.5px] text-muted">{l.ownerName}</span>
+          </span>
+        </MenuItem>
+      ))}
+      {!loading && fields.length === 0 && (
+        <div className="px-2.5 py-2 text-[12px] leading-snug text-muted">
+          No fields yet. Farmers draw theirs on the My fields screen of the farmer view.
+        </div>
+      )}
+    </Menu>
   );
 }
 

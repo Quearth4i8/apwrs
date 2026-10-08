@@ -42,7 +42,8 @@ export interface MapCell {
   at: [number, number];
   precip30: number | null;
   et030: number | null;
-  tmax: number | null;
+  /** Mean air temperature over the last 30 days, °C. */
+  tmean: number | null;
   soilMoisture: number | null;
 }
 
@@ -58,7 +59,7 @@ export interface GridPayload {
     risk: (number | null)[];
     precip30: (number | null)[];
     et030: (number | null)[];
-    tmax: (number | null)[];
+    tmean: (number | null)[];
     soilMoisture: (number | null)[];
     ndvi?: (number | null)[];
     spei3?: (number | null)[];
@@ -230,7 +231,7 @@ export function MapView({
         at: [lon, lat],
         precip30: payload.grid.precip30[i],
         et030: payload.grid.et030[i],
-        tmax: payload.grid.tmax[i],
+        tmean: payload.grid.tmean[i],
         soilMoisture: payload.grid.soilMoisture[i],
       };
     },

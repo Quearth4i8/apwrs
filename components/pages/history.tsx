@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Reveal } from "@/components/ui/reveal";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { useConsole } from "@/components/app-context";
@@ -23,7 +24,7 @@ export function PageHistory() {
   const [metric, setMetric] = React.useState<Metric>("precip");
 
   return (
-    <div className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
+    <Reveal className="flex flex-col gap-6 px-4 pb-12 pt-7 sm:px-8">
       <PageHeader
         title="Past years"
         lede={`${station.coverage.years} years of daily weather at ${station.name}, ${station.coverage.from.slice(0, 4)} to ${station.coverage.to.slice(0, 4)}.`}
@@ -47,7 +48,7 @@ export function PageHistory() {
       />
 
       <Trends station={station} metric={metric} setMetric={setMetric} />
-    </div>
+    </Reveal>
   );
 }
 
@@ -129,7 +130,7 @@ function Trends({ station, metric, setMetric }: { station: Station; metric: Metr
   const atEnd = res === "month" ? year >= last.y : year * 12 + month >= last.y * 12 + last.m;
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile icon="rain" label={`Rain in ${picked.year}`} value={picked.precip.toFixed(0)} unit="mm" />
         <StatTile icon="sun" tint="#D96565" label="Driest year" value={driest.year} />
@@ -200,7 +201,7 @@ function Trends({ station, metric, setMetric }: { station: Station; metric: Metr
           {station.name}, {station.coverage.days.toLocaleString("en-GB")} days of measured weather
         </Provenance>
       </Panel>
-    </>
+    </div>
   );
 }
 

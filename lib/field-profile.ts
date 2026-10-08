@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import type { Station } from "@/lib/climate";
 import type { Texture } from "@/lib/crop-calendar";
 
 /**
- * A user's field: the climate, soil and farming facts the planting advice is
- * judged against. Each user keeps their own and can change it at any time
+ * A user's field: the soil and farming facts the planting advice is judged
+ * against. Climate is not asked for: it comes from the selected station's
+ * 30-year record (lib/advisor.ts). Each user keeps their own and can change it at any time
  * on the Field Profile page.
  *
  * There is no account backend yet, so a profile lives in the browser under a
@@ -19,18 +19,6 @@ export type Irrigation = "rainfed" | "drip" | "sprinkler" | "surface";
 export type GrowthStage = "fallow" | "preparation" | "sown" | "vegetative" | "flowering" | "maturity";
 
 export interface FieldProfile {
-  climate: {
-    /** Annual rain, mm. */
-    precipitation: number;
-    /** Annual mean daily solar radiation, MJ/m²/day. */
-    solarRadiation: number;
-    /** Annual mean wind speed at 2 m, m/s. */
-    windSpeed: number;
-    /** Annual mean relative humidity, %. */
-    relativeHumidity: number;
-    /** Annual mean air temperature, °C. */
-    meanTemperature: number;
-  };
   soil: {
     texture: Texture;
     ph: number;
@@ -82,26 +70,12 @@ export const GROWTH_STAGES: { value: GrowthStage; label: string }[] = [
   { value: "maturity", label: "Maturity" },
 ];
 
-/** The station's 30-year averages, as the climate half of a profile. */
-export function climateFromStation(s: Station): FieldProfile["climate"] {
-  const n = s.normals;
-  const avg = (f: (x: (typeof n)[number]) => number) => n.reduce((a, x) => a + f(x), 0) / n.length;
-  return {
-    precipitation: Math.round(n.reduce((a, x) => a + x.precip, 0)),
-    solarRadiation: +avg((x) => x.rs).toFixed(1),
-    windSpeed: +avg((x) => x.wind).toFixed(1),
-    relativeHumidity: Math.round(avg((x) => x.rh)),
-    meanTemperature: +avg((x) => x.tmean).toFixed(1),
-  };
-}
-
 /**
- * A starting profile: the station's climate, and soil typical of the lower
- * Medjerda / Ichkeul plains — calcareous loam, slightly alkaline.
+ * A starting profile: soil typical of the lower Medjerda / Ichkeul plains —
+ * calcareous loam, slightly alkaline — on fallow, rainfed land.
  */
-export function defaultProfile(s: Station): FieldProfile {
+export function defaultProfile(): FieldProfile {
   return {
-    climate: climateFromStation(s),
     soil: { texture: "loam", ph: 7.8, salinity: 2, organicMatter: 1.5, depth: 80, drainage: "moderate" },
     agriculture: { cropType: "none", growthStage: "fallow", irrigation: "rainfed" },
   };
@@ -154,10 +128,10 @@ function subscribe(cb: () => void) {
 }
 
 /**
- * The user's saved profile, or the station defaults when they have none.
- * `saved` says which, so pages can invite the user to fill theirs in.
+ * The user's saved profile, or the defaults when they have none. `saved`
+ * says which, so pages can invite the user to fill theirs in.
  */
-export function useFieldProfile(user: string, station: Station) {
+export function useFieldProfile(user: string) {
   const raw = React.useSyncExternalStore(
     subscribe,
     () => {
@@ -176,6 +150,6 @@ export function useFieldProfile(user: string, station: Station) {
     } catch {
       saved = null;
     }
-    return { profile: saved ?? defaultProfile(station), saved: saved != null };
-  }, [raw, station]);
+    return { profile: saved ?? defaultProfile(), saved: saved != null };
+  }, [raw]);
 }

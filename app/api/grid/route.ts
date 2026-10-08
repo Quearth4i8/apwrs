@@ -40,7 +40,7 @@ interface OpenMeteoPoint {
   daily?: {
     precipitation_sum?: (number | null)[];
     et0_fao_evapotranspiration?: (number | null)[];
-    temperature_2m_max?: (number | null)[];
+    temperature_2m_mean?: (number | null)[];
     soil_moisture_0_to_100cm_mean?: (number | null)[];
   };
 }
@@ -79,7 +79,7 @@ export async function GET() {
   const url =
     "https://api.open-meteo.com/v1/forecast" +
     `?latitude=${lats.join(",")}&longitude=${lons.join(",")}` +
-    "&daily=precipitation_sum,et0_fao_evapotranspiration,temperature_2m_max," +
+    "&daily=precipitation_sum,et0_fao_evapotranspiration,temperature_2m_mean," +
     "soil_moisture_0_to_100cm_mean" +
     "&past_days=30&forecast_days=1&timezone=UTC";
   // Daily aggregates keep the response near 0.5 MB. The hourly soil variable
@@ -119,7 +119,7 @@ export async function GET() {
       lon: p.longitude,
       precip30: sum(p.daily?.precipitation_sum),
       et030: sum(p.daily?.et0_fao_evapotranspiration),
-      tmax: mean(p.daily?.temperature_2m_max),
+      tmean: mean(p.daily?.temperature_2m_mean),
       soilMoisture: soilOrNull(mean(p.daily?.soil_moisture_0_to_100cm_mean?.slice(-7))),
       ndvi: ndvi?.values[i] ?? null,
       ndwi: ndwi?.values[i] ?? null,
@@ -156,7 +156,7 @@ export async function GET() {
         risk: surface.cells.map((c) => c.risk),
         precip30: surface.cells.map((c) => round(c.precip30, 1)),
         et030: surface.cells.map((c) => round(c.et030, 1)),
-        tmax: surface.cells.map((c) => round(c.tmax, 1)),
+        tmean: surface.cells.map((c) => round(c.tmean, 1)),
         soilMoisture: surface.cells.map((c) => round(c.soilMoisture, 3)),
         ndvi: surface.cells.map((c) => round(c.ndvi ?? null, 3)),
         spei3: surface.cells.map((c) => round(c.spei3 ?? null, 2)),

@@ -5,7 +5,7 @@ import * as React from "react";
 /**
  * Farmers' fields: each one a polygon a farmer drew on the map by marking
  * its corners. They are shared — the farmer draws and edits their own, the
- * expert sees everyone's on the Live Map — so they live on the server
+ * expert sees everyone's on the Drought risk map — so they live on the server
  * (app/api/lands), not in the browser.
  *
  * There are no accounts yet, so a farmer is a random id kept in their

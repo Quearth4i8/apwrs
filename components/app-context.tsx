@@ -13,8 +13,6 @@ export interface SiteRef {
 interface ConsoleState {
   site: SiteRef;
   setSite: (cc: string, name: string) => void;
-  season: string;
-  setSeason: (s: string) => void;
   lang: "en" | "fr";
   setLang: (l: "en" | "fr") => void;
   sidebarCollapsed: boolean;
@@ -31,7 +29,6 @@ function resolve(cc: string, name: string): SiteRef {
 
 export function ConsoleProvider({ children }: { children: React.ReactNode }) {
   const [sel, setSel] = React.useState({ cc: "TN", name: "Ichkeul" });
-  const [season, setSeason] = React.useState("2026/27");
   const [lang, setLang] = React.useState<"en" | "fr">("en");
   const [sidebarCollapsed, setCollapsed] = React.useState(false);
 
@@ -39,14 +36,12 @@ export function ConsoleProvider({ children }: { children: React.ReactNode }) {
     () => ({
       site: resolve(sel.cc, sel.name),
       setSite: (cc, name) => setSel({ cc, name }),
-      season,
-      setSeason,
       lang,
       setLang,
       sidebarCollapsed,
       toggleSidebar: () => setCollapsed((v) => !v),
     }),
-    [sel, season, lang, sidebarCollapsed],
+    [sel, lang, sidebarCollapsed],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
