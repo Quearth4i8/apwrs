@@ -10,7 +10,9 @@ import { BASIN } from "@/lib/basin";
 import { LAYER, domainOf, rampAt, type LayerKey } from "@/lib/map-layers";
 import { RISK_COLOR, RISK_LABEL, riskLevel } from "@/lib/utils";
 import { LandPin, LAND_FILL, LAND_LINE, LAND_SELECTED } from "@/components/land-pin";
-import { landsGeoJSON, type Land } from "@/lib/lands";
+import { bounds as landBounds, landsGeoJSON, type Land } from "@/lib/lands";
+import { S2, S2_BOUNDS, S2_MAXZOOM, S2_MINZOOM, type S2Index } from "@/lib/s2";
+import { setS2Clip, s2TileUrl, s2ValueAt, useFieldIndices } from "@/lib/s2-tiles";
 
 /**
  * The Ichkeul catchment as on the Overview — its outline from the study
@@ -19,10 +21,16 @@ import { landsGeoJSON, type Land } from "@/lib/lands";
  *
  * Farmers' fields can be drawn on top, each with a pin that opens it.
  *
- * The risk grid is coarser than the sections (20 × 16 samples over the whole
- * region), so a section's value is the mean of the grid blended bilinearly
- * at points across it — the same blend the risk raster uses. The fill sits beneath the water layer, so the lake and the sea
- * mask it, as on every other map.
+ * NDVI and NDWI are drawn from Sentinel-2 L2A tiles at its own resolution
+ * (10 m and 20 m; see lib/s2-tiles.ts), clipped to the catchment.
+ *
+ * Risk — and NDVI/NDWI when Copernicus is not configured — is painted in
+ * 300 m cells instead, each the grid blended bilinearly at its
+ * centre — the same blend the risk raster uses — so a close view reads the
+ * value at the field, not a whole section's. A section's value (the legend's
+ * mean, the popup's context) is the mean of that blend at points across it.
+ * The fill sits beneath the water layer, so the lake and the sea mask it, as
+ * on every other map.
  */
 
 type Ring = number[][];
@@ -126,6 +134,71 @@ function sampleSections(basin: BasinGeo, grid: GridPayload, layer: LayerKey): Sa
     });
 }
 
+/** Side of a map cell, km — small enough to read a single farm. */
+const CELL_KM = 0.3;
+
+interface Cell {
+  ring: Ring;
+  lon: number;
+  lat: number;
+  section: string;
+}
+
+/**
+ * The catchment cut into CELL_KM squares, each kept if its centre falls in a
+ * section. A section is tens of km² — far wider than a field — so colouring
+ * it flat hid everything a close view is for; the cells carry the blended
+ * surface down to field scale.
+ */
+function cellsOf(basin: BasinGeo): Cell[] {
+  const sections = basin.features
+    .filter((f) => f.properties?.kind === "section")
+    .map((f) => {
+      const rings = polygonsOf(f.geometry);
+      const pts = rings.flatMap((p) => p[0]);
+      const xs = pts.map((p) => p[0]);
+      const ys = pts.map((p) => p[1]);
+      return {
+        id: String(f.properties?.id),
+        rings,
+        box: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] as const,
+      };
+    });
+  if (!sections.length) return [];
+  const w = Math.min(...sections.map((s) => s.box[0]));
+  const s = Math.min(...sections.map((s) => s.box[1]));
+  const e = Math.max(...sections.map((s) => s.box[2]));
+  const n = Math.max(...sections.map((s) => s.box[3]));
+  const dLat = CELL_KM / 110.574;
+  const dLon = CELL_KM / (111.32 * Math.cos((((s + n) / 2) * Math.PI) / 180));
+
+  const cells: Cell[] = [];
+  for (let y = s; y < n; y += dLat) {
+    for (let x = w; x < e; x += dLon) {
+      const cx = x + dLon / 2;
+      const cy = y + dLat / 2;
+      const home = sections.find(
+        (sec) =>
+          cx >= sec.box[0] && cx <= sec.box[2] && cy >= sec.box[1] && cy <= sec.box[3] && sec.rings.some((r) => inPolygon(cx, cy, r)),
+      );
+      if (!home) continue;
+      cells.push({
+        ring: [
+          [x, y],
+          [x + dLon, y],
+          [x + dLon, y + dLat],
+          [x, y + dLat],
+          [x, y],
+        ],
+        lon: cx,
+        lat: cy,
+        section: home.id,
+      });
+    }
+  }
+  return cells;
+}
+
 export function BasinLayerMap({
   layer,
   className,
@@ -152,7 +225,7 @@ export function BasinLayerMap({
   const [basin, setBasin] = React.useState<BasinGeo | null>(null);
   const [grid, setGrid] = React.useState<GridPayload | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [hover, setHover] = React.useState<{ lng: number; lat: number; id: string } | null>(null);
+  const [hover, setHover] = React.useState<{ lng: number; lat: number; id: string; v: number | null } | null>(null);
 
   React.useEffect(() => {
     let live = true;
@@ -174,7 +247,36 @@ export function BasinLayerMap({
     () => (basin && grid && layer !== "none" ? sampleSections(basin, grid, layer) : []),
     [basin, grid, layer],
   );
-  const domain = React.useMemo(() => domainOf(def, sections.map((s) => s.v)), [def, sections]);
+
+  // NDVI and NDWI at Sentinel-2's own resolution, when the server has the
+  // Copernicus credentials — which the coarse grid carrying values shows.
+  // Without them, the cells below stand in.
+  const fine: S2Index | null =
+    (layer === "ndvi" || layer === "ndwi") && sections.some((s) => s.v != null) ? layer : null;
+  const outline = React.useMemo(() => {
+    const f = basin?.features.find((g) => g.properties?.kind === "outline");
+    return f ? polygonsOf(f.geometry).flat() : null;
+  }, [basin]);
+
+  // With a field open, the index is drawn on that field alone. The clip is
+  // named in render, not an effect, because the raster source asks for its
+  // first tiles before this component's effects run.
+  const openLand = selectedLand ? (lands.find((l) => l.id === selectedLand) ?? null) : null;
+  const clip = openLand ? `field-${openLand.id}@${openLand.updatedAt}` : "basin";
+  React.useMemo(() => {
+    if (openLand) setS2Clip(clip, [[...openLand.polygon, openLand.polygon[0]]]);
+    else if (outline) setS2Clip("basin", outline);
+  }, [clip, openLand, outline]);
+  const tileBounds = openLand ? landBounds(openLand.polygon) : S2_BOUNDS;
+  const showTiles = fine && (openLand || outline);
+
+  // The field under the pointer, and its own figures.
+  const [hoverLandId, setHoverLandId] = React.useState<string | null>(null);
+  const hoverLand = hoverLandId ? (lands.find((l) => l.id === hoverLandId) ?? null) : null;
+  const hoverField = useFieldIndices(hoverLand);
+
+  const coarseDomain = React.useMemo(() => domainOf(def, sections.map((s) => s.v)), [def, sections]);
+  const domain = fine ? S2[fine].domain : coarseDomain;
   const byId = React.useMemo(() => new globalThis.Map(sections.map((s) => [s.id, s])), [sections]);
 
   const colorOf = React.useCallback(
@@ -200,6 +302,23 @@ export function BasinLayerMap({
       ),
     };
   }, [basin, byId, colorOf]);
+
+  const cells = React.useMemo(() => (basin ? cellsOf(basin) : []), [basin]);
+  const paintedCells = React.useMemo<GeoJSON.FeatureCollection<GeoJSON.Polygon> | null>(() => {
+    if (!grid || layer === "none" || fine || !cells.length) return null;
+    const values = (grid.grid[layer] ?? []) as (number | null)[];
+    return {
+      type: "FeatureCollection",
+      features: cells.map((c) => {
+        const v = bilinear(grid, values, c.lon, c.lat);
+        return {
+          type: "Feature",
+          geometry: { type: "Polygon", coordinates: [c.ring] },
+          properties: { section: c.section, v, color: colorOf(v) },
+        };
+      }),
+    };
+  }, [cells, grid, layer, fine, colorOf]);
 
   const bounds = React.useMemo(() => (basin ? boundsOf(basin) : null), [basin]);
   const fit = React.useCallback(() => {
@@ -229,15 +348,81 @@ export function BasinLayerMap({
           lockToPlan(e);
           fit();
         }}
-        interactiveLayerIds={painted ? ["layer-fill"] : []}
+        interactiveLayerIds={[
+          ...(lands.length ? ["farm-lands-fill"] : []),
+          ...(paintedCells ? ["cell-fill"] : painted ? ["layer-fill"] : []),
+        ]}
         onMouseMove={(e) => {
-          const f = e.features?.[0];
-          setHover(f ? { lng: e.lngLat.lng, lat: e.lngLat.lat, id: String(f.properties?.id) } : null);
+          // A field comes first: over one, the popup is about that field alone.
+          const hit = e.features?.find((g) => g.layer.id === "farm-lands-fill");
+          setHoverLandId(hit ? String(hit.properties?.id) : null);
+          const f = e.features?.find((g) => g.layer.id !== "farm-lands-fill");
+          if (!f) return setHover(null);
+          const cell = f.layer.id === "cell-fill";
+          const v = fine
+            ? s2ValueAt(fine, clip, e.lngLat.lng, e.lngLat.lat, e.target.getZoom())
+            : cell
+              ? f.properties?.v
+              : null;
+          setHover({
+            lng: e.lngLat.lng,
+            lat: e.lngLat.lat,
+            id: String(cell ? f.properties?.section : f.properties?.id),
+            v: typeof v === "number" ? v : v == null || v === "null" ? null : Number(v),
+          });
         }}
-        onMouseLeave={() => setHover(null)}
-        cursor={hover ? "pointer" : "grab"}
+        onMouseLeave={() => {
+          setHover(null);
+          setHoverLandId(null);
+        }}
+        onClick={(e) => {
+          const hit = e.features?.find((g) => g.layer.id === "farm-lands-fill");
+          const l = hit && lands.find((x) => x.id === String(hit.properties?.id));
+          if (l) onLand?.(l);
+        }}
+        cursor={hover || hoverLandId ? "pointer" : "grab"}
         style={{ width: "100%", height: "100%" }}
       >
+        {showTiles && (
+          <Source
+            key={`${fine}/${clip}`}
+            id="s2-index"
+            type="raster"
+            tiles={[s2TileUrl(fine, clip)]}
+            tileSize={256}
+            minzoom={S2_MINZOOM}
+            maxzoom={S2_MAXZOOM}
+            bounds={tileBounds}
+            attribution="Contains modified Copernicus Sentinel data"
+          >
+            <Layer
+              id="s2-index-raster"
+              type="raster"
+              beforeId={SATELLITE_WATER}
+              paint={{
+                // Opaque on a single field, which then reads on its own.
+                "raster-opacity": openLand ? 0.9 : 0.72,
+                "raster-resampling": "linear",
+                "raster-fade-duration": 200,
+              }}
+            />
+          </Source>
+        )}
+        {paintedCells && (
+          <Source id="basin-cells" type="geojson" data={paintedCells}>
+            <Layer
+              id="cell-fill"
+              type="fill"
+              beforeId={SATELLITE_WATER}
+              paint={{
+                "fill-color": ["coalesce", ["get", "color"], "#000000"],
+                "fill-opacity": 0.62,
+                // Antialiased edges leave hairline seams between neighbours.
+                "fill-antialias": false,
+              }}
+            />
+          </Source>
+        )}
         {painted && (
           <Source id="basin-layer" type="geojson" data={painted}>
             <Layer
@@ -247,9 +432,9 @@ export function BasinLayerMap({
               filter={["==", ["get", "kind"], "section"]}
               paint={{
                 "fill-color": ["coalesce", ["get", "color"], "#000000"],
-                // "No layer": the sections stay hoverable, just unfilled.
-                "fill-opacity": plain ? 0 : 0.62,
-                "fill-opacity-transition": { duration: 400 },
+                // "No layer": the sections stay hoverable, just unfilled. With a
+                // layer on, the cells below paint instead.
+                "fill-opacity": 0,
               }}
             />
             <Layer
@@ -289,7 +474,12 @@ export function BasinLayerMap({
               id="farm-lands-fill"
               type="fill"
               beforeId={SATELLITE_LABELS}
-              paint={{ "fill-color": ["case", ["get", "selected"], LAND_SELECTED, LAND_FILL], "fill-opacity": 0.4 }}
+              paint={{
+                "fill-color": ["case", ["get", "selected"], LAND_SELECTED, LAND_FILL],
+                // Over the index, a tint would hide the field's own colours;
+                // the outline marks it. Kept at a hair above 0 so it stays hoverable.
+                "fill-opacity": showTiles ? 0.01 : 0.4,
+              }}
             />
             <Layer
               id="farm-lands-line"
@@ -325,27 +515,43 @@ export function BasinLayerMap({
           </Marker>
         ))}
 
-        {hover && plain && (
+        {hoverLand && !plain && (
+          <Popup
+            longitude={hoverLand.center[0]}
+            latitude={hoverLand.center[1]}
+            closeButton={false}
+            closeOnClick={false}
+            offset={34}
+            maxWidth="260px"
+          >
+            <FieldPopup land={hoverLand} field={hoverField} />
+          </Popup>
+        )}
+        {hover && plain && !hoverLand && (
           <Popup longitude={hover.lng} latitude={hover.lat} closeButton={false} closeOnClick={false} offset={14}>
             <span className="text-[12.5px] font-semibold">{hover.id}</span>
           </Popup>
         )}
-        {hover && hovered && !plain && (
+        {hover && hovered && !plain && !hoverLand && (
           <Popup longitude={hover.lng} latitude={hover.lat} closeButton={false} closeOnClick={false} offset={14} maxWidth="240px">
             <div className="flex flex-col gap-1 text-[12.5px]">
               <span className="font-semibold">{hovered.id}</span>
               <span>
-                {def.label} <strong>{hovered.v == null ? "—" : def.format(hovered.v)}</strong>
+                {def.label} <strong>{hover.v == null ? "—" : def.format(hover.v)}</strong>
               </span>
-              {layer === "risk" && hovered.v != null && (
+              {layer === "risk" && hover.v != null && (
                 <span className="flex items-center gap-1.5 text-muted">
-                  <span className="size-2 rounded-full" style={{ background: RISK_COLOR[riskLevel(hovered.v)] }} />
-                  {RISK_LABEL[riskLevel(hovered.v)]}
+                  <span className="size-2 rounded-full" style={{ background: RISK_COLOR[riskLevel(hover.v)] }} />
+                  {RISK_LABEL[riskLevel(hover.v)]}
                 </span>
               )}
               <span className="text-muted">
-                {hovered.km2.toFixed(0)} km² ·{" "}
-                {`mean of ${hovered.samples} point${hovered.samples === 1 ? "" : "s"} across the section`}
+                {fine
+                  ? hover.v == null
+                    ? "No clear Sentinel-2 pixel here (cloud, water or outside the catchment)"
+                    : `Sentinel-2 L2A, ${S2[fine].resolutionM} m · 30-day least-cloud mosaic`
+                  : `${Math.round(CELL_KM * CELL_KM * 100)} ha cell`}
+                {` · section mean ${hovered.v == null ? "—" : def.format(hovered.v)} over ${hovered.km2.toFixed(0)} km²`}
               </span>
             </div>
           </Popup>
@@ -362,6 +568,7 @@ export function BasinLayerMap({
           <span className="font-semibold text-ink">{def.label}</span>
           <span>
             Ichkeul catchment · {BASIN.areaKm2.toLocaleString("en-GB")} km²
+            {fine && <> · Sentinel-2 {S2[fine].resolutionM} m</>}
             {mean != null && <> · mean {def.format(mean)}</>}
           </span>
         </span>
@@ -396,6 +603,43 @@ export function BasinLayerMap({
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-1.5 text-[12.5px] text-muted shadow-pop backdrop-blur">
           {error ? "This layer is unavailable right now" : "Loading the catchment…"}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** A field's own NDVI and NDWI, from the Sentinel-2 pixels inside it. */
+function FieldPopup({ land, field }: { land: Land; field: ReturnType<typeof useFieldIndices> }) {
+  const row = (k: S2Index) => {
+    const st = field.data?.[k];
+    return (
+      <span key={k} className="flex items-baseline justify-between gap-3">
+        <span>{LAYER[k].label}</span>
+        <span className="tabular-nums">
+          <strong>{st ? LAYER[k].format(st.mean) : "—"}</strong>
+          {st && <span className="text-muted"> ({LAYER[k].format(st.p10)} to {LAYER[k].format(st.p90)})</span>}
+        </span>
+      </span>
+    );
+  };
+  const px = field.data?.ndvi?.pixels ?? field.data?.ndwi?.pixels;
+  return (
+    <div className="flex flex-col gap-1 text-[12.5px]">
+      <span className="font-semibold">
+        {land.name} <span className="font-normal text-muted">· {land.areaHa.toFixed(2)} ha</span>
+      </span>
+      {field.loading ? (
+        <span className="text-muted">Reading the field&rsquo;s Sentinel-2 pixels&hellip;</span>
+      ) : field.error ? (
+        <span className="text-muted">Sentinel-2 is unavailable for this field right now</span>
+      ) : (
+        <>
+          {row("ndvi")}
+          {row("ndwi")}
+          <span className="text-muted">
+            Mean (10th to 90th percentile) of {px ?? 0} clear 10 m pixels inside the field · 30-day least-cloud mosaic
+          </span>
+        </>
       )}
     </div>
   );

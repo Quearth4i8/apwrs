@@ -10,6 +10,7 @@ import { calendarCrop } from "@/lib/crop-calendar";
 import { cellFor, impactsAt } from "@/lib/impact";
 import { landsGeoJSON, type Land } from "@/lib/lands";
 import { LAYER, MAP_LAYERS, type LayerKey } from "@/lib/map-layers";
+import { useFieldIndices } from "@/lib/s2-tiles";
 
 /**
  * A farmer's field as the expert sees it: who farms it, what is on it, its
@@ -64,7 +65,14 @@ function LandBody({ land, payload, onZoom }: { land: Land; payload: GridPayload 
   const i = payload ? cellFor(payload, land.center[1], land.center[0]) : null;
   const impacts = payload && i != null ? impactsAt(payload, i) : [];
   const impactOf = new Map(impacts.map((f) => [f.key, f]));
-  const value = (k: LayerKey) => (payload && i != null ? ((payload.grid[k] as (number | null)[] | undefined)?.[i] ?? null) : null);
+  // NDVI and NDWI from the field's own Sentinel-2 pixels; the rest from the grid.
+  const field = useFieldIndices(land);
+  const own = (k: LayerKey) => (k === "ndvi" || k === "ndwi" ? field.data?.[k] : undefined);
+  const value = (k: LayerKey) => {
+    const o = own(k);
+    if (o) return o.mean;
+    return payload && i != null ? ((payload.grid[k] as (number | null)[] | undefined)?.[i] ?? null) : null;
+  };
   const risk = value("risk");
 
   const download = () => {
@@ -119,7 +127,13 @@ function LandBody({ land, payload, onZoom }: { land: Land; payload: GridPayload 
                   <span className="truncate text-muted" title={f ? `Weight ${(f.weight * 100).toFixed(0)}%` : "Not part of the risk score"}>
                     {l.label}
                   </span>
-                  <span className="text-right font-semibold tabular-nums">{v == null ? "—" : LAYER[l.key].format(v)}</span>
+                  <span
+                    className="text-right font-semibold tabular-nums"
+                    title={own(l.key) ? `Mean of ${own(l.key)!.pixels} clear 10 m pixels inside the field` : undefined}
+                  >
+                    {v == null ? "—" : LAYER[l.key].format(v)}
+                    {own(l.key) && <sup className="ml-0.5 text-[10px] font-normal text-muted">S2</sup>}
+                  </span>
                   {f ? (
                     <span className="flex flex-col items-end gap-1">
                       <span className="text-[12.5px] font-semibold tabular-nums" style={{ color: "#EE8434" }}>
@@ -145,8 +159,9 @@ function LandBody({ land, payload, onZoom }: { land: Land; payload: GridPayload 
         )}
         <span className="text-[11.5px] leading-snug text-faint">
           Impact = wₖ·dₖ ÷ Σ wⱼ·dⱼ: each factor&apos;s entropy weight wₖ times how dry the field is on it, dₖ (0 wettest, 1 driest in the
-          region), as a share of the risk score. Factors marked — are shown but not scored. Read from the ~{payload?.resolutionKm ?? 9} km
-          grid cell under the field&apos;s centre.
+          region), as a share of the risk score. Factors marked — are shown but not scored. Values marked S2 are the field&apos;s own
+          Sentinel-2 L2A pixels (10 m, 30-day least-cloud mosaic); the rest, and every impact, are read from the ~
+          {payload?.resolutionKm ?? 9} km grid cell under the field&apos;s centre.
         </span>
       </div>
 

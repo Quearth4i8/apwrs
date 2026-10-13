@@ -296,3 +296,183 @@ function aggregate(
 
   return { values, rows, cols, coverage: +(covered / (rows * cols)).toFixed(3), source };
 }
+
+/* ── Full-resolution tiles ───────────────────────────────────────────── */
+
+/**
+ * The same index, value-encoded for the map at Sentinel-2's own resolution:
+ * a 256 px web-mercator tile per request, so a close view costs a handful of
+ * small requests rather than one raster over the whole region (which the
+ * 1500 m/pixel ceiling would make coarse anyway).
+ *
+ * Each pixel carries the index, clamped to [-1, 1] and scaled to 16 bits, in
+ * red (high byte) and green (low byte); alpha 0 marks cloud, water or no
+ * data. The browser decodes and colours it, and reads hover values from it.
+ */
+function valueEvalscript(bands: [string, string]) {
+  const [a, b] = bands;
+  return `//VERSION=3
+function setup(){return{input:[{bands:['${a}','${b}','SCL','dataMask']}],output:{bands:4,sampleType:'UINT8'}}}
+function evaluatePixel(s){
+  var land = ${USABLE_SCL};
+  var den = s.${a} + s.${b};
+  if (!(s.dataMask == 1 && land && den > 0)) return [0,0,0,0];
+  var v = Math.max(-1, Math.min(1, (s.${a} - s.${b}) / den));
+  var q = Math.round((v + 1) * 32767.5);
+  return [Math.floor(q / 256), q % 256, 0, 255];
+}`;
+}
+
+const TILE_EVALSCRIPT = {
+  ndvi: valueEvalscript(["B08", "B04"]),
+  ndwi: valueEvalscript(["B08", "B11"]),
+} as const;
+
+export type TileIndex = keyof typeof TILE_EVALSCRIPT;
+
+/** Web-mercator bounds of tile z/x/y, metres. */
+function tileBox(z: number, x: number, y: number): [number, number, number, number] {
+  const R = 20037508.342789244;
+  const size = (2 * R) / 2 ** z;
+  return [-R + x * size, R - (y + 1) * size, -R + (x + 1) * size, R - y * size];
+}
+
+/**
+ * One value-encoded PNG tile of `index`, from a least-cloud mosaic of the
+ * last `days`. The window is pinned to whole UTC days so every request in a
+ * day is the same request, and caches as one.
+ */
+export async function fetchIndexTile(index: TileIndex, z: number, x: number, y: number, days = 30): Promise<ArrayBuffer | null> {
+  const token = await accessToken();
+  if (!token) return null;
+
+  const to = new Date();
+  to.setUTCHours(0, 0, 0, 0);
+  const from = new Date(to.getTime() - days * 86_400_000);
+
+  const res = await fetch(PROCESS_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "image/png" },
+    body: JSON.stringify({
+      input: {
+        bounds: {
+          bbox: tileBox(z, x, y),
+          properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/3857" },
+        },
+        data: [
+          {
+            type: "sentinel-2-l2a",
+            dataFilter: {
+              timeRange: { from: from.toISOString(), to: to.toISOString() },
+              mosaickingOrder: "leastCC",
+            },
+            // Zoomed past the 10/20 m pixels, blend them rather than draw blocks.
+            processing: { upsampling: "BILINEAR", downsampling: "BILINEAR" },
+          },
+        ],
+      },
+      output: {
+        width: 256,
+        height: 256,
+        responses: [{ identifier: "default", format: { type: "image/png" } }],
+      },
+      evalscript: TILE_EVALSCRIPT[index],
+    }),
+    next: { revalidate: 86_400 },
+  });
+
+  if (!res.ok) {
+    throw new Error(`CDSE tile failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  }
+  return res.arrayBuffer();
+}
+
+/* ── One field ───────────────────────────────────────────────────────── */
+
+export interface FieldIndexStat {
+  mean: number;
+  /** 10th and 90th percentiles of the field's pixels: its spread, without single odd pixels. */
+  p10: number;
+  p90: number;
+  /** Clear 10 m pixels inside the field. */
+  pixels: number;
+}
+
+export interface FieldIndices {
+  ndvi: FieldIndexStat | null;
+  ndwi: FieldIndexStat | null;
+  window: { from: string; to: string };
+  source: string;
+}
+
+/**
+ * NDVI and NDWI over one field, from its own pixels only: the request is cut
+ * to the field's outline, so Sentinel Hub masks everything outside it, and
+ * read on a 10 m grid (B11, 20 m, is resampled onto it for NDWI).
+ */
+export async function fetchFieldIndices(ring: [number, number][], days = 30): Promise<FieldIndices | null> {
+  const token = await accessToken();
+  if (!token) return null;
+
+  const to = new Date();
+  to.setUTCHours(0, 0, 0, 0);
+  const from = new Date(to.getTime() - days * 86_400_000);
+
+  const xs = ring.map((p) => p[0]);
+  const ys = ring.map((p) => p[1]);
+  const [w, s, e, n] = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  const midLat = ((s + n) / 2) * (Math.PI / 180);
+  const width = Math.max(1, Math.ceil(((e - w) * 111_320 * Math.cos(midLat)) / 10));
+  const height = Math.max(1, Math.ceil(((n - s) * 110_574) / 10));
+  if (width > 2500 || height > 2500) throw new Error("field too large for one request");
+
+  const closed = ring[0][0] === ring.at(-1)![0] && ring[0][1] === ring.at(-1)![1] ? ring : [...ring, ring[0]];
+
+  const one = async (evalscript: string) => {
+    const res = await fetch(PROCESS_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: {
+          bounds: {
+            geometry: { type: "Polygon", coordinates: [closed] },
+            properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/4326" },
+          },
+          data: [
+            {
+              type: "sentinel-2-l2a",
+              dataFilter: { timeRange: { from: from.toISOString(), to: to.toISOString() }, mosaickingOrder: "leastCC" },
+            },
+          ],
+        },
+        output: { width, height, responses: [{ identifier: "default", format: { type: "image/tiff" } }] },
+        evalscript,
+      }),
+      next: { revalidate: 86_400 },
+    });
+    if (!res.ok) throw new Error(`CDSE field failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+
+    const { bands, data } = readFloatTiff(Buffer.from(await res.arrayBuffer()));
+    const v: number[] = [];
+    for (let i = 0; i < data.length; i += bands) {
+      if (data[i + 1] === 1 && Number.isFinite(data[i])) v.push(Math.max(-1, Math.min(1, data[i])));
+    }
+    if (!v.length) return null;
+    v.sort((a, b) => a - b);
+    const q = (p: number) => v[Math.min(v.length - 1, Math.floor(p * v.length))];
+    return {
+      mean: +(v.reduce((a, b) => a + b, 0) / v.length).toFixed(4),
+      p10: +q(0.1).toFixed(4),
+      p90: +q(0.9).toFixed(4),
+      pixels: v.length,
+    };
+  };
+
+  const [ndvi, ndwi] = await Promise.all([one(NDVI_EVALSCRIPT), one(NDWI_EVALSCRIPT)]);
+  return {
+    ndvi,
+    ndwi,
+    window: { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) },
+    source: `Sentinel-2 L2A · 10 m · ${days} d least-cloud mosaic · CDSE`,
+  };
+}
