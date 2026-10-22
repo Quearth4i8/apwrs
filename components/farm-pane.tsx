@@ -2,6 +2,8 @@
 
 import { FarmerContent } from "@/components/farmer-content";
 import { useConsole } from "@/components/app-context";
+import { PagePlanting } from "@/components/pages/planting";
+import { PageIrrigation } from "@/components/pages/irrigation";
 import type { FarmerTab } from "@/lib/data";
 
 /**
@@ -11,5 +13,7 @@ import type { FarmerTab } from "@/lib/data";
  */
 export function FarmerPane({ tab }: { tab: FarmerTab }) {
   const { lang } = useConsole();
+  if (tab === "planting") return <PagePlanting />;
+  if (tab === "irrigation") return <PageIrrigation />;
   return <FarmerContent tab={tab} lang={lang} />;
 }

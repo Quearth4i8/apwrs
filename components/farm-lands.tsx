@@ -1,13 +1,20 @@
 "use client";
 
 import * as React from "react";
-import Map, { Layer, Marker, NavigationControl, ScaleControl, Source, type MapRef } from "react-map-gl/maplibre";
+import Map, { Layer, Marker, NavigationControl, Popup, ScaleControl, Source, type MapRef } from "react-map-gl/maplibre";
 import type { LngLatBoundsLike } from "maplibre-gl";
 import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icon";
 import { CropImage } from "@/components/crop-visual";
 import { LandPin, LAND_FILL, LAND_LINE, LAND_SELECTED } from "@/components/land-pin";
-import { DEFAULT_VIEW, SATELLITE_LABELS, SATELLITE_STYLE, lockToPlan } from "@/components/map-view";
+import { DEFAULT_VIEW, SATELLITE_LABELS, SATELLITE_STYLE, SATELLITE_WATER, loadGrid, lockToPlan, type GridPayload } from "@/components/map-view";
+import { FieldPopup } from "@/components/field-popup";
+import { LayerSwitcher } from "@/components/layer-switcher";
+import { cellFor } from "@/lib/impact";
+import { LAYER } from "@/lib/map-layers";
+import { S2, S2_MAXZOOM, S2_MINZOOM } from "@/lib/s2";
+import { setS2Clip, s2TileUrl, useFieldIndices } from "@/lib/s2-tiles";
+import { RISK_COLOR, RISK_LABEL, riskLevel } from "@/lib/utils";
 import { Button, Panel } from "@/components/ui/primitives";
 import { Select } from "@/components/ui/select";
 import { CALENDAR_CROPS, calendarCrop } from "@/lib/crop-calendar";
@@ -480,6 +487,53 @@ function FieldMap({
   const ref = React.useRef<MapRef | null>(null);
   const drawing = draft != null;
 
+  // What the fields are coloured by. NDVI and NDWI are Sentinel-2 pixels cut
+  // to the farmer's own fields; risk paints each field by its grid cell.
+  const [layer, setLayer] = React.useState<FieldLayer | "none">("none");
+  const shown = drawing ? "none" : layer;
+  const fine = shown === "ndvi" || shown === "ndwi" ? shown : null;
+
+  const [grid, setGrid] = React.useState<GridPayload | null>(null);
+  React.useEffect(() => {
+    if (shown !== "risk" || grid) return;
+    let live = true;
+    loadGrid()
+      .then((g) => live && setGrid(g))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [shown, grid]);
+  const riskOf = React.useCallback(
+    (l: Land) => {
+      if (!grid) return null;
+      const i = cellFor(grid, l.center[1], l.center[0]);
+      return i == null ? null : grid.grid.risk[i];
+    },
+    [grid],
+  );
+
+  // Named in render: the raster source asks for tiles before effects run.
+  const clip = `mine-${lands.map((l) => `${l.id}@${l.updatedAt}`).join(",")}`;
+  React.useMemo(() => setS2Clip(clip, lands.map((l) => [...l.polygon, l.polygon[0]])), [clip, lands]);
+  const tileBounds = lands.length ? bounds(lands.flatMap((l) => l.polygon)) : null;
+
+  const [hoverId, setHoverId] = React.useState<string | null>(null);
+  const hoverLand = shown !== "none" && hoverId ? (lands.find((l) => l.id === hoverId) ?? null) : null;
+  const hoverField = useFieldIndices(hoverLand);
+
+  const geo = React.useMemo(() => {
+    const fc = landsGeoJSON(lands, selected);
+    return {
+      ...fc,
+      features: fc.features.map((f) => {
+        const land = lands.find((l) => l.id === f.properties.id);
+        const r = shown === "risk" && land ? riskOf(land) : null;
+        return { ...f, properties: { ...f.properties, risk: r == null ? null : RISK_COLOR[riskLevel(r)] } };
+      }),
+    };
+  }, [lands, selected, shown, riskOf]);
+
   React.useEffect(() => {
     const map = ref.current;
     if (!map || !target) return;
@@ -519,17 +573,52 @@ function FieldMap({
         doubleClickZoom={!drawing}
         cursor={drawing ? "crosshair" : "grab"}
         attributionControl={{ compact: true }}
+        interactiveLayerIds={drawing ? [] : ["my-lands-fill"]}
+        onMouseMove={(e) => setHoverId(e.features?.[0] ? String(e.features[0].properties?.id) : null)}
+        onMouseLeave={() => setHoverId(null)}
         onClick={(e) => {
-          if (drawing) onDraft([...shape, [+e.lngLat.lng.toFixed(7), +e.lngLat.lat.toFixed(7)]]);
+          if (drawing) return onDraft([...shape, [+e.lngLat.lng.toFixed(7), +e.lngLat.lat.toFixed(7)]]);
+          const hit = e.features?.[0];
+          const l = hit && lands.find((x) => x.id === String(hit.properties?.id));
+          if (l) onSelect(l);
         }}
         style={{ width: "100%", height: "100%" }}
       >
-        <Source id="my-lands" type="geojson" data={landsGeoJSON(lands, selected)}>
+        {fine && tileBounds && (
+          <Source
+            key={`${fine}/${clip}`}
+            id="my-s2"
+            type="raster"
+            tiles={[s2TileUrl(fine, clip)]}
+            tileSize={256}
+            minzoom={S2_MINZOOM}
+            maxzoom={S2_MAXZOOM}
+            bounds={tileBounds}
+            attribution="Contains modified Copernicus Sentinel data"
+          >
+            <Layer
+              id="my-s2-raster"
+              type="raster"
+              beforeId={SATELLITE_WATER}
+              paint={{ "raster-opacity": 0.9, "raster-resampling": "linear", "raster-fade-duration": 200 }}
+            />
+          </Source>
+        )}
+
+        <Source id="my-lands" type="geojson" data={geo}>
           <Layer
             id="my-lands-fill"
             type="fill"
             beforeId={SATELLITE_LABELS}
-            paint={{ "fill-color": ["case", ["get", "selected"], LAND_SELECTED, LAND_FILL], "fill-opacity": drawing ? 0.15 : 0.35 }}
+            paint={{
+              "fill-color":
+                shown === "risk"
+                  ? ["coalesce", ["get", "risk"], "#8a8f93"]
+                  : ["case", ["get", "selected"], LAND_SELECTED, LAND_FILL],
+              // Over NDVI/NDWI a tint would hide the field's own colours;
+              // a hair above 0 keeps the field hoverable.
+              "fill-opacity": drawing ? 0.15 : fine ? 0.01 : shown === "risk" ? 0.6 : 0.35,
+            }}
           />
           <Layer
             id="my-lands-line"
@@ -584,9 +673,29 @@ function FieldMap({
           </Marker>
         ))}
 
+        {hoverLand && (
+          <Popup
+            longitude={hoverLand.center[0]}
+            latitude={hoverLand.center[1]}
+            closeButton={false}
+            closeOnClick={false}
+            offset={34}
+            maxWidth="270px"
+          >
+            <FieldPopup land={hoverLand} field={hoverField} risk={grid ? riskOf(hoverLand) : undefined} lang={lang} />
+          </Popup>
+        )}
+
         <NavigationControl position="top-right" showCompass={false} />
         <ScaleControl position="bottom-left" maxWidth={100} unit="metric" />
       </Map>
+
+      {!drawing && lands.length > 0 && (
+        <div className="absolute left-3 top-3 z-10">
+          <LayerSwitcher value={layer} onChange={setLayer} only={["risk", "ndvi", "ndwi"]} allowNone />
+        </div>
+      )}
+      {shown !== "none" && lands.length > 0 && <FieldLegend layer={shown} lang={lang} />}
 
       <AnimatePresence>
         {drawing && (
@@ -603,5 +712,46 @@ function FieldMap({
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+type FieldLayer = "risk" | "ndvi" | "ndwi";
+
+/** What the colours on the fields mean. */
+function FieldLegend({ layer, lang }: { layer: FieldLayer; lang: Lang }) {
+  const def = LAYER[layer];
+  return (
+    <div className="pointer-events-none absolute bottom-10 left-3 z-10 flex flex-col gap-1.5 rounded-[12px] bg-[color-mix(in_srgb,var(--ap-bg)_88%,transparent)] px-3.5 py-2 text-[11.5px] text-muted shadow-pop backdrop-blur-md">
+      <span className="flex flex-wrap items-baseline gap-x-2">
+        <span className="font-semibold text-ink">{def.label}</span>
+        <span>
+          {layer === "risk"
+            ? tr(lang, "per field · ~9 km weather grid", "par parcelle · grille météo ~9 km")
+            : tr(lang, `your fields · Sentinel-2 ${S2[layer].resolutionM} m`, `vos parcelles · Sentinel-2 ${S2[layer].resolutionM} m`)}
+        </span>
+      </span>
+      {layer === "risk" ? (
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
+          {(["safe", "watch", "severe", "extreme"] as const).map((l) => (
+            <span key={l} className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-full" style={{ background: RISK_COLOR[l] }} />
+              {RISK_LABEL[l]}
+            </span>
+          ))}
+        </span>
+      ) : (
+        <>
+          <span className="h-2 w-[200px] rounded-full" style={{ background: `linear-gradient(to right, ${def.ramp.join(", ")})` }} />
+          <span className="flex w-[200px] justify-between tabular-nums">
+            <span>
+              {def.format(S2[layer].domain[0])} · {def.ends[0]}
+            </span>
+            <span>
+              {def.ends[1]} · {def.format(S2[layer].domain[1])}
+            </span>
+          </span>
+        </>
+      )}
+    </div>
   );
 }

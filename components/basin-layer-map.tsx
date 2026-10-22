@@ -13,6 +13,7 @@ import { LandPin, LAND_FILL, LAND_LINE, LAND_SELECTED } from "@/components/land-
 import { bounds as landBounds, landsGeoJSON, type Land } from "@/lib/lands";
 import { S2, S2_BOUNDS, S2_MAXZOOM, S2_MINZOOM, type S2Index } from "@/lib/s2";
 import { setS2Clip, s2TileUrl, s2ValueAt, useFieldIndices } from "@/lib/s2-tiles";
+import { FieldPopup } from "@/components/field-popup";
 
 /**
  * The Ichkeul catchment as on the Overview — its outline from the study
@@ -608,39 +609,3 @@ export function BasinLayerMap({
   );
 }
 
-/** A field's own NDVI and NDWI, from the Sentinel-2 pixels inside it. */
-function FieldPopup({ land, field }: { land: Land; field: ReturnType<typeof useFieldIndices> }) {
-  const row = (k: S2Index) => {
-    const st = field.data?.[k];
-    return (
-      <span key={k} className="flex items-baseline justify-between gap-3">
-        <span>{LAYER[k].label}</span>
-        <span className="tabular-nums">
-          <strong>{st ? LAYER[k].format(st.mean) : "—"}</strong>
-          {st && <span className="text-muted"> ({LAYER[k].format(st.p10)} to {LAYER[k].format(st.p90)})</span>}
-        </span>
-      </span>
-    );
-  };
-  const px = field.data?.ndvi?.pixels ?? field.data?.ndwi?.pixels;
-  return (
-    <div className="flex flex-col gap-1 text-[12.5px]">
-      <span className="font-semibold">
-        {land.name} <span className="font-normal text-muted">· {land.areaHa.toFixed(2)} ha</span>
-      </span>
-      {field.loading ? (
-        <span className="text-muted">Reading the field&rsquo;s Sentinel-2 pixels&hellip;</span>
-      ) : field.error ? (
-        <span className="text-muted">Sentinel-2 is unavailable for this field right now</span>
-      ) : (
-        <>
-          {row("ndvi")}
-          {row("ndwi")}
-          <span className="text-muted">
-            Mean (10th to 90th percentile) of {px ?? 0} clear 10 m pixels inside the field · 30-day least-cloud mosaic
-          </span>
-        </>
-      )}
-    </div>
-  );
-}

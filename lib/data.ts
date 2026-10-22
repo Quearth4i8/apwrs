@@ -84,7 +84,8 @@ export const FARMER_TABS = [
   { id: "help", icon: "help" as IconName },
 ] as const;
 
-export type FarmerTab = (typeof FARMER_TABS)[number]["id"];
+/** The console adds the expert Calendar and Irrigation pages to the phone tabs. */
+export type FarmerTab = (typeof FARMER_TABS)[number]["id"] | "planting" | "irrigation";
 
 /**
  * The farmer console runs the same shell as the expert one with a single
@@ -95,8 +96,10 @@ export const FARM_NAV: { key: string; fr: string; items: { id: FarmerTab; en: st
   key: "MY FARM",
   fr: "MA FERME",
   items: [
-    { id: "today", en: "Today", fr: "Aujourd’hui", icon: "home" },
+    { id: "today", en: "Home", fr: "Accueil", icon: "home" },
     { id: "fields", en: "My fields", fr: "Mes parcelles", icon: "map" },
+    { id: "planting", en: "Calendar", fr: "Calendrier", icon: "sprout" },
+    { id: "irrigation", en: "Irrigation", fr: "Irrigation", icon: "droplet" },
     { id: "alerts", en: "Messages", fr: "Messages", icon: "bell" },
     { id: "help", en: "Help", fr: "Aide", icon: "help" },
   ],

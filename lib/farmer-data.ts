@@ -34,7 +34,7 @@ export const FARMER_TEXT = {
       "The land is very dry. It has barely rained for 6 weeks and it is hot. It will likely get worse before November rains.",
     lv: ["Normal", "A bit dry", "Very dry", "Drought"],
     days: ["Wed", "Thu", "Fri", "Sat", "Sun", "Mon", "Tue"],
-    tabs: ["Today", "My fields", "Messages", "Help"],
+    tabs: ["Home", "My fields", "Messages", "Help"],
   },
   fr: {
     hello: "Bonjour",
@@ -61,7 +61,7 @@ export const FARMER_TEXT = {
       "La terre est très sèche. Il n’a presque pas plu depuis 6 semaines et il fait chaud. Cela risque d’empirer avant les pluies de novembre.",
     lv: ["Normal", "Un peu sec", "Très sec", "Sécheresse"],
     days: ["mer", "jeu", "ven", "sam", "dim", "lun", "mar"],
-    tabs: ["Aujourd’hui", "Parcelles", "Messages", "Aide"],
+    tabs: ["Accueil", "Parcelles", "Messages", "Aide"],
   },
 } as const;
 
